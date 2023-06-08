@@ -1,2 +1,2 @@
-# static-site-formation
+# Static Site Formation
  

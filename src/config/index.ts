@@ -7,6 +7,7 @@
  *
  * @type {object}
  * @prop {string} namespace
+ * @prop {string} source
  * @prop {string} title
  * @prop {object} meta
  * @prop {string} meta.description
@@ -20,6 +21,12 @@
  * @prop {string} slug.bases.page.title
  * @prop {string} slug.bases.page.singular
  * @prop {string} slug.bases.page.archiveId
+ * @prop {object} contentTypes
+ * @prop {array<string>} contentTypes.partial
+ * @prop {array<string>} contentTypes.whole
+ * @prop {object} image
+ * @prop {string} image.url
+ * @prop {array<number>} image.sizes
  * @prop {array<object>} navigation
  * @prop {array<object>} navigationItem
  * @prop {object} script
@@ -39,13 +46,14 @@
  * @prop {object} files.slugParents
  * @prop {string} files.slugParents.data
  * @prop {string} files.slugParents.name
- * @prop {object} files.navs
- * @prop {string} files.navs.data
- * @prop {string} files.navs.name
+ * @prop {object} files.navigations
+ * @prop {string} files.navigations.data
+ * @prop {string} files.navigations.name
  */
 
 let config: Formation.Config = {
   namespace: 'ss',
+  source: 'file',
   title: 'Static Site',
   meta: {
     description: '',
@@ -63,11 +71,21 @@ let config: Formation.Config = {
       }
     }
   },
-  contentTypesGet: [
-    'navigation',
-    'navigationItem',
-    'page'
-  ],
+  contentTypes: {
+    partial: [
+      'navigation',
+      'navigationItem'
+    ],
+    whole: [
+      'page'
+    ]
+  },
+  image: {
+    url: '/assets/img/',
+    sizes: [
+      200, 400, 600, 800, 1000, 1200, 1600, 2000
+    ],
+  },
   navigation: [],
   navigationItem: [],
   script: {},
@@ -92,9 +110,9 @@ let config: Formation.Config = {
       data: '',
       name: 'slug-parents.json'
     },
-    navs: {
+    navigations: {
       data: '',
-      name: 'navs.json'
+      name: 'navigations.json'
     }
   }
 }

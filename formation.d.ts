@@ -63,12 +63,13 @@ declare namespace Formation {
   interface Files {
     slugs: File
     slugParents: File
-    navs: File
+    navigations: File
     [key: string]: File
   }
   
   interface Config {
     namespace: string
+    source: string
     title: string
     meta: {
       description: string
@@ -89,7 +90,14 @@ declare namespace Formation {
         [key: string]: SlugBase
       }
     }
-    contentTypesGet: string[]
+    contentTypes: {
+      partial: string[]
+      whole: string[]
+    }
+    image: {
+      url: string
+      sizes: number[]
+    }
     script: {
       [key: string]: any
     }

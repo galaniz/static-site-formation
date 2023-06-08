@@ -34,8 +34,11 @@ interface Resolve {
 interface Return {
   navigation: Formation.Navigation[]
   navigationItem: Formation.NavigationItem[]
-  page: any[]
-  [key: string]: any[]
+  content: {
+    page: any[]
+    [key: string]: any[]
+  }
+  [key: string]: any
 }
 
 const getAllFileData = async (
@@ -115,11 +118,17 @@ const getAllFileData = async (
     const allData: Return = {
       navigation: [],
       navigationItem: [],
-      page: []
+      content: {
+        page: []
+      }
     }
 
-    config.contentTypesGet.forEach((contentType) => {
+    config.contentTypes.partial.forEach((contentType) => {
       allData[contentType] = []
+    })
+
+    config.contentTypes.whole.forEach((contentType) => {
+      allData.content[contentType] = []
     })
 
     if (Object.keys(data).length > 0) {
@@ -149,6 +158,10 @@ const getAllFileData = async (
 
         if (allData[contentType]) {
           allData[contentType].push(dd)
+        }
+
+        if (allData.content[contentType]) {
+          allData.content[contentType].push(dd)
         }
 
         if (typeof onDataSet === 'function') {

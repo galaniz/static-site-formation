@@ -18,7 +18,7 @@ const getPermalink = (slug: string = '', trailingSlash: boolean = true): string 
   let url = '/'
 
   if (config.env.prod) {
-    url = config.urls.prod
+    url = config.env.urls.prod
   }
 
   return `${url}${slug}${slug !== '' && trailingSlash ? '/' : ''}`

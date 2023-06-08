@@ -2,6 +2,89 @@
  * Utils - get image
  */
 
+/* Imports */
+
+import { config } from '../../config'
+
+/**
+ * Function -
+ *
+ * @private
+ * @param {object} data
+ * @return {object|undefined}
+ */
+
+interface ImageData {
+  base?: string
+  alt?: string
+  width?: number
+  height?: number
+  description?: string
+  file?: {
+    url: string
+    details: {
+      image: {
+        width: number
+        height: number
+      }
+    }
+  }
+}
+
+interface NormalData {
+  url: string
+  alt: string
+  naturalWidth: number
+  naturalHeight: number
+}
+
+const _normalizeImageData = (data: ImageData): NormalData | undefined => {
+  if (config.source === 'file') {
+    const {
+      base = '',
+      alt = '',
+      width = 0,
+      height = 0
+    } = data
+
+    if (base === '' || width === 0 || height === 0) {
+      return
+    }
+
+    const url = `${config.image.url}${base}.webp`
+
+    return {
+      url,
+      alt,
+      naturalWidth: width,
+      naturalHeight: height
+    }
+  } else {
+    const { file, description = '' } = data
+
+    /* File required */
+  
+    if (file === undefined) {
+      return
+    }
+  
+    const { url = '', details } = file
+  
+    /* Url and details required */
+  
+    if (url === '' || details === undefined) {
+      return
+    }
+
+    return {
+      url,
+      alt: description,
+      naturalWidth: details.image.width,
+      naturalHeight: details.image.height
+    }
+  }
+}
+
 /**
  * Function - get responsive image output
  *
@@ -17,52 +100,52 @@
  * @return {string|object}
  */
 
-interface Data {
-  base: string
-  alt?: string
-  width: number
-  height: number
-}
-
 interface Args {
-  data?: Data
+  data?: ImageData | undefined
   classes?: string
   attr?: string
   width?: string | number
   height?: string | number
   returnAspectRatio?: boolean
   lazy?: boolean
-  max?: number
+  quality?: number
+  maxWidth?: number
+  viewportWidth?: number
 }
 
 const getImage = (args: Args = {}): string | { output: string, aspectRatio: number } => {
   const {
-    data,
     classes = '',
     attr = '',
     width = 'auto',
     height = 'auto',
     returnAspectRatio = false,
     lazy = true,
-    max = 1600
+    quality = 75,
+    maxWidth = 1200,
+    viewportWidth = 100,
   } = args
+
+  let { data } = args
 
   /* Data required */
 
-  if (data == null) {
+  if (data === undefined) {
+    return ''
+  }
+
+  const normalData = _normalizeImageData(data)
+
+  if (normalData === undefined) {
     return ''
   }
 
   const {
-    base = '',
+    url = '',
     alt = '',
-    width: naturalWidth,
-    height: naturalHeight
-  } = data
-
-  if (base === '') {
-    return ''
-  }
+    naturalWidth,
+    naturalHeight
+  } = normalData
 
   /* Dimensions */
 
@@ -82,28 +165,43 @@ const getImage = (args: Args = {}): string | { output: string, aspectRatio: numb
     w = typeof width === 'string' ? h * aspectRatioReverse : width
   }
 
+  if (w > maxWidth) {
+    w = Math.round(maxWidth)
+    h = Math.round(w * aspectRatio)
+  }
+
   /* Src and sizes attributes */
 
-  const src = `/assets/img/${base}.webp`
-  const size = w <= max ? w : max
-  const sizes = `(min-width: ${size / 16}rem) ${size / 16}rem, 100vw`
+  let src = url
 
-  let srcset: string[] | number[] = [200, 400, 600, 800, 1200, 1600, 2000]
+  if (config.source !== 'file') {
+    src = `https:${url}?fm=webp&q=${quality}&w=${w}&h=${h}`
+  }
 
-  srcset = srcset.filter(s => s < w && s <= max)
+  const sizes = `(min-width: ${w / 16}rem) ${w / 16}rem, ${viewportWidth}vw`
 
-  if (w <= max) {
+  let srcset: string[] | number[] = config.image.sizes
+
+  if (!srcset.includes(w)) {
     srcset.push(w)
   }
 
+  srcset = srcset.filter(s => s <= w)
+
+  srcset.sort((a, b) => a - b)
+
   srcset = srcset.map(s => {
-    return `/assets/img/${base}${s !== naturalWidth ? `@${s}` : ''}.webp ${s}w`
+    if (config.source === 'file') {
+      return `${url}${s !== naturalWidth ? `@${s}` : ''}.webp ${s}w`
+    } else {
+      return `https:${url}?fm=webp&q=${quality}&w=${s}&h=${Math.round(s * aspectRatio)} ${s}w`
+    }
   })
 
   /* Output */
 
   const output = `
-    <img${classes !== '' ? ` class="${classes}"` : ''} alt="${alt}" src="${src}" srcset="${srcset.join(', ')}" sizes="${sizes}" width="${w}" height="${h}"${attr !== '' ? ` ${attr}` : ''}${lazy ? ' loading="lazy" decoding="async"' : ''}>
+    <img${classes !== '' ? ` class="${classes}"` : ''} alt="${alt}" src="${src}" srcset="${srcset.join(', ')}" sizes="${sizes}" width="${w}" height="${h}"${attr !== '' ? ` ${attr}` : ''}${lazy ? ' loading="lazy" decoding="async"' : ' loading="eager"'}>
   `
 
   if (returnAspectRatio) {

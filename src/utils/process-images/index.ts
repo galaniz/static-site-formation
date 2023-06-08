@@ -4,6 +4,7 @@
 
 /* Imports */
 
+import { config } from '../../config'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { extname, dirname } from 'node:path'
 import { existsSync } from 'node:fs'
@@ -15,7 +16,6 @@ import getAllFilePaths from '../get-all-file-paths'
  * @param {string} inputDir
  * @param {string} outputDir
  * @param {string} savePath
- * @param {array<string>} sizes
  * @param {function} sharp
  * @return {void}
  */
@@ -31,7 +31,6 @@ const processImages = async (
   inputDir: string = '',
   outputDir: string = '',
   savePath: string = '',
-  sizes: number[] = [200, 400, 600, 800, 1000, 1200, 1600, 2000],
   sharp: any
 ): Promise<void> => {
   const store = {}
@@ -66,7 +65,10 @@ const processImages = async (
 
       const metadata = await sharp(path).metadata()
       const { width = 0, height } = metadata
+
       store[base] = { base, width, height }
+
+      let sizes = config.imageSizes
 
       sizes.push(width)
 
