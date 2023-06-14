@@ -53,7 +53,7 @@
 
 let config: Formation.Config = {
   namespace: 'ss',
-  source: 'file',
+  source: 'static',
   title: 'Static Site',
   meta: {
     description: '',
@@ -82,12 +82,14 @@ let config: Formation.Config = {
   },
   image: {
     url: '/assets/img/',
+    quality: 75,
     sizes: [
       200, 400, 600, 800, 1000, 1200, 1600, 2000
-    ],
+    ]
   },
   navigation: [],
   navigationItem: [],
+  normalizedParams: {},
   script: {},
   archive: {
     ids: {}
@@ -101,18 +103,36 @@ let config: Formation.Config = {
       prod: ''
     }
   },
-  files: {
-    slugs: {
-      data: '',
-      name: 'slugs.json'
-    },
-    slugParents: {
-      data: '',
-      name: 'slug-parents.json'
-    },
-    navigations: {
-      data: '',
-      name: 'navigations.json'
+  store: {
+    dir: './src/json/',
+    files: {
+      slugs: {
+        data: '',
+        name: 'slugs.json'
+      },
+      slugParents: {
+        data: '',
+        name: 'slug-parents.json'
+      },
+      navigations: {
+        data: '',
+        name: 'navigations.json'
+      }
+    }
+  },
+  cms: {
+    space: '',
+    previewAcessToken: '',
+    previewHost: '',
+    deliveryAcessToken: '',
+    deliveryHost: ''
+  },
+  static: {
+    dir: './json/',
+    image: {
+      inputDir: './src/assets/img/',
+      outputDir: './site/assets/img/',
+      dataFile: './src/json/image-data.json'
     }
   }
 }

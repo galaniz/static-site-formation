@@ -5,117 +5,56 @@
 /* Imports */
 
 import { config } from '../../config'
-import { readdir, readFile } from 'node:fs/promises'
-import { extname, basename, resolve } from 'node:path'
+import { readFile } from 'node:fs/promises'
+import { resolve } from 'node:path'
+import getFileData from '../get-file-data'
 import resolveInternalLinks from '../resolve-internal-links'
 
 /**
  * Function - get data from file system/cache if available
  *
- * @param {string} key
- * @param {object} params
- * @param {function} cache
- * @param {function} beforeDataSet
- * @param {function} onDataSet
- * @param {function} afterDataSet
- * @return {object}
+ * @param {object} args
+ * @param {object} args.resolveProps
+ * @param {function} args.beforeDataSet
+ * @param {function} args.onDataSet
+ * @param {function} args.afterDataSet
+ * @param {function} args.cache - external module
+ * @return {object|undefined}
  */
 
-interface Params {
-  all?: boolean
-  id?: number
-}
-
-interface Resolve {
+interface ResolveProps {
   image: string[]
   data: string[]
 }
 
-interface Return {
-  navigation: Formation.Navigation[]
-  navigationItem: Formation.NavigationItem[]
-  content: {
-    page: any[]
-    [key: string]: any[]
-  }
-  [key: string]: any
+interface Args {
+  resolveProps: ResolveProps
+  beforeDataSet: Function
+  onDataSet: Function
+  afterDataSet: Function
+  cache: Function
 }
 
-const getAllFileData = async (
-  key: string = '',
-  params: Params = {},
-  resolveProps: Resolve = {
-    image: ['image'],
-    data: ['items', 'internalLink']
-  },
-  cache: Function,
-  beforeDataSet: Function,
-  onDataSet: Function,
-  afterDataSet: Function
-): Promise<Return | undefined> => {
+const getAllFileData = async (args: Args): Promise<Formation.AllData | undefined> => {
+  const {
+    resolveProps = {
+      image: ['image'],
+      data: ['items', 'internalLink']
+    },
+    beforeDataSet,
+    onDataSet,
+    afterDataSet,
+    cache
+  } = args
+
   try {
-    if (key === '') {
-      throw new Error('No key')
-    }
+    /* Get data */
 
-    /* Check cache */
+    const data = getFileData('all_file_data', { all: true }, cache)
 
-    if (typeof cache === 'function') {
-      const data = cache(key)
+    /* Store all data */
 
-      if (data) {
-        return data
-      }
-    }
-
-    /* Fetch new data */
-
-    const {
-      all = true,
-      id = ''
-    } = params
-
-    const data = {}
-
-    if (id !== '') {
-      const file = await readFile(resolve(`./json/${id}.json`), { encoding: 'utf8' })
-
-      if (file !== '') {
-        const fileJson = JSON.parse(file)
-
-        if (fileJson !== '') {
-          data[id] = fileJson
-        }
-      }
-    }
-
-    if (all) {
-      const files = await readdir('./json/')
-
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i]
-        const fileExt = extname(file)
-        const fileName = basename(file, fileExt)
-
-        if (fileExt !== '.json') {
-          continue
-        }
-
-        const fileContents = await readFile(resolve(`./json/${file}`), { encoding: 'utf8' })
-
-        if (fileContents !== '') {
-          const fileJson = JSON.parse(fileContents)
-
-          if (fileJson !== '') {
-            data[fileName] = fileJson
-          }
-        }
-      }
-    }
-
-    /* All data */
-
-    const allData: Return = {
+    const allData: Formation.AllData = {
       navigation: [],
       navigationItem: [],
       content: {
@@ -131,15 +70,18 @@ const getAllFileData = async (
       allData.content[contentType] = []
     })
 
-    if (Object.keys(data).length > 0) {
-      const imageJson = await readFile(
-        resolve('./src/json/image-data.json'),
-        {
-          encoding: 'utf8'
-        }
-      )
+    /* Process data */
 
-      const imageData = imageJson != null ? JSON.parse(imageJson) : {}
+    if (Object.keys(data).length > 0) {
+      let imageData = {}
+
+      if (config.static.image.dataFile !== '') {
+        const imageJson = await readFile(resolve(config.static.image.dataFile), { encoding: 'utf8' })
+
+        if (imageJson !== null) {
+          imageData = JSON.parse(imageJson)
+        }
+      }
 
       resolveInternalLinks(imageData, data, resolveProps.image)
       resolveInternalLinks(data, data, resolveProps.data)
@@ -156,11 +98,11 @@ const getAllFileData = async (
 
         dd.id = d
 
-        if (allData[contentType]) {
+        if (allData[contentType] !== undefined) {
           allData[contentType].push(dd)
         }
 
-        if (allData.content[contentType]) {
+        if (allData.content[contentType] !== undefined) {
           allData.content[contentType].push(dd)
         }
 
@@ -172,12 +114,6 @@ const getAllFileData = async (
       if (typeof afterDataSet === 'function') {
         afterDataSet(allData)
       }
-    }
-
-    /* Store in cache */
-
-    if (typeof cache === 'function') {
-      await cache(allData)
     }
 
     /* Output */

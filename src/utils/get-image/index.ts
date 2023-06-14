@@ -7,7 +7,7 @@
 import { config } from '../../config'
 
 /**
- * Function -
+ * Function - consistent data object regardless of source
  *
  * @private
  * @param {object} data
@@ -63,15 +63,15 @@ const _normalizeImageData = (data: ImageData): NormalData | undefined => {
     const { file, description = '' } = data
 
     /* File required */
-  
+
     if (file === undefined) {
       return
     }
-  
+
     const { url = '', details } = file
-  
+
     /* Url and details required */
-  
+
     if (url === '' || details === undefined) {
       return
     }
@@ -115,18 +115,17 @@ interface Args {
 
 const getImage = (args: Args = {}): string | { output: string, aspectRatio: number } => {
   const {
+    data,
     classes = '',
     attr = '',
     width = 'auto',
     height = 'auto',
     returnAspectRatio = false,
     lazy = true,
-    quality = 75,
+    quality = config.image.quality,
     maxWidth = 1200,
-    viewportWidth = 100,
+    viewportWidth = 100
   } = args
-
-  let { data } = args
 
   /* Data required */
 

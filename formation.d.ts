@@ -28,7 +28,7 @@ declare namespace Formation {
     singular: string
     archiveId?: string
   }
-  
+
   interface NavigationItem {
     id?: string
     title: string
@@ -41,14 +41,14 @@ declare namespace Formation {
     descendentCurrent?: boolean
     [key: string]: any
   }
-  
+
   interface Navigation {
     title?: string
     location: string
     items: NavigationItem[]
     [key: string]: any
   }
-  
+
   interface Archive {
     ids: {
       [key: string]: string
@@ -59,14 +59,92 @@ declare namespace Formation {
     data: string
     name: string
   }
-  
+
   interface Files {
     slugs: File
     slugParents: File
     navigations: File
     [key: string]: File
   }
-  
+
+  interface Cms {
+    space: string
+    previewAcessToken: string
+    previewHost: string
+    deliveryAcessToken: string
+    deliveryHost: string
+  }
+
+  interface AllData {
+    navigation: Navigation[]
+    navigationItem: NavigationItem[]
+    content: {
+      page: any[]
+      [key: string]: any[]
+    }
+    [key: string]: any
+  }
+
+  interface ServerlessData {
+    path: string
+    query: {
+      [key: string]: any[]
+    }
+  }
+
+  interface PreviewData {
+    id: string
+    contentType: string
+  }
+
+  interface Return {
+    start: string
+    end: string
+  }
+
+  interface ContainerProps {
+    args: {
+      tag?: string
+      layout?: string
+      maxWidth?: string
+      paddingTop?: string
+      paddingTopLarge?: string
+      paddingBottom?: string
+      paddingBottomLarge?: string
+      gap?: string
+      gapLarge?: string
+      justify?: string
+      align?: string
+      classes?: string
+      attr?: string
+      richTextStyles?: boolean
+    }
+    parents?: object[]
+  }
+
+  interface ColumnProps {
+    args: {
+      tag?: string
+      width?: string
+      widthSmall?: string
+      widthMedium?: string
+      widthLarge?: string
+      widthCustom?: {
+        default: string
+        small: string
+        medium: string
+        large: string
+      }
+      justify?: string
+      align?: string
+      grow?: boolean
+      classes?: string
+      style?: string
+      attr?: string
+    }
+    parents?: object[]
+  }
+
   interface Config {
     namespace: string
     source: string
@@ -97,15 +175,31 @@ declare namespace Formation {
     image: {
       url: string
       sizes: number[]
+      quality: number
     }
     script: {
       [key: string]: any
     }
     navigation: Navigation[]
     navigationItem: NavigationItem[]
+    normalizedParams: {
+      [key: string]: any
+    }
     archive: Archive
     env: Env
-    files: Files
-    [key: string]: any
+    store: {
+      dir: string
+      files: Files
+    }
+    cms: Cms
+    static: {
+      dir: string
+      image: {
+        inputDir: string
+        outputDir: string
+        dataFile: string
+      }
+    }
+    // [key: string]: any
   }
 }
