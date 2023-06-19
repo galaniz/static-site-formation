@@ -4,8 +4,7 @@
 
 /* Imports */
 
-import { getLink } from '../../utils'
-import lockSvg from '../svg/lock'
+import getLink from '../../utils/get-link'
 
 /**
  * Function - recursively output content
@@ -21,7 +20,7 @@ interface _ContentProps {
   content: Array<{
     tag?: string
     link?: string
-    internalLink?: Render.InternalLink
+    internalLink?: Formation.InternalLink
     content?: string | object[]
   }>
   cardLink?: string
@@ -126,12 +125,12 @@ interface RichTextProps {
     caption?: string
     align?: string
     link?: string
-    internalLink?: Render.InternalLink
+    internalLink?: Formation.InternalLink
     style?: object
   }
   parents?: Array<{
     renderType: string
-    internalLink?: Render.InternalLink
+    internalLink?: Formation.InternalLink
     externalLink?: string
   }>
 }

@@ -4,30 +4,16 @@
 
 /* Imports */
 
-import { PurgeCSS } from 'purgecss'
-import { getSlug, getPermalink } from '../utils'
-import { slugData, envData, navData, archiveData, formMeta, jsonFileData } from '../vars/data'
-import getAllData from '../utils/get-all-data'
-import layout from './layout'
-import header from './header'
-import footer from './footer'
-import button from './button'
-import container from './container'
-import column from './column'
-import form from './form'
-import field from './field'
-import richText from './rich-text'
-import image from './image'
-import video from './video'
-import waveSeparator from './wave-separator'
-import navigations, { navContainer } from './navigations'
-import hero from './hero'
-import httpError from './http-error'
-import aspectRatio from './aspect-ratio'
-import posts from './posts'
-import singleContent from './single-content'
-import termContent from './term-content'
-import { card } from './cards'
+import { config } from '../config'
+import getSlug from '../utils/get-slug'
+import getPermalink from '../utils/get-permalink'
+import getNormalParam from '../utils/get-normal-param'
+import getProp from '../utils/get-prop'
+import container from '../layouts/container'
+import column from '../layouts/column'
+import form from '../objects/form'
+import field from '../objects/field'
+import richText from '../text/rich'
 
 /**
  * Store slug data for json
@@ -38,6 +24,73 @@ import { card } from './cards'
 const _slugs: object = {}
 
 /**
+ * Function - normalize meta properties into one object
+ *
+ * @private
+ * @param {object} item
+ * @return {object}
+ */
+
+interface _MetaReturn {
+  title: string
+  description: string
+  url: string
+  image: string
+  canonical: string
+  prev: string
+  next: string
+  noIndex: boolean
+  isIndex: boolean
+}
+
+const _getMeta = (item: {
+  meta?: object
+  metaTitle?: string
+  metaDescription?: string
+  metaImage?: {
+    fields?: {
+      file?: {
+        url?: string
+      }
+    }
+  }
+}): _MetaReturn => {
+  const meta = {
+    title: '',
+    description: '',
+    url: '',
+    image: '',
+    canonical: '',
+    prev: '',
+    next: '',
+    noIndex: false,
+    isIndex: false
+  }
+
+  if (item?.meta !== undefined) {
+    return Object.assign(meta, item.meta)
+  }
+
+  if (item?.metaTitle !== undefined) {
+    meta.title = item.metaTitle
+  }
+
+  if (item?.metaDescription !== undefined) {
+    meta.description = item.metaDescription
+  }
+
+  if (item?.metaImage !== undefined) {
+    const imageUrl = item.metaImage?.fields?.file?.url
+
+    if (imageUrl !== undefined && typeof imageUrl === 'string') {
+      meta.image = `https:${imageUrl}`
+    }
+  }
+
+  return meta
+}
+
+/**
  * Function - recurse and output nested content
  *
  * @private
@@ -45,12 +98,22 @@ const _slugs: object = {}
  * @param {array<object>} args.contentData
  * @param {object} args.output
  * @param {array<object>} args.parents
- * @param {object} args.navs
+ * @param {object} args.renderFunctions
  * @return {void}
  */
 
+interface _RenderFunctions {
+  [key: string]: Function
+}
+
+interface _ContentChildren {
+  nodeType?: string
+  content?: any[]
+}
+
 interface _ContentArgs {
   contentData: any[]
+  serverlessData?: Formation.ServerlessData
   output: {
     html: string
   }
@@ -58,22 +121,45 @@ interface _ContentArgs {
     renderType: string
     props: object
   }>
-  navs: object
+  pageData: object
+  pageContains: string[]
+  renderFunctions: _RenderFunctions
 }
 
 const _renderContent = async ({
   contentData = [],
+  serverlessData,
   output,
   parents = [],
-  navs
+  pageData = {},
+  pageContains = [],
+  renderFunctions = {}
 }: _ContentArgs): Promise<void> => {
   if (Array.isArray(contentData) && (contentData.length > 0)) {
     for (let i = 0; i < contentData.length; i++) {
-      const c = contentData[i]
+      let c = contentData[i]
+
+      /* Check for embedded entries and rich text */
+
+      const richTextNode = c?.nodeType
+
+      if (richTextNode !== undefined) {
+        if (c.nodeType === 'embedded-entry-block') {
+          c = c.data.target
+        } else {
+          output.html += richText({
+            args: {
+              tag: richTextNode,
+              content: c.content
+            },
+            parents
+          })
+        }
+      }
 
       /* Check for nested content */
 
-      const children: object[] = c?.content !== undefined ? c.content : []
+      let children: _ContentChildren | _ContentChildren[] = c?.content !== undefined ? c.content : []
       let recurse = false
 
       if (children !== undefined) {
@@ -81,60 +167,46 @@ const _renderContent = async ({
           if (children.length > 0) {
             recurse = true
           }
+        } else {
+          if (children?.nodeType !== undefined) {
+            if (children?.content !== undefined) {
+              children = children.content
+            }
+
+            if (Array.isArray(children) && children.length > 0) {
+              recurse = true
+            }
+          }
         }
       }
 
       /* Render and recursion */
 
-      const props: object = typeof c === 'object' ? c : {}
-      const renderType: string = typeof c.renderType === 'string' ? c.renderType : ''
+      const normalProps = getProp(c)
+      const normalRenderType = getProp(c, 'renderType')
+
+      const props: { id?: string, [key: string]: any } = typeof normalProps === 'object' ? normalProps : {}
+      const renderType: string = typeof normalRenderType === 'string' ? normalRenderType : ''
 
       let renderObj = {
         start: '',
         end: ''
       }
 
-      switch (renderType) {
-        case 'column':
-          renderObj = column({ args: props, parents })
-          break
-        case 'container':
-          renderObj = container({ args: props, parents })
-          break
-        case 'aspect-ratio':
-          renderObj = aspectRatio({ args: props, parents })
-          break
-        case 'card':
-          renderObj = card({ args: props, parents })
-          break
-        case 'form':
-          renderObj = form({ args: props })
-          break
-        case 'field':
-          renderObj.start = field({ args: props })
-          break
-        case 'rich-text':
-          renderObj.start = richText({ args: props, parents })
-          break
-        case 'image':
-          renderObj.start = image({ args: props, parents })
-          break
-        case 'button':
-          renderObj.start = button({ args: props, parents })
-          break
-        case 'video':
-          renderObj.start = video({ args: props, parents })
-          break
-        case 'wave-separator':
-          renderObj.start = waveSeparator()
-          break
-        case 'posts':
-          renderObj.start = posts({ args: props, parents })
-          break
-        case 'navigation': {
-          renderObj.start = navContainer({ navs, props })
-          break
+      props.id = getProp(c, 'id')
+
+      const renderFunction = renderFunctions[renderType]
+
+      if (typeof renderFunction === 'function') {
+        const renderOutput = renderFunction({ args: props, parents })
+
+        if (typeof renderOutput === 'string') {
+          renderObj.start = renderOutput
+        } else {
+          renderObj = renderOutput
         }
+
+        pageContains.push(renderType)
       }
 
       const start = renderObj.start
@@ -142,7 +214,7 @@ const _renderContent = async ({
 
       output.html += start
 
-      if (children.length !== 0 && recurse) {
+      if (Array.isArray(children) && children.length !== 0 && recurse) {
         const parentsCopy = [...parents]
 
         parentsCopy.unshift({
@@ -152,9 +224,12 @@ const _renderContent = async ({
 
         await _renderContent({
           contentData: children,
+          serverlessData,
           output,
           parents: parentsCopy,
-          navs
+          pageData,
+          pageContains,
+          renderFunctions
         })
       }
 
@@ -179,16 +254,26 @@ const _renderContent = async ({
  * @return {object}
  */
 
+interface _Item {
+  id: string
+  title: string
+  slug: string
+  content?: any
+  meta?: object
+  basePermalink?: string
+  [key: string]: any
+}
+
 interface _ItemArgs {
-  item: {
-    id: string
-    basePermalink?: string
-  }
+  item: _Item
   contentType: string
+  serverlessData: Formation.ServerlessData
+  renderFunctions: _RenderFunctions
 }
 
 interface _ItemReturn {
-  data: {
+  serverlessRender: boolean
+  data?: {
     slug: string
     output: string
   }
@@ -196,38 +281,36 @@ interface _ItemReturn {
 
 const _renderItem = async ({
   item,
-  contentType = 'page'
+  contentType = 'page',
+  serverlessData,
+  renderFunctions
 }: _ItemArgs): Promise<_ItemReturn> => {
+  /* Serverless render check */
+
+  let serverlessRender = false
+
   /* Item id */
 
-  const id = item.id
+  const id: string = getProp(item, 'id')
 
   /* Item props */
 
-  const props = Object.assign({
+  const props: _Item = Object.assign({
     title: '',
     slug: '',
-    archive: '',
-    hero: {},
-    content: [],
-    meta: {
-      title: '',
-      canonical: '',
-      url: '',
-      isIndex: false
-    },
-    passwordProtected: false,
-    theme: {},
-    svg: false,
-    related: []
-  }, item)
+    content: []
+  }, getProp(item))
+
+  /* Store components contained in page  */
+
+  const pageContains = []
 
   /* Meta */
 
   const title = props.title
-  const meta = props.meta
+  const meta = _getMeta(props)
 
-  if (meta?.title === undefined || meta?.title === '') {
+  if (meta.title === '') {
     meta.title = title
   }
 
@@ -237,7 +320,8 @@ const _renderItem = async ({
     id,
     contentType,
     slug: props.slug,
-    returnParents: true
+    returnParents: true,
+    page: 0
   }
 
   const s = getSlug(slugArgs)
@@ -269,34 +353,6 @@ const _renderItem = async ({
 
   meta.isIndex = index
 
-  /* Navigations */
-
-  const navsOutput = navigations({
-    navs: navData.navs,
-    items: navData.items,
-    current: permalink,
-    title,
-    parents
-  })
-
-  /* Hero */
-
-  const heroArgs: Render.HeroArgs = {
-    contentType,
-    archive: props.archive,
-    ...props.hero
-  }
-
-  if (props.slug === 'index') {
-    heroArgs.type = 'index'
-  }
-
-  if (heroArgs.title === undefined) {
-    heroArgs.title = title
-  }
-
-  const heroOutput = hero(heroArgs)
-
   /* Main output */
 
   let output = ''
@@ -304,70 +360,111 @@ const _renderItem = async ({
   /* Content loop */
 
   const contentOutput = { html: '' }
-  const contentData = props.content
+
+  let contentData = props.content
+
+  if (contentData?.nodeType !== undefined) {
+    contentData = contentData.content
+  }
+
+  let itemServerlessData: Formation.ServerlessData | undefined
+
+  if (serverlessData !== undefined) {
+    if (serverlessData?.path !== undefined && serverlessData?.query !== undefined) {
+      if (serverlessData.path === (slug !== '' ? `/${slug}/` : '/')) {
+        itemServerlessData = serverlessData
+      } else { // Avoid re-rendering non dynamic pages
+        return {
+          serverlessRender: false
+        }
+      }
+    }
+  }
 
   if (Array.isArray(contentData) && contentData.length > 0) {
     await _renderContent({
       contentData,
+      serverlessData: itemServerlessData,
       output: contentOutput,
       parents: [],
-      navs: navsOutput
+      pageData: item,
+      pageContains,
+      renderFunctions
     })
-  }
-
-  if (props.related.length > 0) {
-    const s = singleContent({
-      contentType,
-      related: props.related
-    })
-
-    if (s !== '') {
-      contentOutput.html += s
-    }
-  }
-
-  if (contentType === 'workCategory') {
-    contentOutput.html += termContent(contentType, id)
   }
 
   output += contentOutput.html
 
-  /* Style */
+  /* Prev next pagination - end for pagination update from posts */
 
-  let style = ''
+  const updatedItem = getProp(item)
 
-  if (Object.keys(props.theme).length !== 0) {
-    const styleArray: string[] = []
+  if (updatedItem?.pagination !== undefined) {
+    serverlessRender = true
 
-    Object.keys(props.theme).forEach((t) => {
-      const prefix = t.includes('video') ? '' : 'theme-'
-      const color = props.theme[t]?.dark !== undefined ? props.theme[t].dark : props.theme[t]
+    const pagination = updatedItem.pagination
 
-      if (typeof color === 'string') {
-        styleArray.push(`--${prefix}${t}:${color}`)
+    const { currentFilters, prevFilters, nextFilters } = pagination
+
+    slugArgs.page = pagination.current > 1 ? pagination.current : 0
+
+    const c = getSlug(slugArgs)
+
+    if (typeof c === 'object') {
+      meta.canonical = `${getPermalink(c.slug, pagination.current === 1)}${typeof currentFilters === 'string' ? currentFilters : ''}`
+    }
+
+    if (pagination?.prev !== undefined) {
+      slugArgs.page = pagination.prev > 1 ? pagination.prev : 0
+
+      const p = getSlug(slugArgs)
+
+      if (typeof p === 'object') {
+        meta.prev = `${getPermalink(p.slug, pagination.prev === 1)}${typeof prevFilters === 'string' ? prevFilters : ''}`
       }
-    })
+    }
 
-    style = `:root{${styleArray.join(';')};--main-button-bg:var(--theme-main)}`
+    if (pagination?.next !== undefined) {
+      if (pagination.next > 1) {
+        slugArgs.page = pagination.next
+
+        const n = getSlug(slugArgs)
+
+        if (typeof n === 'object') {
+          meta.next = `${getPermalink(n.slug, false)}${typeof nextFilters === 'string' ? nextFilters : ''}`
+        }
+      }
+    }
+
+    meta.title = updatedItem.metaTitle
   }
 
   /* Output */
 
-  const layoutOutput = await layout({
-    meta,
-    content: `
-      ${header(navsOutput)}
-      <main id="main">
-        ${heroOutput}
-        ${output}
-      </main>
-      ${footer(navsOutput)}
-    `,
-    style,
-    PurgeCSS
-  })
+  let layoutOutput = ''
+
+  if (renderFunctions?.layout !== undefined) {
+    const layoutData = { ...props }
+
+    layoutData.id = id
+    layoutData.title = title
+    layoutData.parents = parents
+
+    delete layoutData.content
+
+    layoutOutput = await renderFunctions.layout({
+      meta,
+      navigations: config.navigation,
+      navigationItems: config.navigationItem,
+      content: output,
+      contains: pageContains,
+      data: layoutData,
+      serverlessData
+    })
+  }
 
   return {
+    serverlessRender,
     data: {
       slug: slug !== 'index' && slug !== '' ? `/${slug}/` : '/',
       output: layoutOutput
@@ -380,6 +477,9 @@ const _renderItem = async ({
  *
  * @param {object} args
  * @param {object} args.env
+ * @param {array<object>} args.allData
+ * @param {object} args.serverlessData
+ * @param {object} args.previewData
  * @param {function} args.onRenderEnd
  * @return {array|object}
  */
@@ -389,22 +489,31 @@ interface RenderArgs {
     dev: boolean
     prod: boolean
   }
+  allData: Formation.AllData
+  serverlessData: Formation.ServerlessData
+  previewData: Formation.PreviewData
+  renderFunctions: _RenderFunctions
   onRenderEnd?: Function
 }
 
-const render = async ({ env, onRenderEnd }: RenderArgs): Promise<object[]> => {
+const render = async ({
+  env,
+  allData,
+  serverlessData,
+  previewData,
+  renderFunctions = {},
+  onRenderEnd
+}: RenderArgs): Promise<object[] | object> => {
   /* Set env */
 
   if (env !== undefined) {
-    envData.dev = env.dev
-    envData.prod = env.prod
+    config.env.dev = env.dev
+    config.env.prod = env.prod
   }
 
-  /* All data */
+  /* Data */
 
-  const allData = await getAllData('init_all_data')
-
-  if (allData == null) {
+  if (allData === undefined) {
     return [{
       slug: '',
       output: ''
@@ -412,17 +521,22 @@ const render = async ({ env, onRenderEnd }: RenderArgs): Promise<object[]> => {
   }
 
   const {
-    content,
-    navs,
-    navItems,
-    redirects,
-    archivePosts
+    navigation,
+    navigationItem,
+    content
   } = allData
 
   /* Store navigations and items */
 
-  navData.navs = navs
-  navData.items = navItems
+  config.navigation = navigation
+  config.navigationItem = navigationItem
+
+  /* Add formation functions */
+
+  renderFunctions.container = container
+  renderFunctions.column = column
+  renderFunctions.form = form
+  renderFunctions.field = field
 
   /* Store content data */
 
@@ -434,39 +548,53 @@ const render = async ({ env, onRenderEnd }: RenderArgs): Promise<object[]> => {
 
   /* Loop through pages first to set parent slugs */
 
-  content.page.forEach(item => {
-    const { parent, id = '', archive = '' } = item
+  if (serverlessData === undefined) {
+    content.page.forEach(item => {
+      let { parent, archive = '' } = getProp(item)
 
-    if (archive !== '' && id !== '') {
-      archiveData.ids[archive] = id
+      const id = getProp(item, 'id')
 
-      if (archivePosts?.[archive] !== undefined) {
-        archiveData.posts[archive] = archivePosts[archive]
-      }
+      archive = getNormalParam('contentType', archive)
 
-      if (slugData.bases?.[archive] !== undefined) {
-        slugData.bases[archive].archiveId = id
-      }
-    }
+      if (archive !== '' && id !== '') {
+        config.archive.ids[archive] = id
 
-    if (parent !== undefined && id !== '') {
-      if (parent.slug !== undefined && parent.title !== undefined) {
-        slugData.parents[id] = {
-          id: parent.id,
-          slug: parent.slug,
-          title: parent.title,
-          contentType: 'page'
+        if (config.archive.posts?.[archive] !== undefined && config.source === 'static') {
+          config.archive.posts[archive] = config.archive.posts[archive]
+        }
+
+        if (config.slug.bases?.[archive] !== undefined) {
+          config.slug.bases[archive].archiveId = id
         }
       }
-    }
-  })
+
+      if (parent !== undefined && id !== '') {
+        const parentSlug = getProp(parent, 'slug')
+        const parentTitle = getProp(parent, 'title')
+        const parentId = getProp(parent, 'id')
+
+        if (parentSlug !== undefined && parentTitle !== undefined && parentId !== undefined) {
+          config.slug.parents[id] = {
+            id: parentId,
+            slug: parentSlug,
+            title: parentTitle,
+            contentType: 'page'
+          }
+        }
+      }
+    })
+  } else {
+
+  }
 
   /* 404 page */
 
-  data.push({
-    slug: '404.html',
-    output: await httpError('404')
-  })
+  if (serverlessData === undefined && previewData === undefined && renderFunctions?.httpError !== undefined) {
+    data.push({
+      slug: '404.html',
+      output: renderFunctions.httpError('404')
+    })
+  }
 
   /* Loop through all content types */
 
@@ -476,18 +604,24 @@ const render = async ({ env, onRenderEnd }: RenderArgs): Promise<object[]> => {
     const contentType = contentTypes[c]
 
     for (let i = 0; i < content[contentType].length; i++) {
-      const itemObj = content[contentType][i]
-      const { passwordProtected = false } = itemObj
-
       const item: _ItemReturn = await _renderItem({
-        item: itemObj,
-        contentType
+        item: content[contentType][i],
+        contentType,
+        serverlessData,
+        renderFunctions
       })
 
-      data.push(item.data)
+      const {
+        serverlessRender = false,
+        data: itemData
+      } = item
 
-      if (passwordProtected === true) {
-        serverlessRoutes.push(item.data.slug)
+      if (itemData !== undefined) {
+        data.push(itemData)
+
+        if (serverlessRender && serverlessData === undefined) {
+          serverlessRoutes.push(itemData.slug)
+        }
       }
     }
   }
@@ -495,7 +629,13 @@ const render = async ({ env, onRenderEnd }: RenderArgs): Promise<object[]> => {
   /* Render end callback */
 
   if (typeof onRenderEnd === 'function') {
-    jsonFileData.slugs.data = JSON.stringify(_slugs)
+    config.store.files.slugs.data = JSON.stringify(_slugs)
+    config.store.files.slugParents.data = JSON.stringify()
+
+    config.store.files.navigation.data = JSON.stringify(config.navigation)
+
+    config.navigation
+
     jsonFileData.slugParents.data = JSON.stringify(slugData.parents)
     jsonFileData.archiveIds.data = JSON.stringify(archiveData.ids)
     jsonFileData.archivePosts.data = JSON.stringify(archiveData.posts)
@@ -510,6 +650,10 @@ const render = async ({ env, onRenderEnd }: RenderArgs): Promise<object[]> => {
   }
 
   /* Output */
+
+  if (serverlessData !== undefined || previewData !== undefined) {
+    return data[0]
+  }
 
   return data
 }

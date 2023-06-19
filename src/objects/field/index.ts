@@ -5,6 +5,8 @@
 /* Imports */
 
 import { v4 as uuid } from 'uuid'
+import { config } from '../../config'
+import getNormalParam from '../../utils/get-normal-param'
 
 /**
  * Function - output checkbox and radio inputs from options
@@ -62,7 +64,7 @@ const _getCheckboxRadioOpts = (args: _Args = {}): string => {
     return `
       <div data-${type}-opt>
         <input type="${type}" name="${name}" id="${id}" class="${classes}" value="${value}"${attr}${selected ? ' checked' : ''}>
-        <label for="${id}" class="o-form__label" data-label>
+        <label for="${id}" class="${config.classNames.form.label}" data-label>
           <span>${text}</span>
         </label>
       </div>
@@ -120,13 +122,13 @@ interface Props {
 const field = (props: Props = { args: {} }): string => {
   const { args = {} } = props
 
-  const {
+  let {
     type = 'text',
     name = '',
     label = '',
     value = '',
     required = false,
-    width = '1-1',
+    width = '',
     widthBreakpoint = 'm',
     grow = false,
     autoCompleteToken = '',
@@ -136,12 +138,17 @@ const field = (props: Props = { args: {} }): string => {
     emptyErrorMessage = '',
     invalidErrorMessage = '',
     fieldClasses = '',
-    classes = ''
-  } = args
-
-  let {
+    classes = '',
     fieldset = false
   } = args
+
+  type = getNormalParam('type', type)
+  width = getNormalParam('width', width)
+  widthBreakpoint = getNormalParam('breakpoint', widthBreakpoint)
+
+  if (width === '') {
+    width = config.normalParams.width.full
+  }
 
   /* Name and label required */
 
@@ -155,15 +162,23 @@ const field = (props: Props = { args: {} }): string => {
 
   /* Classes */
 
-  const fieldClassesArray = [`o-form__field l-width-1-1 l-width-${width}-${widthBreakpoint}`]
-  const classesArray = ['js-input']
+  const initWidth: string = config.normalParams.width.full
+
+  let bkWidth = ''
+
+  if (width !== initWidth) {
+    bkWidth = ` ${config.classNames.width.default}-${width}-${widthBreakpoint}`
+  }
+
+  const fieldClassesArray = [`${config.classNames.form.field} ${config.classNames.width.default}-${initWidth}${bkWidth}`]
+  const classesArray = [config.classNames.form.input]
 
   if (fieldClasses !== '') {
     fieldClassesArray.push(fieldClasses)
   }
 
   if (grow) {
-    fieldClassesArray.push('l-flex-grow-1')
+    fieldClassesArray.push(config.classNames.grow)
   }
 
   if (classes !== '') {
@@ -250,7 +265,7 @@ const field = (props: Props = { args: {} }): string => {
   if (checkboxRadio) {
     labelAfter = `
       <label for="${id}">
-        <span class="o-form__label" data-label>
+        <span class="${config.classNames.form.label}" data-label>
           <span>${label}</span>
         </span>
         <span data-control data-type="${type}"></span>
@@ -260,7 +275,7 @@ const field = (props: Props = { args: {} }): string => {
     if (fieldset) {
       labelBefore = `
         <legend${labelRequired}>
-          <span>${label}${required ? '<span class="a11y-visually-hidden"> required</span>' : ''}
+          <span>${label}${required ? `<span class="${config.classNames.a11y.visuallyHidden}"> required</span>` : ''}
             ${labelRequiredIcon}
           </span>
         </legend>
@@ -268,7 +283,7 @@ const field = (props: Props = { args: {} }): string => {
     }
   } else {
     labelBefore = `
-      <label for="${id}" class="o-form__label" data-label${labelRequired}>
+      <label for="${id}" class="${config.classNames.form.label}" data-label${labelRequired}>
         <span>
           ${label}
           ${labelRequiredIcon}
@@ -290,7 +305,7 @@ const field = (props: Props = { args: {} }): string => {
     case 'password':
     case 'tel': {
       if (checkboxRadio) {
-        classesArray.push('a11y-hide-input')
+        classesArray.push(config.classNames.a11y.hide)
       }
 
       input = `<input type="${type}" name="${name}" id="${id}" class="${classesArray.join(' ')}"${attrs}>`
@@ -343,7 +358,7 @@ const field = (props: Props = { args: {} }): string => {
 
   return `
     <div class="${fieldClassesArray.join(' ')}" data-type="${type}">
-      ${fieldset ? '<fieldset class="o-field__group">' : ''}
+      ${fieldset ? `<fieldset class="${config.classNames.form.fieldset}">` : ''}
       ${labelBefore}
       ${input}
       ${labelAfter}

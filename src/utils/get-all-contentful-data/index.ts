@@ -4,6 +4,7 @@
 
 /* Imports */
 
+import { resolve } from 'node:path'
 import { config } from '../../config'
 import getContentfulData from '../get-contentful-data'
 
@@ -78,7 +79,7 @@ const getAllContentfulData = async (args: Args): Promise<Formation.AllData | und
 
       if (serverlessData !== undefined) {
         // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const slugsJson = require('../../json/slugs.json')
+        const slugsJson = require(resolve(`${config.store.dir}${config.store.files.slugs.name}`))
         const path = serverlessData.path
 
         if (slugsJson?.[path] !== undefined) {

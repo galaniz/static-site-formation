@@ -2,6 +2,11 @@
  * Render - container
  */
 
+/* Imports */
+
+import { config } from '../../config'
+import getNormalParam from '../../utils/get-normal-param'
+
 /**
  * Function - output container wrapper
  *
@@ -18,16 +23,16 @@
  * @param {string} props.args.gapLarge
  * @param {string} props.args.justify
  * @param {string} props.args.align
- * @param {string} props.args.classes
+ * @param {string} props.args.richTextStyles
+ * @param {string} props.args.classes // Back end option
  * @param {string} props.args.attr // Back end option
- * @param {string} props.args.richTextStyles // Back end option
  * @return {object}
  */
 
-const container = (props: Render.ContainerProps = { args: {} }): Render.Return => {
+const container = (props: Formation.ContainerProps = { args: {} }): Formation.Return => {
   const { args = {} } = props
 
-  const {
+  let {
     tag = 'div',
     layout = 'column',
     maxWidth = '',
@@ -39,10 +44,23 @@ const container = (props: Render.ContainerProps = { args: {} }): Render.Return =
     gapLarge = '',
     justify = '',
     align = '',
+    richTextStyles = '',
     classes = '',
-    attr = '',
-    richTextStyles = false
+    attr = ''
   } = args
+
+  tag = getNormalParam('tag', tag)
+  layout = getNormalParam('layout', layout)
+  maxWidth = getNormalParam('maxWidth', maxWidth)
+  paddingTop = getNormalParam('paddingTop', paddingTop)
+  paddingTopLarge = getNormalParam('paddingTopLarge', paddingTopLarge)
+  paddingBottom = getNormalParam('paddingBottom', paddingBottom)
+  paddingBottomLarge = getNormalParam('paddingBottomLarge', paddingBottomLarge)
+  gap = getNormalParam('gap', gap)
+  gapLarge = getNormalParam('gapLarge', gapLarge)
+  justify = getNormalParam('justify', justify)
+  align = getNormalParam('align', align)
+  richTextStyles = getNormalParam('richTextStyles', richTextStyles)
 
   /* Classes */
 
@@ -60,77 +78,83 @@ const container = (props: Render.ContainerProps = { args: {} }): Render.Return =
 
   if (tag === 'ul' || tag === 'ol') {
     attrs.push('role="list"')
-    classesArray.push('t-list-style-none')
+    classesArray.push(config.classNames.list)
   }
 
   /* Max width */
 
   if (maxWidth !== '') {
-    classesArray.push(`l-container${maxWidth !== 'default' ? `-${maxWidth}` : ''}`)
+    classesArray.push(`${config.classNames.maxWidth}${maxWidth !== 'default' ? `-${maxWidth}` : ''}`)
   }
 
   /* Flex */
 
   if (layout === 'column' && (justify !== '' || align !== '')) {
-    classesArray.push('l-flex l-flex-column')
+    classesArray.push(config.classNames.column)
   }
 
   if (layout === 'row') {
-    classesArray.push('l-flex l-flex-wrap')
+    classesArray.push(config.classNames.row)
   }
 
   /* Gap */
 
+  const gapRowClass = config.classNames.gap.row
+  const gapColumnClass = config.classNames.gap.column
+
   if (gap !== '') {
     if (layout === 'row') {
-      classesArray.push(`l-gap-margin-${gap}`)
+      classesArray.push(`${gapRowClass}-${gap}`)
     } else {
-      classesArray.push(`l-margin-bottom-${gap}-all`)
+      classesArray.push(`${gapColumnClass}-${gap}`)
     }
   }
 
   if (gapLarge !== '' && gapLarge !== gap) {
     if (layout === 'row') {
-      classesArray.push(`l-gap-margin-${gapLarge}-l`)
+      classesArray.push(`${gapRowClass}-${gapLarge}`)
     } else {
-      classesArray.push(`l-margin-bottom-${gapLarge}-all-l`)
+      classesArray.push(`${gapColumnClass}-${gapLarge}`)
     }
   }
 
   /* Justify */
 
   if (justify !== '') {
-    classesArray.push(`l-justify-${justify}`)
+    classesArray.push(`${config.classNames.justify}-${justify}`)
   }
 
   /* Align */
 
   if (align !== '') {
-    classesArray.push(`l-align-${align}`)
+    classesArray.push(`${config.classNames.align}-${align}`)
   }
 
   /* Padding */
 
+  const paddingTopClass = config.classNames.padding.top
+  const paddingBottomClass = config.classNames.padding.bottom
+
   if (paddingTop !== '') {
-    classesArray.push(`l-padding-top-${paddingTop}`)
+    classesArray.push(`${paddingTopClass}-${paddingTop}`)
   }
 
   if (paddingTopLarge !== '' && paddingTopLarge !== paddingTop) {
-    classesArray.push(`l-padding-top-${paddingTopLarge}-m`)
+    classesArray.push(`${paddingTopClass}-${paddingTopLarge}`)
   }
 
   if (paddingBottom !== '') {
-    classesArray.push(`l-padding-bottom-${paddingBottom}`)
+    classesArray.push(`${paddingBottomClass}-${paddingBottom}`)
   }
 
   if (paddingBottomLarge !== '' && paddingBottomLarge !== paddingBottom) {
-    classesArray.push(`l-padding-bottom-${paddingBottomLarge}-m`)
+    classesArray.push(`${paddingBottomClass}-${paddingBottomLarge}`)
   }
 
   /* Rich text styles */
 
-  if (richTextStyles) {
-    classesArray.push('t-rich-text e-underline')
+  if (richTextStyles !== '') {
+    classesArray.push(config.classNames.richText)
 
     if (gap === '' && gapLarge === '' && layout === 'column') {
       attrs.push('data-mb')

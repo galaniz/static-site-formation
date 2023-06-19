@@ -53,6 +53,12 @@ declare namespace Formation {
     ids: {
       [key: string]: string
     }
+    counts: {
+      [key: string]: number
+    }
+    posts: {
+      [key: string]: any
+    }
   }
 
   interface File {
@@ -68,6 +74,7 @@ declare namespace Formation {
   }
 
   interface Cms {
+    name: string
     space: string
     previewAcessToken: string
     previewHost: string
@@ -117,7 +124,7 @@ declare namespace Formation {
       align?: string
       classes?: string
       attr?: string
-      richTextStyles?: boolean
+      richTextStyles?: string
     }
     parents?: object[]
   }
@@ -180,9 +187,15 @@ declare namespace Formation {
     script: {
       [key: string]: any
     }
+    formMeta: {
+      [key: string]: any
+    }
     navigation: Navigation[]
     navigationItem: NavigationItem[]
-    normalizedParams: {
+    normalParams: {
+      width: {
+        full: string
+      }
       [key: string]: any
     }
     archive: Archive
@@ -198,6 +211,38 @@ declare namespace Formation {
         inputDir: string
         outputDir: string
         dataFile: string
+      }
+    }
+    classNames: {
+      maxWidth: string
+      justify: string
+      align: string
+      grow: string
+      list: string
+      richText: string
+      column: string
+      row: string
+      gap: {
+        column: string
+        row: string
+      }
+      padding: {
+        bottom: string
+        top: string
+      }
+      width: {
+        default: string
+        custom: string
+      }
+      a11y: {
+        visuallyHidden: string
+        hide: string
+      }
+      form: {
+        fieldset: string
+        field: string
+        input: string
+        label: string
       }
     }
     // [key: string]: any

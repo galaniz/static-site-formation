@@ -6,10 +6,6 @@
 
 import { v4 as uuid } from 'uuid'
 import { config } from '../../config'
-import { scriptData, formMeta } from '../../vars/data'
-import errorSvg from '../svg/error'
-import checkSvg from '../svg/check'
-import loader from '../loader'
 
 /**
  * Function - output form wrapper
@@ -50,7 +46,7 @@ interface Props {
   }
 }
 
-const form = (props: Props = { args: {} }): Render.Return => {
+const form = (props: Props = { args: {} }): Formation.Return => {
   const { args = {} } = props
 
   const {
@@ -95,12 +91,12 @@ const form = (props: Props = { args: {} }): Render.Return => {
       meta.senderEmail = senderEmail
     }
 
-    formMeta[id] = meta
+    config.formMeta[id] = meta
   }
 
   /* Add to script data */
 
-  if (scriptData[`form-${id}`] === undefined && (successTitle !== '' || errorTitle !== '')) {
+  if (config.script[`form-${id}`] === undefined && (successTitle !== '' || errorTitle !== '')) {
     const messages: { successMessage?: object, errorMessage?: object } = {}
 
     if (successTitle !== '') {
@@ -117,19 +113,20 @@ const form = (props: Props = { args: {} }): Render.Return => {
       }
     }
 
-    scriptData[`form-${id}`] = messages
+    config.script[`form-${id}`] = messages
   }
 
-  scriptData.sendUrl = '/ajax/'
+  config.script.sendUrl = '/ajax/'
 
   /* Honeypot */
 
   const honeypotId: string = uuid()
   const honeypotName = `${config.namespace}_asi`
+  const honeypotFieldClasses = `${config.classNames.form.field} ${config.classNames.width.default}-${config.normalParams.width.full}`
   const honeypot = `
-    <div class="o-form__field l-width-1-1" data-asi>
-      <label class="o-form__label" for="${honeypotId}">Website</label>
-      <input type="url" name="${honeypotName}" id="${honeypotId}" autocomplete="off" class="js-input">
+    <div class="${honeypotFieldClasses}" data-asi>
+      <label class="${config.classNames.form.label}" for="${honeypotId}">Website</label>
+      <input type="url" name="${honeypotName}" id="${honeypotId}" autocomplete="off" class="${config.classNames.form.input}">
     </div>
   `
 

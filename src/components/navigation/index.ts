@@ -7,6 +7,7 @@
 import getSlug from '../../utils/get-slug'
 import getPermalink from '../../utils/get-permalink'
 import getLink from '../../utils/get-link'
+import getProp from '../../utils/get-prop'
 
 /**
  * Class - recursively generate navigation output
@@ -119,13 +120,11 @@ class Navigation {
     /* Navs by location */
 
     this.navs.forEach(nav => {
-      const fields = nav
-
       const navFields = Object.assign({
         title: '',
         location: '',
         items: []
-      }, fields)
+      }, getProp(nav))
 
       const { title, location, items } = navFields
 
@@ -149,7 +148,7 @@ class Navigation {
    */
 
   _getItemInfo (item: Formation.NavigationItem): Formation.NavigationItem {
-    const fields = item
+    const fields = getProp(item)
 
     const {
       title = '',
@@ -169,7 +168,7 @@ class Navigation {
     }
 
     if (internalLink !== undefined) {
-      id = internalLink.id
+      id = getProp(internalLink, 'id')
     }
 
     const props: Formation.NavigationItem = {
@@ -222,22 +221,26 @@ class Navigation {
     }
 
     return items.map(item => {
-      const fields = item
+      const fields = getProp(item)
 
       const {
         title = '',
         internalLink,
-        externalLink = ''
+        externalLink
       } = fields
 
       let id = title
 
-      if (externalLink !== '' && item?.externalLink !== undefined) {
-        id = item.externalLink
+      if (externalLink !== '' && externalLink !== undefined) {
+        id = externalLink
       }
 
-      if ((internalLink !== undefined) && item?.internalLink?.id !== undefined) {
-        id = item.internalLink.id
+      if (internalLink !== undefined && typeof internalLink === 'object') {
+        const internalId = getProp(internalLink, 'id')
+
+        if (internalId !== undefined) {
+          id = internalId
+        }
       }
 
       const obj = this._itemsById[id]

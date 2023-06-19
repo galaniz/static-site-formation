@@ -89,10 +89,17 @@ let config: Formation.Config = {
   },
   navigation: [],
   navigationItem: [],
-  normalizedParams: {},
+  normalParams: {
+    width: {
+      full: '1-1'
+    }
+  },
   script: {},
+  form: {},
   archive: {
-    ids: {}
+    ids: {},
+    counts: {},
+    posts: {}
   },
   env: {
     dev: true,
@@ -117,10 +124,27 @@ let config: Formation.Config = {
       navigations: {
         data: '',
         name: 'navigations.json'
+      },
+      archiveIds: {
+        data: '',
+        name: 'archive-ids.json'
+      },
+      archiveCounts: {
+        data: '',
+        name: 'archive-counts.json'
+      },
+      archivePosts: {
+        data: '',
+        name: 'archive-posts.json'
+      },
+      formMeta: {
+        data: '',
+        name: 'form-meta.json'
       }
     }
   },
   cms: {
+    name: '',
     space: '',
     previewAcessToken: '',
     previewHost: '',
@@ -133,6 +157,38 @@ let config: Formation.Config = {
       inputDir: './src/assets/img/',
       outputDir: './site/assets/img/',
       dataFile: './src/json/image-data.json'
+    }
+  },
+  classNames: {
+    maxWidth: 'l-container',
+    justify: 'l-justify',
+    align: 'l-align',
+    grow: 'l-flex-grow-1',
+    list: 't-list-style-none',
+    richText: 't-rich-text e-underline',
+    column: 'l-flex l-flex-column',
+    row: 'l-flex l-flex-wrap',
+    gap: {
+      column: 'l-margin-bottom',
+      row: 'l-gap-margin'
+    },
+    padding: {
+      bottom: 'l-padding-bottom',
+      top: 'l-padding-top'
+    },
+    width: {
+      default: 'l-width',
+      custom: 'l-width-custom'
+    },
+    a11y: {
+      visuallyHidden: 'a11y-visually-hidden',
+      hide: 'a11y-hide-input'
+    },
+    form: {
+      fieldset: 'o-field__group',
+      field: 'o-form__field',
+      input: 'js-input',
+      label: 'o-form__label'
     }
   }
 }

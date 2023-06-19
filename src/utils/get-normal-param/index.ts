@@ -15,8 +15,8 @@ import { config } from '../../config'
  */
 
 const getNormalParam = (param: string, value: string): string => {
-  if (config.normalizedParams?.[param] !== undefined) {
-    return config.normalizedParams[param]
+  if (config.normalParams?.[param] !== undefined) {
+    return config.normalParams[param]
   }
 
   return value

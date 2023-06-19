@@ -4,6 +4,7 @@
 
 /* Imports */
 
+import { config } from '../../config'
 import getNormalParam from '../../utils/get-normal-param'
 
 /**
@@ -42,8 +43,8 @@ const column = (props: Formation.ColumnProps = { args: {} }): Formation.Return =
     widthCustom,
     justify = '',
     align = '',
-    classes = '',
     grow = false,
+    classes = '',
     style = '',
     attr = ''
   } = args
@@ -66,42 +67,50 @@ const column = (props: Formation.ColumnProps = { args: {} }): Formation.Return =
 
   /* Width */
 
+  const widthClass = config.classNames.width.default
+
   if (width === '' && widthCustom === undefined) {
-    width = '1-1'
+    width = config.normalParams.width.full
   }
 
   if (width !== '') {
-    classesArray.push(`l-width-${width}`)
+    classesArray.push(`${widthClass}-${width}`)
   }
 
   if (widthSmall !== '' && widthSmall !== width) {
-    classesArray.push(`l-width-${widthSmall}-s`)
+    classesArray.push(`${widthClass}-${widthSmall}-s`)
   }
 
   if (widthMedium !== '' && widthMedium !== widthSmall) {
-    classesArray.push(`l-width-${widthMedium}-m`)
+    classesArray.push(`${widthClass}-${widthMedium}-m`)
   }
 
   if (widthLarge !== '' && widthLarge !== widthMedium) {
-    classesArray.push(`l-width-${widthLarge}-l`)
+    classesArray.push(`${widthClass}-${widthLarge}-l`)
   }
 
   /* Justify */
 
+  const justifyClass = config.classNames.justify
+
   if (justify !== '') {
-    classesArray.push(`l-justify-${justify}`)
+    classesArray.push(`${justifyClass}-${justify}`)
   }
 
   /* Align */
 
+  const alignClass = config.classNames.align
+
   if (align !== '') {
-    classesArray.push(`l-align-${align}`)
+    classesArray.push(`${alignClass}-${align}`)
   }
 
   /* Grow */
 
+  const growClass = config.classNames.grow
+
   if (grow) {
-    classesArray.push('l-flex-grow-1')
+    classesArray.push(growClass)
   }
 
   /* Style */
@@ -113,7 +122,7 @@ const column = (props: Formation.ColumnProps = { args: {} }): Formation.Return =
   }
 
   if (widthCustom !== undefined) {
-    classesArray.push('l-width-custom')
+    classesArray.push(config.classNames.width.custom)
 
     const styleArray = [
       `--width:${widthCustom?.default !== undefined ? widthCustom.default : '100%'}`,
