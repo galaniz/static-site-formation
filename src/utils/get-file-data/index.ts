@@ -7,13 +7,14 @@
 import { config } from '../../config'
 import { readdir, readFile } from 'node:fs/promises'
 import { extname, basename, resolve } from 'node:path'
+import requireFile from '../../utils/require-file'
 
 /**
  * Function -
  *
  * @param {string} key
  * @param {object} params
- * @param {function} cache - external module
+ * @param {boolean} cache
  * @return {object}
  */
 
@@ -25,7 +26,7 @@ interface Params {
 const getFileData = async (
   key: string = '',
   params: Params = {},
-  cache: Function
+  cache: boolean = false
 ): Promise<object> => {
   try {
     /* Key required for cache */
@@ -36,11 +37,17 @@ const getFileData = async (
 
     /* Check cache */
 
-    if (typeof cache === 'function') {
-      const data = cache(key)
+    let cacheModule: Function | null = null
 
-      if (data !== undefined) {
-        return data
+    if (cache) {
+      cacheModule = requireFile(config.modules.cache?.path, config.modules.cache?.local)
+
+      if (cacheModule !== null && typeof cacheModule === 'function') {
+        const data = cacheModule(key)
+
+        if (data !== undefined) {
+          return data
+        }
       }
     }
 
@@ -96,8 +103,8 @@ const getFileData = async (
 
     /* Store in cache */
 
-    if (typeof cache === 'function') {
-      await cache(data)
+    if (cacheModule !== null && typeof cacheModule === 'function') {
+      await cacheModule(data)
     }
 
     /* Output */

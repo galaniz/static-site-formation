@@ -6,6 +6,8 @@
 
 import { v4 as uuid } from 'uuid'
 import { config } from '../../config'
+import { applyFilters } from '../../utils/filters'
+import isString from '../../utils/is-string'
 
 /**
  * Function - output form wrapper
@@ -23,8 +25,8 @@ import { config } from '../../config'
  * @param {string} props.args.errorTitle
  * @param {string} props.args.errorText
  * @param {boolean} props.args.wrap
- * @param {string} props.args.row
- * @param {string} props.args.align
+ * @param {string} props.args.rowBreakpoint
+ * @param {string} props.args.alignBreakpoint
  * @return {object}
  */
 
@@ -38,15 +40,28 @@ interface Props {
     submitLabel?: string
     successTitle?: string
     successText?: string
+    successResult?: string
     errorTitle?: string
     errorText?: string
-    wrap?: boolean
-    row?: string
-    align?: string
+    errorSummary?: string
+    errorResult?: string
+    formClasses?: string
+    formAttr?: string
+    fieldsClasses?: string
+    fieldsAttr?: string
+    submitFieldClasses?: string
+    submitClasses?: string
+    submitAttr?: string
+    submitLoader?: string
+    honeypotFieldClasses?: string
+    honeypotLabelClasses?: string
+    honeypotClasses?: string
   }
 }
 
 const form = (props: Props = { args: {} }): Formation.Return => {
+  props = applyFilters('formProps', props, ['form'])
+
   const { args = {} } = props
 
   const {
@@ -60,9 +75,20 @@ const form = (props: Props = { args: {} }): Formation.Return => {
     successText = '',
     errorTitle = '',
     errorText = '',
-    wrap = true,
-    row = 'm',
-    align = 'm'
+    errorSummary = '',
+    errorResult = '',
+    successResult = '',
+    formClasses = '',
+    formAttr = '',
+    fieldsClasses = '',
+    fieldsAttr = '',
+    submitFieldClasses = '',
+    submitClasses = '',
+    submitAttr = '',
+    submitLoader = '',
+    honeypotFieldClasses = '',
+    honeypotLabelClasses = '',
+    honeypotClasses = ''
   } = args
 
   /* Id required */
@@ -122,66 +148,31 @@ const form = (props: Props = { args: {} }): Formation.Return => {
 
   const honeypotId: string = uuid()
   const honeypotName = `${config.namespace}_asi`
-  const honeypotFieldClasses = `${config.classNames.form.field} ${config.classNames.width.default}-${config.normalParams.width.full}`
   const honeypot = `
-    <div class="${honeypotFieldClasses}" data-asi>
-      <label class="${config.classNames.form.label}" for="${honeypotId}">Website</label>
-      <input type="url" name="${honeypotName}" id="${honeypotId}" autocomplete="off" class="${config.classNames.form.input}">
+    <div${isString(honeypotFieldClasses) ? ` class="${honeypotFieldClasses}"` : ''} data-asi>
+      <label${isString(honeypotLabelClasses) ? ` class="${honeypotLabelClasses}"` : ''} for="${honeypotId}">Website</label>
+      <input${isString(honeypotClasses) ? ` class="${honeypotClasses}"` : ''} type="url" name="${honeypotName}" id="${honeypotId}" autocomplete="off">
     </div>
   `
 
   /* Output */
 
   const start = `
-    <form id="${id}" class="o-form js-send-form" data-action="${action}" method="post" novalidate>
-      <div class="l-flex l-flex-column l-flex-row-${row}${wrap ? ' l-flex-wrap' : ''} l-align-end-${align} l-gap-margin-m">
-        <div class="o-form-error__summary l-width-100-pc l-none outline-none" tabindex="-1">
-          <div class="o-info-negative l-padding-left-xs l-padding-right-xs l-padding-top-xs l-padding-bottom-xs b-radius-s">
-            <div class="l-flex l-gap-margin-3xs">
-              <div>
-                ${errorSvg('l-width-s l-height-s l-width-m-m l-height-m-m')}
-              </div>
-              <div>
-                <h2 class="t t-weight-medium l-margin-0">There is a problem</h2>
-                <ul class="o-form-error__list l-flex l-flex-column l-padding-bottom-4xs l-margin-bottom-4xs-all l-margin-0-last t-s t-list-style-none e-underline-all" role="list"></ul>
-              </div>
-            </div>
-          </div>
-        </div>
+    <form${isString(formClasses) ? ` class="${formClasses}"` : ''} id="${id}" data-action="${action}"${isString(formAttr) ? ` ${formAttr}` : ''} novalidate>
+      <div${isString(fieldsClasses) ? ` class="${fieldsClasses}"` : ''}${isString(fieldsAttr) ? ` ${fieldsAttr}` : ''}>
+        ${errorSummary}
   `
 
   const end = `
         ${honeypot}
-        <div class="o-form-result__negative l-width-100-pc l-none outline-none" role="alert" tabindex="-1">
-          <div class="o-info-negative l-padding-left-xs l-padding-right-xs l-padding-top-xs l-padding-bottom-xs b-radius-s">
-            <div class="l-flex l-gap-margin-3xs">
-              <div>
-                ${errorSvg('l-width-s l-height-s l-width-m-m l-height-m-m')}
-              </div>
-              <div>
-                <h2 class="o-form-result__primary t t-line-height-150-pc t-weight-medium l-margin-0"></h2>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div data-type="submit">
-          <button class="o-button o-button-main o-button-form l-overflow-hidden b-radius-l e-transition-quad js-submit" type="submit">
-            ${loader({ size: 's' })}
+        ${errorResult}
+        <div${isString(submitFieldClasses) ? ` class="${submitFieldClasses}"` : ''} data-type="submit">
+          <button${isString(submitClasses) ? ` class="${submitClasses}"` : ''}${isString(submitAttr) ? ` ${submitAttr}` : ''} type="submit">
+            ${submitLoader}
             <span>${submitLabel}</span>
           </button>
         </div>
-        <div class="o-form-result__positive l-width-100-pc l-none outline-none" role="alert" tabindex="-1">
-          <div class="o-info-positive l-padding-left-xs l-padding-right-xs l-padding-top-xs l-padding-bottom-xs b-radius-s">
-            <div class="l-flex l-gap-margin-3xs">
-              <div>
-                ${checkSvg('l-width-s l-height-s l-width-m-m l-height-m-m')}
-              </div>
-              <div>
-                <h2 class="o-form-result__primary t t-line-height-150-pc t-weight-medium l-margin-0"></h2>
-              </div>
-            </div>
-          </div>
-        </div>
+        ${successResult}
       </div>
     </form>
   `

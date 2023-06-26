@@ -1,12 +1,11 @@
 /**
- * Functions - ajax
+ * Serverless - ajax
  */
 
 /* Imports */
 
-import sendForm from '../../src/serverless/send-form'
-import { enumNamespace } from '../../src/vars/enums'
-import { envData } from '../../src/vars/data'
+import { config, setConfig } from '../../config'
+import sendForm from '../send-form'
 
 /**
  * Function - normalize inputs body data to reflect nested structures
@@ -16,8 +15,13 @@ import { envData } from '../../src/vars/data'
  * @return {object}
  */
 
-const _normalizeBody = (data = {}) => {
+interface _NormalData extends Formation.AjaxActionArgs {
+  action?: string
+}
+
+const _normalizeBody = (data: object = {}): _NormalData => {
   const normalData = {
+    id: '',
     inputs: {}
   }
 
@@ -35,14 +39,14 @@ const _normalizeBody = (data = {}) => {
           return
         }
 
-        if (!lastLevel?.[k]) {
+        if (lastLevel?.[k] === undefined) {
           lastLevel[k] = i === lastIndex ? data[d] : {}
         }
 
         lastLevel = obj[k]
       })
 
-      if (normalData.inputs?.[keys[0]]) {
+      if (normalData.inputs?.[keys[0]] !== undefined) {
         const existingObj = normalData.inputs?.[keys[0]]
 
         Object.keys(obj).forEach((o) => {
@@ -62,24 +66,27 @@ const _normalizeBody = (data = {}) => {
 /**
  * Function - set env variables, normalize request body, check for required props and call actions
  *
- * @param {object} context
- * @param {object} context.request
- * @param {object} context.env
+ * @param {object} args
+ * @param {object} args.request
+ * @param {object} args.env
+ * @param {object} args.siteConfig
  * @return {object}
  */
 
-const ajax = async ({ request, env }) => {
-  try {
-    /* Set env data */
+interface AjaxArgs {
+  request: any
+  env: any
+  siteConfig: Formation.Config
+}
 
-    envData.dev = env.ENVIRONMENT === 'dev'
-    envData.prod = env.ENVIRONMENT === 'production'
-    envData.smtp2go.apiKey = env.SMPT2GO_API_KEY
-    envData.ctfl = {
-      spaceId: env.CTFL_SPACE_ID,
-      cpaToken: env.CTFL_CPA_TOKEN,
-      cdaToken: env.CTFL_CDA_TOKEN
-    }
+const ajax = async ({ request, env, siteConfig }: AjaxArgs): Promise<object> => {
+  try {
+    /* Config */
+
+    setConfig(siteConfig)
+
+    config.env.dev = env.ENVIRONMENT === 'dev'
+    config.env.prod = env.ENVIRONMENT === 'production'
 
     /* Get form data */
 
@@ -94,53 +101,60 @@ const ajax = async ({ request, env }) => {
 
     /* Inputs required */
 
-    if (!data?.inputs) {
+    if (data?.inputs === undefined) {
       throw new Error('No inputs')
     }
 
     /* Honeypot check */
 
-    const honeypotName = `${enumNamespace}_asi`
+    const honeypotName = `${config.namespace}_asi`
 
-    if (data.inputs?.[honeypotName]) {
-      if (data.inputs[honeypotName].value) {
+    if (data.inputs?.[honeypotName] !== undefined) {
+      const honeypotValue = data.inputs[honeypotName].value
+
+      if (honeypotValue !== '' && honeypotValue !== undefined) {
         return new Response(JSON.stringify({ success: 'Form successully sent.' }), {
           status: 200
         })
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
       delete data.inputs[honeypotName]
     }
 
     /* Id required */
 
-    if (!data?.id) {
+    if (data?.id === undefined || data?.id === '') {
       throw new Error('No id')
     }
 
     /* Action required */
 
-    const action = data?.action ? data.action : ''
+    const action = data?.action !== undefined ? data.action : ''
 
-    if (!action) {
+    if (action === undefined || action === '') {
       throw new Error('No action')
     }
 
     /* Call functions by action */
 
-    let res
+    let res: Formation.AjaxActionReturn | null = null
 
     if (action === 'sendForm') {
       res = await sendForm(data)
     }
 
+    if (config.ajaxFunctions?.[action] !== undefined && typeof config.ajaxFunctions?.[action] === 'function') {
+      res = await config.ajaxFunctions[action](data)
+    }
+
     /* Result */
 
-    if (!res) {
+    if (res === null) {
       throw new Error('No result')
     }
 
-    if (res?.error) {
+    if (res?.error !== undefined && typeof res?.error === 'string') {
       throw new Error(res.error)
     }
 
@@ -150,8 +164,10 @@ const ajax = async ({ request, env }) => {
   } catch (error) {
     console.error('Error with ajax function: ', error)
 
+    const statusCode = typeof error.httpStatusCode === 'number' ? error.httpStatusCode : 500
+
     return new Response(error.message, {
-      status: error.httpStatusCode || 500
+      status: statusCode
     })
   }
 }

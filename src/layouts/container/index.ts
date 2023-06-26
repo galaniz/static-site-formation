@@ -4,8 +4,8 @@
 
 /* Imports */
 
-import { config } from '../../config'
-import getNormalParam from '../../utils/get-normal-param'
+import { applyFilters } from '../../utils/filters'
+import isString from '../../utils/is-string'
 
 /**
  * Function - output container wrapper
@@ -23,16 +23,40 @@ import getNormalParam from '../../utils/get-normal-param'
  * @param {string} props.args.gapLarge
  * @param {string} props.args.justify
  * @param {string} props.args.align
- * @param {string} props.args.richTextStyles
+ * @param {boolean} props.args.richTextStyles
  * @param {string} props.args.classes // Back end option
+ * @param {string} props.args.style // Back end option
  * @param {string} props.args.attr // Back end option
  * @return {object}
  */
 
-const container = (props: Formation.ContainerProps = { args: {} }): Formation.Return => {
+interface Props {
+  args: {
+    tag?: string
+    layout?: string
+    maxWidth?: string
+    paddingTop?: string
+    paddingTopLarge?: string
+    paddingBottom?: string
+    paddingBottomLarge?: string
+    gap?: string
+    gapLarge?: string
+    justify?: string
+    align?: string
+    classes?: string
+    style?: string
+    attr?: string
+    richTextStyles?: boolean
+  }
+  parents?: object[]
+}
+
+const container = (props: Props = { args: {} }): Formation.Return => {
+  props = applyFilters('containerProps', props, ['container'])
+
   const { args = {} } = props
 
-  let {
+  const {
     tag = 'div',
     layout = 'column',
     maxWidth = '',
@@ -44,29 +68,16 @@ const container = (props: Formation.ContainerProps = { args: {} }): Formation.Re
     gapLarge = '',
     justify = '',
     align = '',
-    richTextStyles = '',
     classes = '',
+    style = '',
     attr = ''
   } = args
-
-  tag = getNormalParam('tag', tag)
-  layout = getNormalParam('layout', layout)
-  maxWidth = getNormalParam('maxWidth', maxWidth)
-  paddingTop = getNormalParam('paddingTop', paddingTop)
-  paddingTopLarge = getNormalParam('paddingTopLarge', paddingTopLarge)
-  paddingBottom = getNormalParam('paddingBottom', paddingBottom)
-  paddingBottomLarge = getNormalParam('paddingBottomLarge', paddingBottomLarge)
-  gap = getNormalParam('gap', gap)
-  gapLarge = getNormalParam('gapLarge', gapLarge)
-  justify = getNormalParam('justify', justify)
-  align = getNormalParam('align', align)
-  richTextStyles = getNormalParam('richTextStyles', richTextStyles)
 
   /* Classes */
 
   const classesArray: string[] = []
 
-  if (classes !== '') {
+  if (isString(classes)) {
     classesArray.push(classes)
   }
 
@@ -74,97 +85,68 @@ const container = (props: Formation.ContainerProps = { args: {} }): Formation.Re
 
   const attrs: string[] = []
 
-  /* List check */
-
-  if (tag === 'ul' || tag === 'ol') {
-    attrs.push('role="list"')
-    classesArray.push(config.classNames.list)
-  }
-
   /* Max width */
 
-  if (maxWidth !== '') {
-    classesArray.push(`${config.classNames.maxWidth}${maxWidth !== 'default' ? `-${maxWidth}` : ''}`)
+  if (isString(maxWidth)) {
+    classesArray.push(maxWidth)
   }
 
-  /* Flex */
+  /* Layout */
 
-  if (layout === 'column' && (justify !== '' || align !== '')) {
-    classesArray.push(config.classNames.column)
-  }
-
-  if (layout === 'row') {
-    classesArray.push(config.classNames.row)
+  if (isString(layout)) {
+    classesArray.push(layout)
   }
 
   /* Gap */
 
-  const gapRowClass = config.classNames.gap.row
-  const gapColumnClass = config.classNames.gap.column
-
-  if (gap !== '') {
-    if (layout === 'row') {
-      classesArray.push(`${gapRowClass}-${gap}`)
-    } else {
-      classesArray.push(`${gapColumnClass}-${gap}`)
-    }
+  if (isString(gap)) {
+    classesArray.push(gap)
   }
 
-  if (gapLarge !== '' && gapLarge !== gap) {
-    if (layout === 'row') {
-      classesArray.push(`${gapRowClass}-${gapLarge}`)
-    } else {
-      classesArray.push(`${gapColumnClass}-${gapLarge}`)
-    }
+  if (isString(gapLarge) && gapLarge !== gap) {
+    classesArray.push(gapLarge)
   }
 
   /* Justify */
 
-  if (justify !== '') {
-    classesArray.push(`${config.classNames.justify}-${justify}`)
+  if (isString(justify)) {
+    classesArray.push(justify)
   }
 
   /* Align */
 
-  if (align !== '') {
-    classesArray.push(`${config.classNames.align}-${align}`)
+  if (isString(align)) {
+    classesArray.push(align)
   }
 
   /* Padding */
 
-  const paddingTopClass = config.classNames.padding.top
-  const paddingBottomClass = config.classNames.padding.bottom
-
-  if (paddingTop !== '') {
-    classesArray.push(`${paddingTopClass}-${paddingTop}`)
+  if (isString(paddingTop)) {
+    classesArray.push(paddingTop)
   }
 
-  if (paddingTopLarge !== '' && paddingTopLarge !== paddingTop) {
-    classesArray.push(`${paddingTopClass}-${paddingTopLarge}`)
+  if (isString(paddingTopLarge) && paddingTopLarge !== paddingTop) {
+    classesArray.push(paddingTopLarge)
   }
 
-  if (paddingBottom !== '') {
-    classesArray.push(`${paddingBottomClass}-${paddingBottom}`)
+  if (isString(paddingBottom)) {
+    classesArray.push(paddingBottom)
   }
 
-  if (paddingBottomLarge !== '' && paddingBottomLarge !== paddingBottom) {
-    classesArray.push(`${paddingBottomClass}-${paddingBottomLarge}`)
-  }
-
-  /* Rich text styles */
-
-  if (richTextStyles !== '') {
-    classesArray.push(config.classNames.richText)
-
-    if (gap === '' && gapLarge === '' && layout === 'column') {
-      attrs.push('data-mb')
-    }
+  if (isString(paddingBottomLarge) && paddingBottomLarge !== paddingBottom) {
+    classesArray.push(paddingBottomLarge)
   }
 
   /* Classes */
 
   if (classesArray.length > 0) {
     attrs.push(`class="${classesArray.join(' ')}"`)
+  }
+
+  /* Style */
+
+  if (style !== '') {
+    attrs.push(`style="${style}"`)
   }
 
   /* Attributes */

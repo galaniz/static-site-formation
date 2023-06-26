@@ -5,9 +5,9 @@
 /* Imports */
 
 import escape from 'validator/es/lib/escape'
-import { getPermalink } from '../utils'
-import { enumSite } from '../vars/enums'
-import { envData } from '../vars/data'
+import { config } from '../../config'
+import getPermalink from '../../utils/get-permalink'
+import requireFile from '../../utils/require-file'
 
 /**
  * Function - recurse through data to output plain and html email body
@@ -16,13 +16,14 @@ import { envData } from '../vars/data'
  * @param {object} data
  * @param {object} output
  * @param {number} depth
+ * @return {void}
  */
 
-const _recurseEmailHtml = (data = {}, output = {}, depth = 1) => {
+const _recurseEmailHtml = (data: object, output: { html: string, plain: string }, depth: number = 1): void => {
   const isArray = Array.isArray(data)
 
-  Object.keys(data).forEach((label) => {
-    const value = data[label]
+  Object.keys(data).forEach((label: string) => {
+    const value: string = data[label]
     const h = depth + 1
 
     if (depth === 1) {
@@ -32,7 +33,7 @@ const _recurseEmailHtml = (data = {}, output = {}, depth = 1) => {
       `
     }
 
-    if (label && !isArray) {
+    if (label !== '' && !isArray) {
       output.html += `
         <h${h} style='font-family: sans-serif; color: #222; margin: 16px 0; line-height: 1.3em'>
           ${label}
@@ -74,17 +75,37 @@ const _recurseEmailHtml = (data = {}, output = {}, depth = 1) => {
  * @return {object}
  */
 
-const sendForm = async ({ id, inputs }) => {
+interface SendFormBody {
+  api_key: string
+  to: string[]
+  sender: string
+  subject: string
+  text_body: string
+  html_body: string
+  custom_headers?: any[]
+}
+
+const sendForm = async ({ id, inputs }: Formation.AjaxActionArgs): Promise<Formation.AjaxActionReturn> => {
+  /* Id required */
+
+  if (id === undefined || id === '') {
+    return {
+      error: {
+        message: 'No id'
+      }
+    }
+  }
+
   /* Meta information - to email and subject */
 
-  const formMeta = require('../json/form-meta.json')
+  const formMeta = requireFile(`${config.store.dir}${config.store.files.formMeta.name}`)
   const meta = formMeta[id]
 
   /* To email */
 
-  let toEmail = meta?.toEmail
+  const toEmail: string = meta?.toEmail
 
-  if (!toEmail) {
+  if (toEmail === undefined || toEmail === '') {
     return {
       error: {
         message: 'No to email'
@@ -92,13 +113,13 @@ const sendForm = async ({ id, inputs }) => {
     }
   }
 
-  toEmail = toEmail.split(',')
+  const toEmails: string[] = toEmail.split(',')
 
   /* Sender email */
 
   const senderEmail = meta?.senderEmail
 
-  if (!senderEmail) {
+  if (senderEmail === undefined || senderEmail === '') {
     return {
       error: {
         message: 'No sender email'
@@ -108,7 +129,7 @@ const sendForm = async ({ id, inputs }) => {
 
   /* Subject */
 
-  let subject = meta?.subject || ''
+  let subject = meta?.subject !== undefined ? meta.subject : ''
 
   /* Reply to email */
 
@@ -116,8 +137,8 @@ const sendForm = async ({ id, inputs }) => {
 
   /* Email content */
 
-  const header = `${enumSite.title} contact form submission`
-  const footer = `This email was sent from a contact form on ${enumSite.title} (${getPermalink()})`
+  const header = `${config.title} contact form submission`
+  const footer = `This email was sent from a contact form on ${config.title} (${getPermalink()})`
   const outputData = {}
   const output = {
     html: '',
@@ -128,48 +149,50 @@ const sendForm = async ({ id, inputs }) => {
     const input = inputs[name]
     const inputType = input.type
     const inputLabel = input.label.trim()
-
-    let inputValue = input.value
+    const inputValue = input.value
 
     /* Escape value */
 
+    let inputValueStr = ''
+
     if (Array.isArray(inputValue)) {
-      inputValue = inputValue.map(v => escape(v + ''))
-      inputValue = inputValue.join('<br>')
-    } else {
-      inputValue = escape(input.value + '')
+      inputValueStr = inputValue.map(v => escape(v + '')).join('<br>')
+    }
+
+    if (typeof inputValue === 'string') {
+      inputValueStr = escape(inputValue + '')
     }
 
     /* Subject */
 
-    if (name === 'subject' && inputValue) {
-      subject = `${subject} - ${inputValue}`
+    if (name === 'subject' && inputValueStr !== '') {
+      subject = `${typeof subject === 'string' && subject !== '' ? `${subject} - ` : ''}${inputValueStr}`
       return
     }
 
     /* Reply to email */
 
-    if (inputType === 'email' && inputValue) {
-      replyToEmail = inputValue
-      inputValue = `<a href='mailto:${inputValue}'>${inputValue}</a>`
+    if (inputType === 'email' && inputValueStr !== '') {
+      replyToEmail = inputValueStr
+      inputValueStr = `<a href='mailto:${inputValueStr}'>${inputValueStr}</a>`
     }
 
     /* Legend */
 
     let legend = ''
 
-    if (input?.legend) {
+    if (input?.legend !== undefined) {
       legend = input.legend
 
-      if (!outputData?.[legend]) {
+      if (outputData?.[legend] === undefined) {
         outputData[legend] = {}
       }
     }
 
     /* Label */
 
-    if (!outputData?.[inputLabel]) {
-      if (legend) {
+    if (outputData?.[inputLabel] === undefined) {
+      if (legend !== '') {
         outputData[legend][inputLabel] = []
       } else {
         outputData[inputLabel] = []
@@ -178,9 +201,9 @@ const sendForm = async ({ id, inputs }) => {
 
     /* Output value */
 
-    const outputValue = inputValue || '--'
+    const outputValue = inputValueStr === '' ? '--' : inputValueStr
 
-    if (legend) {
+    if (legend !== '') {
       outputData[legend][inputLabel].push(outputValue)
     } else {
       outputData[inputLabel].push(outputValue)
@@ -229,22 +252,22 @@ const sendForm = async ({ id, inputs }) => {
 
   /* Subjext fallback */
 
-  if (!subject) {
-    subject = `${enumSite.title} Contact Form`
+  if (subject === '') {
+    subject = `${config.title} Contact Form`
   }
 
   /* Smtp2go request */
 
-  const body = {
-    api_key: envData.smtp2go.apiKey,
-    to: toEmail,
+  const body: SendFormBody = {
+    api_key: config.apiKeys.smtp2go,
+    to: toEmails,
     sender: senderEmail,
     subject,
     text_body: outputPlain,
     html_body: outputHtml
   }
 
-  if (replyToEmail) {
+  if (replyToEmail !== '') {
     body.custom_headers = [
       {
         header: 'Reply-To',
@@ -268,7 +291,7 @@ const sendForm = async ({ id, inputs }) => {
 
   /* Success */
 
-  if (resJson?.data?.succeeded) {
+  if (resJson?.data?.succeeded !== undefined) {
     return {
       success: {
         message: 'Form successully sent'

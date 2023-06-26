@@ -4,8 +4,8 @@
 
 /* Imports */
 
-import { resolve } from 'node:path'
 import { config } from '../../config'
+import requireFile from '../require-file'
 import getContentfulData from '../get-contentful-data'
 
 /**
@@ -14,38 +14,30 @@ import getContentfulData from '../get-contentful-data'
  * @param {object} args
  * @param {object} args.serverlessData
  * @param {object} args.previewData
- * @param {function} args.resolveResponse - external module
- * @param {function} args.cache - external module
+ * @param {boolean} args.cache
  * @return {object|undefined}
  */
 
 interface Args {
-  serverlessData: Formation.ServerlessData
-  previewData: Formation.PreviewData
-  resolveResponse: Function
-  cache: Function
+  serverlessData?: Formation.ServerlessData
+  previewData?: Formation.PreviewData
+  cache?: boolean
 }
 
 const getAllContentfulData = async (args: Args): Promise<Formation.AllData | undefined> => {
   const {
     serverlessData,
     previewData,
-    resolveResponse,
-    cache
+    cache = false
   } = args
 
   try {
-    /* Resolve module required */
-
-    if (resolveResponse === undefined || typeof resolveResponse !== 'function') {
-      throw new Error('No resolve response module')
-    }
-
     /* Store all data */
 
     const allData: Formation.AllData = {
       navigation: [],
       navigationItem: [],
+      redirect: [],
       content: {
         page: []
       }
@@ -62,7 +54,7 @@ const getAllContentfulData = async (args: Args): Promise<Formation.AllData | und
 
       const key = `all_${contentType}`
       const params = { content_type: contentType }
-      const data = await getContentfulData(key, params, resolveResponse, cache)
+      const data = await getContentfulData(key, params, cache)
 
       if (data?.items !== undefined) {
         allData[contentType].push(data.items)
@@ -78,8 +70,7 @@ const getAllContentfulData = async (args: Args): Promise<Formation.AllData | und
       let id = ''
 
       if (serverlessData !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const slugsJson = require(resolve(`${config.store.dir}${config.store.files.slugs.name}`))
+        const slugsJson = requireFile(`${config.store.dir}${config.store.files.slugs.name}`)
         const path = serverlessData.path
 
         if (slugsJson?.[path] !== undefined) {
@@ -102,7 +93,7 @@ const getAllContentfulData = async (args: Args): Promise<Formation.AllData | und
           include: 10
         }
 
-        entry = await getContentfulData(key, params, resolveResponse, cache)
+        entry = await getContentfulData(key, params, cache)
 
         if (entry?.items !== undefined) {
           allData.content[contentType] = entry.items
@@ -122,7 +113,7 @@ const getAllContentfulData = async (args: Args): Promise<Formation.AllData | und
 
         const key = `all_${contentType}`
         const params = { content_type: contentType }
-        const data = await getContentfulData(key, params, resolveResponse, cache)
+        const data = await getContentfulData(key, params, cache)
 
         if (data?.items !== undefined) {
           allData.content[contentType].push(data.items)

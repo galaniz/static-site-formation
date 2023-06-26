@@ -73,12 +73,17 @@ declare namespace Formation {
     [key: string]: File
   }
 
+  interface Module {
+    path: string
+    local: boolean
+  }
+
   interface Cms {
     name: string
     space: string
-    previewAcessToken: string
+    previewAccessToken: string
     previewHost: string
-    deliveryAcessToken: string
+    deliveryAccessToken: string
     deliveryHost: string
   }
 
@@ -95,8 +100,14 @@ declare namespace Formation {
   interface ServerlessData {
     path: string
     query: {
-      [key: string]: any[]
+      [key: string]: any
     }
+  }
+
+  interface ServerlessRoute {
+    path: string
+    contentType: string
+    props: object | undefined
   }
 
   interface PreviewData {
@@ -109,47 +120,25 @@ declare namespace Formation {
     end: string
   }
 
-  interface ContainerProps {
-    args: {
-      tag?: string
-      layout?: string
-      maxWidth?: string
-      paddingTop?: string
-      paddingTopLarge?: string
-      paddingBottom?: string
-      paddingBottomLarge?: string
-      gap?: string
-      gapLarge?: string
-      justify?: string
-      align?: string
-      classes?: string
-      attr?: string
-      richTextStyles?: string
+  interface AjaxActionArgs {
+    id: string
+    inputs: {
+      [key: string]: {
+        type: string
+        label: string
+        value: string | string[]
+        legend?: string
+      }
     }
-    parents?: object[]
   }
 
-  interface ColumnProps {
-    args: {
-      tag?: string
-      width?: string
-      widthSmall?: string
-      widthMedium?: string
-      widthLarge?: string
-      widthCustom?: {
-        default: string
-        small: string
-        medium: string
-        large: string
-      }
-      justify?: string
-      align?: string
-      grow?: boolean
-      classes?: string
-      style?: string
-      attr?: string
+  interface AjaxActionReturn {
+    error?: {
+      message: string
     }
-    parents?: object[]
+    success?: {
+      message: string
+    }
   }
 
   interface Config {
@@ -159,7 +148,6 @@ declare namespace Formation {
     meta: {
       description: string
       image: string
-      color: string
     }
     slug: {
       parents: {
@@ -179,23 +167,28 @@ declare namespace Formation {
       partial: string[]
       whole: string[]
     }
+    renderTypes: {
+      [key: string]: string
+    }
+    renderFunctions: {
+      [key: string]: Function
+    }
+    ajaxFunctions: {
+      [key: string]: Function
+    }
     image: {
       url: string
       sizes: number[]
       quality: number
     }
+    navigation: Navigation[]
+    navigationItem: NavigationItem[]
+    redirect: string[]
+    serverlessRoutes: ServerlessRoute[]
     script: {
       [key: string]: any
     }
     formMeta: {
-      [key: string]: any
-    }
-    navigation: Navigation[]
-    navigationItem: NavigationItem[]
-    normalParams: {
-      width: {
-        full: string
-      }
       [key: string]: any
     }
     archive: Archive
@@ -213,37 +206,12 @@ declare namespace Formation {
         dataFile: string
       }
     }
-    classNames: {
-      maxWidth: string
-      justify: string
-      align: string
-      grow: string
-      list: string
-      richText: string
-      column: string
-      row: string
-      gap: {
-        column: string
-        row: string
-      }
-      padding: {
-        bottom: string
-        top: string
-      }
-      width: {
-        default: string
-        custom: string
-      }
-      a11y: {
-        visuallyHidden: string
-        hide: string
-      }
-      form: {
-        fieldset: string
-        field: string
-        input: string
-        label: string
-      }
+    modules: {
+      cache?: Module
+      contentfulResolveResponse?: Module
+    }
+    apiKeys: {
+      smtp2go: string
     }
     // [key: string]: any
   }

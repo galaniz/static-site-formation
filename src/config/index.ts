@@ -12,7 +12,6 @@
  * @prop {object} meta
  * @prop {string} meta.description
  * @prop {string} meta.image
- * @prop {string} meta.color
  * @prop {string} slug
  * @prop {object} slug.parents
  * @prop {object} slug.bases
@@ -24,14 +23,23 @@
  * @prop {object} contentTypes
  * @prop {array<string>} contentTypes.partial
  * @prop {array<string>} contentTypes.whole
+ * @prop {object} renderTypes
+ * @prop {object} renderFunctions
+ * @prop {object} ajaxFunctions
  * @prop {object} image
  * @prop {string} image.url
+ * @prop {number} image.quality
  * @prop {array<number>} image.sizes
  * @prop {array<object>} navigation
  * @prop {array<object>} navigationItem
+ * @prop {array<object>} redirect
+ * @prop {array<object>} serverlessRoutes
  * @prop {object} script
+ * @prop {object} formMeta
  * @prop {object} archive
  * @prop {object} archive.ids
+ * @prop {object} archive.counts
+ * @prop {object} archive.posts
  * @prop {object} env
  * @prop {boolean} env.dev
  * @prop {boolean} env.prod
@@ -39,16 +47,52 @@
  * @prop {object} env.urls
  * @prop {string} env.urls.dev
  * @prop {string} env.urls.prod
- * @prop {object} files
- * @prop {object} files.slugs
- * @prop {string} files.slugs.data
- * @prop {string} files.slugs.name
- * @prop {object} files.slugParents
- * @prop {string} files.slugParents.data
- * @prop {string} files.slugParents.name
- * @prop {object} files.navigations
- * @prop {string} files.navigations.data
- * @prop {string} files.navigations.name
+ * @prop {object} store
+ * @prop {string} store.dir
+ * @prop {object} store.files
+ * @prop {object} store.files.slugs
+ * @prop {string} store.files.slugs.data
+ * @prop {string} store.files.slugs.name
+ * @prop {object} store.files.slugParents
+ * @prop {string} store.files.slugParents.data
+ * @prop {string} store.files.slugParents.name
+ * @prop {object} store.files.navigations
+ * @prop {string} store.files.navigations.data
+ * @prop {string} store.files.navigations.name
+ * @prop {object} store.files.archiveIds
+ * @prop {string} store.files.archiveIds.data
+ * @prop {string} store.files.archiveIds.name
+ * @prop {object} store.files.archiveCounts
+ * @prop {string} store.files.archiveCounts.data
+ * @prop {string} store.files.archiveCounts.name
+ * @prop {object} store.files.archivePosts
+ * @prop {string} store.files.archivePosts.data
+ * @prop {string} store.files.archivePosts.name
+ * @prop {object} store.files.formMeta
+ * @prop {string} store.files.formMeta.data
+ * @prop {string} store.files.formMeta.name
+ * @prop {object} cms
+ * @prop {string} cms.name
+ * @prop {string} cms.space
+ * @prop {string} cms.previewAccessToken
+ * @prop {string} cms.previewHost
+ * @prop {string} cms.deliveryAccessToken
+ * @prop {string} cms.deliveryHost
+ * @prop {object} static
+ * @prop {string} static.dir
+ * @prop {object} static.image
+ * @prop {string} static.image.inputDir
+ * @prop {string} static.image.outputDir
+ * @prop {string} static.image.dataFile
+ * @prop {object} modules
+ * @prop {object} modules.cache
+ * @prop {string} modules.cache.path
+ * @prop {boolean} modules.cache.local
+ * @prop {object} modules.contentfulResolveResponse
+ * @prop {string} modules.contentfulResolveResponse.path
+ * @prop {boolean} modules.contentfulResolveResponse.local
+ * @prop {object} apiKeys
+ * @prop {string} apiKeys.smtp2go
  */
 
 let config: Formation.Config = {
@@ -57,8 +101,7 @@ let config: Formation.Config = {
   title: 'Static Site',
   meta: {
     description: '',
-    image: '',
-    color: ''
+    image: ''
   },
   slug: {
     parents: {},
@@ -74,12 +117,16 @@ let config: Formation.Config = {
   contentTypes: {
     partial: [
       'navigation',
-      'navigationItem'
+      'navigationItem',
+      'redirect'
     ],
     whole: [
       'page'
     ]
   },
+  renderTypes: {},
+  renderFunctions: {},
+  ajaxFunctions: {},
   image: {
     url: '/assets/img/',
     quality: 75,
@@ -89,13 +136,10 @@ let config: Formation.Config = {
   },
   navigation: [],
   navigationItem: [],
-  normalParams: {
-    width: {
-      full: '1-1'
-    }
-  },
+  redirect: [],
+  serverlessRoutes: [],
   script: {},
-  form: {},
+  formMeta: {},
   archive: {
     ids: {},
     counts: {},
@@ -146,9 +190,9 @@ let config: Formation.Config = {
   cms: {
     name: '',
     space: '',
-    previewAcessToken: '',
+    previewAccessToken: '',
     previewHost: '',
-    deliveryAcessToken: '',
+    deliveryAccessToken: '',
     deliveryHost: ''
   },
   static: {
@@ -159,37 +203,18 @@ let config: Formation.Config = {
       dataFile: './src/json/image-data.json'
     }
   },
-  classNames: {
-    maxWidth: 'l-container',
-    justify: 'l-justify',
-    align: 'l-align',
-    grow: 'l-flex-grow-1',
-    list: 't-list-style-none',
-    richText: 't-rich-text e-underline',
-    column: 'l-flex l-flex-column',
-    row: 'l-flex l-flex-wrap',
-    gap: {
-      column: 'l-margin-bottom',
-      row: 'l-gap-margin'
+  modules: {
+    cache: {
+      path: '',
+      local: false
     },
-    padding: {
-      bottom: 'l-padding-bottom',
-      top: 'l-padding-top'
-    },
-    width: {
-      default: 'l-width',
-      custom: 'l-width-custom'
-    },
-    a11y: {
-      visuallyHidden: 'a11y-visually-hidden',
-      hide: 'a11y-hide-input'
-    },
-    form: {
-      fieldset: 'o-field__group',
-      field: 'o-form__field',
-      input: 'js-input',
-      label: 'o-form__label'
+    contentfulResolveResponse: {
+      path: '',
+      local: false
     }
+  },
+  apiKeys: {
+    smtp2go: ''
   }
 }
 

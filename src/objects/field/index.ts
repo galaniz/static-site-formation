@@ -5,8 +5,8 @@
 /* Imports */
 
 import { v4 as uuid } from 'uuid'
-import { config } from '../../config'
-import getNormalParam from '../../utils/get-normal-param'
+import { applyFilters } from '../../utils/filters'
+import isString from '../../utils/is-string'
 
 /**
  * Function - output checkbox and radio inputs from options
@@ -33,6 +33,7 @@ interface _Args {
   classes?: string
   attr?: string
   type?: string
+  labelClass?: string
 }
 
 const _getCheckboxRadioOpts = (args: _Args = {}): string => {
@@ -41,7 +42,8 @@ const _getCheckboxRadioOpts = (args: _Args = {}): string => {
     name = '',
     classes = '',
     attr = '',
-    type = 'checkbox'
+    type = 'checkbox',
+    labelClass = ''
   } = args
 
   /* Opts and name required */
@@ -64,7 +66,7 @@ const _getCheckboxRadioOpts = (args: _Args = {}): string => {
     return `
       <div data-${type}-opt>
         <input type="${type}" name="${name}" id="${id}" class="${classes}" value="${value}"${attr}${selected ? ' checked' : ''}>
-        <label for="${id}" class="${config.classNames.form.label}" data-label>
+        <label for="${id}"${labelClass} data-label>
           <span>${text}</span>
         </label>
       </div>
@@ -83,7 +85,7 @@ const _getCheckboxRadioOpts = (args: _Args = {}): string => {
  * @param {string} props.args.value
  * @param {boolean} props.args.required
  * @param {string} props.args.width
- * @param {string} props.args.widthBreakpoint
+ * @param {string} props.args.widthLarge
  * @param {boolean} props.args.grow
  * @param {string} props.args.autoCompleteToken
  * @param {string} props.args.placeholder
@@ -91,9 +93,12 @@ const _getCheckboxRadioOpts = (args: _Args = {}): string => {
  * @param {number} props.args.rows
  * @param {string} props.args.emptyErrorMessage
  * @param {string} props.args.invalidErrorMessage
- * @param {string} props.args.fieldClasses
- * @param {string} props.args.classes
  * @param {boolean} props.args.fieldset
+ * @param {string} props.args.fieldsetClasses // Back end option
+ * @param {string} props.args.fieldClasses // Back end option
+ * @param {string} props.args.labelClasses // Back end option
+ * @param {string} props.args.classes // Back end option
+ * @param {string} props.args.visuallyHiddenClass // Back end option
  * @return {string} HTML - div
  */
 
@@ -105,7 +110,7 @@ interface Props {
     value?: string
     required?: boolean
     width?: string
-    widthBreakpoint?: string
+    widthLarge?: string
     grow?: boolean
     autoCompleteToken?: string
     placeholder?: string
@@ -113,42 +118,42 @@ interface Props {
     rows?: number
     emptyErrorMessage?: string
     invalidErrorMessage?: string
-    fieldClasses?: string
-    classes?: string
     fieldset?: boolean
+    fieldsetClasses?: string
+    fieldClasses?: string
+    labelClasses?: string
+    classes?: string
+    visuallyHiddenClass?: string
   }
 }
 
 const field = (props: Props = { args: {} }): string => {
+  props = applyFilters('fieldProps', props, ['field'])
+
   const { args = {} } = props
 
-  let {
+  const {
     type = 'text',
     name = '',
     label = '',
     value = '',
     required = false,
     width = '',
-    widthBreakpoint = 'm',
-    grow = false,
+    widthLarge = '',
     autoCompleteToken = '',
     placeholder = '',
     options = [],
     rows = 5,
     emptyErrorMessage = '',
     invalidErrorMessage = '',
+    fieldsetClasses = '',
     fieldClasses = '',
+    labelClasses = '',
     classes = '',
-    fieldset = false
+    visuallyHiddenClass = ''
   } = args
 
-  type = getNormalParam('type', type)
-  width = getNormalParam('width', width)
-  widthBreakpoint = getNormalParam('breakpoint', widthBreakpoint)
-
-  if (width === '') {
-    width = config.normalParams.width.full
-  }
+  let { fieldset = false } = args
 
   /* Name and label required */
 
@@ -162,26 +167,22 @@ const field = (props: Props = { args: {} }): string => {
 
   /* Classes */
 
-  const initWidth: string = config.normalParams.width.full
+  const fieldClassesArray: string[] = []
+  const classesArray: string[] = []
 
-  let bkWidth = ''
-
-  if (width !== initWidth) {
-    bkWidth = ` ${config.classNames.width.default}-${width}-${widthBreakpoint}`
-  }
-
-  const fieldClassesArray = [`${config.classNames.form.field} ${config.classNames.width.default}-${initWidth}${bkWidth}`]
-  const classesArray = [config.classNames.form.input]
-
-  if (fieldClasses !== '') {
+  if (isString(fieldClasses)) {
     fieldClassesArray.push(fieldClasses)
   }
 
-  if (grow) {
-    fieldClassesArray.push(config.classNames.grow)
+  if (isString(width)) {
+    classesArray.push(width)
   }
 
-  if (classes !== '') {
+  if (isString(widthLarge)) {
+    classesArray.push(widthLarge)
+  }
+
+  if (isString(classes)) {
     classesArray.push(classes)
   }
 
@@ -261,11 +262,12 @@ const field = (props: Props = { args: {} }): string => {
 
   const labelRequired = required ? ' data-required' : ''
   const labelRequiredIcon = required ? '<span data-required-icon aria-hidden="true"></span>' : ''
+  const labelClass = isString(labelClasses) ? ` class="${labelClasses}"` : ''
 
   if (checkboxRadio) {
     labelAfter = `
       <label for="${id}">
-        <span class="${config.classNames.form.label}" data-label>
+        <span${labelClass} data-label>
           <span>${label}</span>
         </span>
         <span data-control data-type="${type}"></span>
@@ -275,7 +277,7 @@ const field = (props: Props = { args: {} }): string => {
     if (fieldset) {
       labelBefore = `
         <legend${labelRequired}>
-          <span>${label}${required ? `<span class="${config.classNames.a11y.visuallyHidden}"> required</span>` : ''}
+          <span>${label}${required ? `<span${isString(visuallyHiddenClass) ? ` class="${visuallyHiddenClass}"` : ''}> required</span>` : ''}
             ${labelRequiredIcon}
           </span>
         </legend>
@@ -283,7 +285,7 @@ const field = (props: Props = { args: {} }): string => {
     }
   } else {
     labelBefore = `
-      <label for="${id}" class="${config.classNames.form.label}" data-label${labelRequired}>
+      <label for="${id}"${labelClass} data-label${labelRequired}>
         <span>
           ${label}
           ${labelRequiredIcon}
@@ -304,10 +306,6 @@ const field = (props: Props = { args: {} }): string => {
     case 'number':
     case 'password':
     case 'tel': {
-      if (checkboxRadio) {
-        classesArray.push(config.classNames.a11y.hide)
-      }
-
       input = `<input type="${type}" name="${name}" id="${id}" class="${classesArray.join(' ')}"${attrs}>`
 
       if (checkboxRadioOpts) {
@@ -316,7 +314,8 @@ const field = (props: Props = { args: {} }): string => {
           name,
           classes,
           attr: attrs,
-          type
+          type,
+          labelClass
         })
       }
 
@@ -358,7 +357,7 @@ const field = (props: Props = { args: {} }): string => {
 
   return `
     <div class="${fieldClassesArray.join(' ')}" data-type="${type}">
-      ${fieldset ? `<fieldset class="${config.classNames.form.fieldset}">` : ''}
+      ${fieldset ? `<fieldset${isString(fieldsetClasses) ? ` class="${fieldsetClasses}"` : ''}>` : ''}
       ${labelBefore}
       ${input}
       ${labelAfter}

@@ -5,7 +5,6 @@
 /* Imports */
 
 import { config } from '../../config'
-import getNormalParam from '../get-normal-param'
 
 /**
  * Function - get prop from object with cms normalization
@@ -22,9 +21,13 @@ const getProp = (object: { [key: string]: any }, prop: string = ''): any => {
     }
 
     if (prop === 'renderType') {
-      const type = object?.sys?.contentType?.sys?.id
+      let type: string = object?.sys?.contentType?.sys?.id
 
-      return type !== undefined ? getNormalParam('contentType', type) : ''
+      if (config.renderTypes?.[type] !== undefined) {
+        type = config.renderTypes[type]
+      }
+
+      return typeof type === 'string' ? type : ''
     }
 
     if (prop === '') {

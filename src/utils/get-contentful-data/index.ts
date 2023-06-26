@@ -5,14 +5,14 @@
 /* Imports */
 
 import { config } from '../../config'
+import requireFile from '../../utils/require-file'
 
 /**
  * Function - fetch data from contentful cms
  *
  * @param {string} key
  * @param {object} params
- * @param {function} resolveResponse - external module
- * @param {function} cache - external module
+ * @param {boolean} cache
  * @return {object}
  */
 
@@ -28,13 +28,14 @@ interface Items {
 const getContentfulData = async (
   key: string = '',
   params: Params = {},
-  resolveResponse: Function,
-  cache: Function
+  cache: boolean = false
 ): Promise<Items> => {
   try {
     /* Resolve module required */
 
-    if (resolveResponse === undefined || typeof resolveResponse !== 'function') {
+    const resolveResponseModule = requireFile(config.modules.contentfulResolveResponse?.path, config.modules.contentfulResolveResponse?.local)
+
+    if (resolveResponseModule === null || typeof resolveResponseModule !== 'function') {
       throw new Error('No resolve response module')
     }
 
@@ -46,11 +47,17 @@ const getContentfulData = async (
 
     /* Check cache */
 
-    if (typeof cache === 'function') {
-      const data = cache(key)
+    let cacheModule: Function | null = null
 
-      if (data !== undefined) {
-        return data
+    if (cache) {
+      cacheModule = requireFile(config.modules.cache?.path, config.modules.cache?.local)
+
+      if (cacheModule !== null && typeof cacheModule === 'function') {
+        const data = cacheModule(key)
+
+        if (data !== undefined) {
+          return data
+        }
       }
     }
 
@@ -60,17 +67,17 @@ const getContentfulData = async (
 
     const {
       space,
-      previewAcessToken,
-      deliveryAcessToken,
+      previewAccessToken,
+      deliveryAccessToken,
       previewHost,
       deliveryHost
     } = credentials
 
-    let accessToken = previewAcessToken
+    let accessToken = previewAccessToken
     let host = previewHost
 
     if (config.env.prod) {
-      accessToken = deliveryAcessToken
+      accessToken = deliveryAccessToken
       host = deliveryHost
     }
 
@@ -92,15 +99,15 @@ const getContentfulData = async (
     const data = await resp.json()
 
     if (data?.items !== undefined) {
-      data.items = resolveResponse(data)
+      data.items = resolveResponseModule(data)
     } else {
       throw new Error('No items')
     }
 
     /* Store in cache */
 
-    if (typeof cache === 'function') {
-      await cache(data)
+    if (cacheModule !== null && typeof cacheModule === 'function') {
+      await cacheModule(data)
     }
 
     /* Output */

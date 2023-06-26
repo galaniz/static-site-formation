@@ -4,8 +4,8 @@
 
 /* Imports */
 
-import { config } from '../../config'
-import getNormalParam from '../../utils/get-normal-param'
+import { applyFilters } from '../../utils/filters'
+import isString from '../../utils/is-string'
 
 /**
  * Function - output column wrapper
@@ -18,6 +18,7 @@ import getNormalParam from '../../utils/get-normal-param'
  * @param {string} props.args.widthMedium
  * @param {string} props.args.widthLarge
  * @param {object} props.args.widthCustom
+ * @param {string} props.args.widthCustom.class
  * @param {string} props.args.widthCustom.default
  * @param {string} props.args.widthCustom.small
  * @param {string} props.args.widthCustom.medium
@@ -31,10 +32,36 @@ import getNormalParam from '../../utils/get-normal-param'
  * @return {object}
  */
 
-const column = (props: Formation.ColumnProps = { args: {} }): Formation.Return => {
+interface Props {
+  args: {
+    tag?: string
+    width?: string
+    widthSmall?: string
+    widthMedium?: string
+    widthLarge?: string
+    widthCustom?: {
+      class?: string
+      default: string
+      small: string
+      medium: string
+      large: string
+    }
+    justify?: string
+    align?: string
+    grow?: boolean
+    classes?: string
+    style?: string
+    attr?: string
+  }
+  parents?: object[]
+}
+
+const column = (props: Props = { args: {} }): Formation.Return => {
+  props = applyFilters('columnProps', props, ['column'])
+
   const { args = {} } = props
 
-  let {
+  const {
     tag = 'div',
     width = '',
     widthSmall = '',
@@ -43,74 +70,47 @@ const column = (props: Formation.ColumnProps = { args: {} }): Formation.Return =
     widthCustom,
     justify = '',
     align = '',
-    grow = false,
     classes = '',
     style = '',
     attr = ''
   } = args
 
-  tag = getNormalParam('tag', tag)
-  width = getNormalParam('width', width)
-  widthSmall = getNormalParam('width', widthSmall)
-  widthMedium = getNormalParam('width', widthMedium)
-  widthLarge = getNormalParam('width', widthLarge)
-  justify = getNormalParam('justify', justify)
-  align = getNormalParam('align', align)
-
   /* Classes */
 
   const classesArray: string[] = []
 
-  if (classes !== '') {
+  if (isString(classes)) {
     classesArray.push(classes)
   }
 
   /* Width */
 
-  const widthClass = config.classNames.width.default
-
-  if (width === '' && widthCustom === undefined) {
-    width = config.normalParams.width.full
+  if (isString(width)) {
+    classesArray.push(width)
   }
 
-  if (width !== '') {
-    classesArray.push(`${widthClass}-${width}`)
+  if (isString(widthSmall) && widthSmall !== width) {
+    classesArray.push(widthSmall)
   }
 
-  if (widthSmall !== '' && widthSmall !== width) {
-    classesArray.push(`${widthClass}-${widthSmall}-s`)
+  if (isString(widthMedium) && widthMedium !== widthSmall) {
+    classesArray.push(widthMedium)
   }
 
-  if (widthMedium !== '' && widthMedium !== widthSmall) {
-    classesArray.push(`${widthClass}-${widthMedium}-m`)
-  }
-
-  if (widthLarge !== '' && widthLarge !== widthMedium) {
-    classesArray.push(`${widthClass}-${widthLarge}-l`)
+  if (isString(widthLarge) && widthLarge !== widthMedium) {
+    classesArray.push(widthLarge)
   }
 
   /* Justify */
 
-  const justifyClass = config.classNames.justify
-
-  if (justify !== '') {
-    classesArray.push(`${justifyClass}-${justify}`)
+  if (isString(justify)) {
+    classesArray.push(justify)
   }
 
   /* Align */
 
-  const alignClass = config.classNames.align
-
-  if (align !== '') {
-    classesArray.push(`${alignClass}-${align}`)
-  }
-
-  /* Grow */
-
-  const growClass = config.classNames.grow
-
-  if (grow) {
-    classesArray.push(growClass)
+  if (isString(align)) {
+    classesArray.push(align)
   }
 
   /* Style */
@@ -122,7 +122,9 @@ const column = (props: Formation.ColumnProps = { args: {} }): Formation.Return =
   }
 
   if (widthCustom !== undefined) {
-    classesArray.push(config.classNames.width.custom)
+    if (widthCustom.class !== '' && typeof widthCustom.class === 'string') {
+      classesArray.push(widthCustom.class)
+    }
 
     const styleArray = [
       `--width:${widthCustom?.default !== undefined ? widthCustom.default : '100%'}`,
@@ -144,10 +146,14 @@ const column = (props: Formation.ColumnProps = { args: {} }): Formation.Return =
     attrs = ` ${attr}`
   }
 
+  if (classesArray.length > 0) {
+    attrs += ` class="${classesArray.join(' ')}"`
+  }
+
   /* Output */
 
   return {
-    start: `<${tag} class="${classesArray.join(' ')}"${styles}${attrs}>`,
+    start: `<${tag}${attrs}${styles}>`,
     end: `</${tag}>`
   }
 }

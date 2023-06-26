@@ -18,7 +18,7 @@ import resolveInternalLinks from '../resolve-internal-links'
  * @param {function} args.beforeDataSet
  * @param {function} args.onDataSet
  * @param {function} args.afterDataSet
- * @param {function} args.cache - external module
+ * @param {boolean} args.cache
  * @return {object|undefined}
  */
 
@@ -32,7 +32,7 @@ interface Args {
   beforeDataSet: Function
   onDataSet: Function
   afterDataSet: Function
-  cache: Function
+  cache: boolean
 }
 
 const getAllFileData = async (args: Args): Promise<Formation.AllData | undefined> => {
@@ -44,7 +44,7 @@ const getAllFileData = async (args: Args): Promise<Formation.AllData | undefined
     beforeDataSet,
     onDataSet,
     afterDataSet,
-    cache
+    cache = false
   } = args
 
   try {
@@ -57,6 +57,7 @@ const getAllFileData = async (args: Args): Promise<Formation.AllData | undefined
     const allData: Formation.AllData = {
       navigation: [],
       navigationItem: [],
+      redirect: [],
       content: {
         page: []
       }
