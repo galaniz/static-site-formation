@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "jest"
+    "build": "tsc && npx ts-standard"
   },
   "author": "",
   "license": "ISC",
