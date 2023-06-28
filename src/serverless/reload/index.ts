@@ -14,6 +14,7 @@ import render from '../../render'
  * @param {object} args
  * @param {object} args.request
  * @param {object} args.env
+ * @param {function} args.next
  * @param {object} args.siteConfig
  * @return {object}
  */
@@ -21,18 +22,12 @@ import render from '../../render'
 interface ReloadArgs {
   request: any
   env: any
+  next: any
   siteConfig: Formation.Config
 }
 
-const reload = async ({ request, env, siteConfig }: ReloadArgs): Promise<object> => {
+const reload = async ({ request, env, next, siteConfig }: ReloadArgs): Promise<object> => {
   try {
-    /* Config */
-
-    setConfig(siteConfig)
-
-    config.env.dev = env.ENVIRONMENT === 'dev'
-    config.env.prod = env.ENVIRONMENT === 'production'
-
     /* Query */
 
     const { searchParams, pathname } = new URL(request.url)
@@ -48,6 +43,19 @@ const reload = async ({ request, env, siteConfig }: ReloadArgs): Promise<object>
     if (filters !== null) {
       query.filters = filters
     }
+
+    /* No query move on to default page */
+
+    if (page === null || filters === null) {
+      return next()
+    }
+
+    /* Config */
+
+    setConfig(siteConfig)
+
+    config.env.dev = env.ENVIRONMENT === 'dev'
+    config.env.prod = env.ENVIRONMENT === 'production'
 
     /* Data params */
 

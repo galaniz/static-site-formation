@@ -5,6 +5,7 @@
 /* Imports */
 
 import { config } from '../config'
+import { doActions } from '../utils/actions'
 import getSlug from '../utils/get-slug'
 import getPermalink from '../utils/get-permalink'
 import getProp from '../utils/get-prop'
@@ -138,7 +139,7 @@ const _renderContent = async ({
   renderFunctions = {}
 }: _ContentArgs): Promise<void> => {
   if (Array.isArray(contentData) && (contentData.length > 0)) {
-    for (let i = 0; i < contentData.length; i++) {
+    for (let i = 0; i < contentData.length; i += 1) {
       let c = contentData[i]
 
       /* Check for embedded entries and rich text */
@@ -353,7 +354,9 @@ const _renderItem = async ({
 
   /* Add to data by slugs store */
 
-  _slugs[slug !== 'index' && slug !== '' ? `/${slug}/` : '/'] = {
+  const formattedSlug = slug !== 'index' && slug !== '' ? `/${slug}/` : '/'
+
+  _slugs[formattedSlug] = {
     contentType,
     id
   }
@@ -392,7 +395,7 @@ const _renderItem = async ({
 
   if (serverlessData !== undefined) {
     if (serverlessData?.path !== undefined && serverlessData?.query !== undefined) {
-      if (serverlessData.path === (slug !== '' ? `/${slug}/` : '/')) {
+      if (serverlessData.path === formattedSlug) {
         itemServerlessData = serverlessData
       } else { // Avoid re-rendering non dynamic pages
         return {
@@ -485,11 +488,13 @@ const _renderItem = async ({
     })
   }
 
+  doActions('render', [contentType, formattedSlug, layoutOutput, props])
+
   return {
     serverlessRender,
     props: propsCopy,
     data: {
-      slug: slug !== 'index' && slug !== '' ? `/${slug}/` : '/',
+      slug: formattedSlug,
       output: layoutOutput
     }
   }
@@ -598,7 +603,7 @@ const render = async ({
         const { redirect: rr } = getProp(r)
 
         if (rr.length > 0) {
-          config.redirect = config.redirect.concat(rr)
+          config.redirects.data = config.redirects.data.concat(rr)
         }
       })
     }
@@ -660,10 +665,10 @@ const render = async ({
 
   const contentTypes = Object.keys(content)
 
-  for (let c = 0; c < contentTypes.length; c++) {
+  for (let c = 0; c < contentTypes.length; c += 1) {
     const contentType = contentTypes[c]
 
-    for (let i = 0; i < content[contentType].length; i++) {
+    for (let i = 0; i < content[contentType].length; i += 1) {
       const item: _ItemReturn = await _renderItem({
         item: content[contentType][i],
         contentType,
@@ -673,18 +678,15 @@ const render = async ({
 
       const {
         serverlessRender = false,
-        data: itemData,
-        props
+        data: itemData
       } = item
 
       if (itemData !== undefined) {
         data.push(itemData)
 
         if (serverlessRender && serverlessData === undefined) {
-          config.serverlessRoutes.push({
-            path: itemData.slug,
-            contentType,
-            props
+          config.serverless.routes.reload.push({
+            path: itemData.slug
           })
         }
       }

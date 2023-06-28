@@ -106,8 +106,7 @@ declare namespace Formation {
 
   interface ServerlessRoute {
     path: string
-    contentType: string
-    props: object | undefined
+    content?: string
   }
 
   interface PreviewData {
@@ -183,8 +182,6 @@ declare namespace Formation {
     }
     navigation: Navigation[]
     navigationItem: NavigationItem[]
-    redirect: string[]
-    serverlessRoutes: ServerlessRoute[]
     script: {
       [key: string]: any
     }
@@ -196,6 +193,21 @@ declare namespace Formation {
     store: {
       dir: string
       files: Files
+    }
+    serverless: {
+      dir: string
+      files: {
+        ajax: string
+        preview: string
+        reload: string
+      }
+      routes: {
+        reload: ServerlessRoute[]
+      }
+    }
+    redirects: {
+      file: string
+      data: string[]
     }
     cms: Cms
     static: {

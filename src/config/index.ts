@@ -32,8 +32,6 @@
  * @prop {array<number>} image.sizes
  * @prop {array<object>} navigation
  * @prop {array<object>} navigationItem
- * @prop {array<object>} redirect
- * @prop {array<object>} serverlessRoutes
  * @prop {object} script
  * @prop {object} formMeta
  * @prop {object} archive
@@ -71,6 +69,17 @@
  * @prop {object} store.files.formMeta
  * @prop {string} store.files.formMeta.data
  * @prop {string} store.files.formMeta.name
+ * @prop {object} serverless
+ * @prop {string} serverless.dir
+ * @prop {object} serverless.files
+ * @prop {string} serverless.files.ajax
+ * @prop {string} serverless.files.preview
+ * @prop {string} serverless.files.reload
+ * @prop {object} serverless.routes
+ * @prop {array<object>} serverless.routes.reload
+ * @prop {object} redirects
+ * @prop {string} redirects.file
+ * @prop {array<string>} redirects.data
  * @prop {object} cms
  * @prop {string} cms.name
  * @prop {string} cms.space
@@ -136,8 +145,6 @@ let config: Formation.Config = {
   },
   navigation: [],
   navigationItem: [],
-  redirect: [],
-  serverlessRoutes: [],
   script: {},
   formMeta: {},
   archive: {
@@ -186,6 +193,21 @@ let config: Formation.Config = {
         name: 'form-meta.json'
       }
     }
+  },
+  serverless: {
+    dir: './functions/',
+    files: {
+      ajax: 'ajax/index.js',
+      preview: '_middleware.js',
+      reload: '_middleware.js'
+    },
+    routes: {
+      reload: []
+    }
+  },
+  redirects: {
+    file: './site/_redirects',
+    data: []
   },
   cms: {
     name: '',

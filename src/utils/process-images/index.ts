@@ -7,7 +7,6 @@
 import { config } from '../../config'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { extname, dirname } from 'node:path'
-import { existsSync } from 'node:fs'
 import getAllFilePaths from '../get-all-file-paths'
 
 /**
@@ -60,9 +59,7 @@ const processImages = async (sharp: any): Promise<void> => {
 
         sizes = sizes.filter(s => s <= width)
 
-        if (!existsSync(folder)) {
-          await mkdir(folder, { recursive: true })
-        }
+        await mkdir(folder, { recursive: true })
 
         sizes.forEach((size) => {
           sharpImages.push({

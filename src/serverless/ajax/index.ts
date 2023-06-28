@@ -174,4 +174,4 @@ const ajax = async ({ request, env, siteConfig }: AjaxArgs): Promise<object> => 
 
 /* Exports */
 
-export const onRequestPost = [ajax]
+export default ajax
