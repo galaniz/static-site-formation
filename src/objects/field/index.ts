@@ -6,7 +6,6 @@
 
 import { v4 as uuid } from 'uuid'
 import { applyFilters } from '../../utils/filters'
-import isString from '../../utils/is-string'
 
 /**
  * Function - output checkbox and radio inputs from options
@@ -21,14 +20,14 @@ import isString from '../../utils/is-string'
  * @return {array<string>}
  */
 
-interface _Opt {
+interface _FieldOption {
   text: string
   value: string
   selected?: boolean
 }
 
-interface _Args {
-  opts?: _Opt[]
+interface _FieldCheckboxRadioArgs {
+  opts?: _FieldOption[]
   name?: string
   classes?: string
   attr?: string
@@ -36,7 +35,7 @@ interface _Args {
   labelClass?: string
 }
 
-const _getCheckboxRadioOpts = (args: _Args = {}): string => {
+const _getCheckboxRadioOpts = (args: _FieldCheckboxRadioArgs = {}): string => {
   const {
     opts = [],
     name = '',
@@ -102,33 +101,8 @@ const _getCheckboxRadioOpts = (args: _Args = {}): string => {
  * @return {string} HTML - div
  */
 
-interface Props {
-  args: {
-    type?: string
-    name?: string
-    label?: string
-    value?: string
-    required?: boolean
-    width?: string
-    widthLarge?: string
-    grow?: boolean
-    autoCompleteToken?: string
-    placeholder?: string
-    options?: string[]
-    rows?: number
-    emptyErrorMessage?: string
-    invalidErrorMessage?: string
-    fieldset?: boolean
-    fieldsetClasses?: string
-    fieldClasses?: string
-    labelClasses?: string
-    classes?: string
-    visuallyHiddenClass?: string
-  }
-}
-
-const field = (props: Props = { args: {} }): string => {
-  props = applyFilters('fieldProps', props, ['field'])
+const field = (props: FRM.FieldProps = { args: {} }): string => {
+  props = applyFilters('fieldProps', props, { renderType: 'field' })
 
   const { args = {} } = props
 
@@ -139,6 +113,8 @@ const field = (props: Props = { args: {} }): string => {
     value = '',
     required = false,
     width = '',
+    widthSmall = '',
+    widthMedium = '',
     widthLarge = '',
     autoCompleteToken = '',
     placeholder = '',
@@ -165,24 +141,37 @@ const field = (props: Props = { args: {} }): string => {
 
   const id: string = uuid()
 
-  /* Classes */
+  /* Field classes */
 
   const fieldClassesArray: string[] = []
-  const classesArray: string[] = []
 
-  if (isString(fieldClasses)) {
+  if (fieldClasses !== '') {
     fieldClassesArray.push(fieldClasses)
   }
 
-  if (isString(width)) {
-    classesArray.push(width)
+  /* Width */
+
+  if (width !== '') {
+    fieldClassesArray.push(width)
   }
 
-  if (isString(widthLarge)) {
-    classesArray.push(widthLarge)
+  if (widthSmall !== '' && widthSmall !== width) {
+    fieldClassesArray.push(widthSmall)
   }
 
-  if (isString(classes)) {
+  if (widthMedium !== '' && widthMedium !== widthSmall) {
+    fieldClassesArray.push(widthMedium)
+  }
+
+  if (widthLarge !== '' && widthLarge !== widthMedium) {
+    fieldClassesArray.push(widthLarge)
+  }
+
+  /* Classes */
+
+  const classesArray: string[] = []
+
+  if (classes !== '') {
     classesArray.push(classes)
   }
 
@@ -192,7 +181,7 @@ const field = (props: Props = { args: {} }): string => {
 
   /* Options */
 
-  const opts: _Opt[] = []
+  const opts: _FieldOption[] = []
 
   if (options.length > 0) {
     options.forEach((option) => {
@@ -262,7 +251,7 @@ const field = (props: Props = { args: {} }): string => {
 
   const labelRequired = required ? ' data-required' : ''
   const labelRequiredIcon = required ? '<span data-required-icon aria-hidden="true"></span>' : ''
-  const labelClass = isString(labelClasses) ? ` class="${labelClasses}"` : ''
+  const labelClass = labelClasses !== '' ? ` class="${labelClasses}"` : ''
 
   if (checkboxRadio) {
     labelAfter = `
@@ -277,7 +266,7 @@ const field = (props: Props = { args: {} }): string => {
     if (fieldset) {
       labelBefore = `
         <legend${labelRequired}>
-          <span>${label}${required ? `<span${isString(visuallyHiddenClass) ? ` class="${visuallyHiddenClass}"` : ''}> required</span>` : ''}
+          <span>${label}${required ? `<span${visuallyHiddenClass !== '' ? ` class="${visuallyHiddenClass}"` : ''}> required</span>` : ''}
             ${labelRequiredIcon}
           </span>
         </legend>
@@ -357,7 +346,7 @@ const field = (props: Props = { args: {} }): string => {
 
   return `
     <div class="${fieldClassesArray.join(' ')}" data-type="${type}">
-      ${fieldset ? `<fieldset${isString(fieldsetClasses) ? ` class="${fieldsetClasses}"` : ''}>` : ''}
+      ${fieldset ? `<fieldset${fieldsetClasses !== '' ? ` class="${fieldsetClasses}"` : ''}>` : ''}
       ${labelBefore}
       ${input}
       ${labelAfter}

@@ -4,32 +4,28 @@
 
 /* Imports */
 
-import { config } from '../../config'
 import { mkdir, writeFile } from 'node:fs/promises'
-import { extname, dirname } from 'node:path'
+import { extname, resolve, basename, dirname } from 'node:path'
+import sharp from 'sharp'
+import config from '../../config'
 import getAllFilePaths from '../get-all-file-paths'
 
 /**
  * Function - get and save image data and output multiple sizes
  *
- * @param {function} sharp
  * @return {void}
  */
 
-interface SharpImages {
+interface ProcessImagesSharp {
   size: number
   path: string
   newPath: string
 }
 
-const processImages = async (sharp: any): Promise<void> => {
+const processImages = async (): Promise<void> => {
   const store = {}
 
   try {
-    if (sharp === undefined) {
-      throw new Error('Sharp module undefined')
-    }
-
     const inputDir = config.static.image.inputDir
     const outputDir = config.static.image.outputDir
     const dataFile = config.static.image.dataFile
@@ -38,34 +34,48 @@ const processImages = async (sharp: any): Promise<void> => {
       throw new Error('No input or output directories')
     }
 
-    const sharpImages: SharpImages[] = []
+    await mkdir(resolve(outputDir), { recursive: true })
+
+    const sharpImages: ProcessImagesSharp[] = []
 
     for await (const path of getAllFilePaths(inputDir)) {
       if (!path.includes('.DS_Store')) {
         const ext = extname(path)
-        const relPath: string = path.split(inputDir.split('./')[1])[1]
-        const base: string = relPath.split(`${ext}`)[0]
-        const folder = dirname(`${outputDir}${base}`)
+        const baseName = basename(path)
+        const base: string = baseName.split(ext)[0]
+
+        /* Nested files */
+
+        let folders: string = dirname(path).split(`${inputDir}/`)[1]
+
+        if (folders !== undefined && folders !== baseName) {
+          await mkdir(resolve(outputDir, folders), { recursive: true })
+        } else {
+          folders = ''
+        }
+
+        /* Store meta data */
 
         const metadata = await sharp(path).metadata()
+        const id = `${folders !== '' ? `${folders}/` : ''}${base}`
 
         const { width = 0, height } = metadata
 
-        store[base] = { base, width, height }
+        store[id] = { base: id, width, height }
 
-        let sizes = config.image.sizes
+        /* Sizes */
+
+        let sizes = [...config.image.sizes]
 
         sizes.push(width)
 
         sizes = sizes.filter(s => s <= width)
 
-        await mkdir(folder, { recursive: true })
-
         sizes.forEach((size) => {
           sharpImages.push({
             size,
-            path,
-            newPath: `${outputDir}${base}${size !== width ? `@${size}` : ''}.webp`
+            path: resolve(path),
+            newPath: resolve(outputDir, folders, `${base}${size !== width ? `@${size}` : ''}.webp`)
           })
         })
       }
@@ -76,7 +86,7 @@ const processImages = async (sharp: any): Promise<void> => {
         sharpImages.map(async (c) => {
           const { size, path, newPath } = c
 
-          const create = await sharp(`./${path}`)
+          const create = await sharp(path)
             .webp({ quality: config.image.quality })
             .resize(size)
             .toFile(newPath)
@@ -87,10 +97,10 @@ const processImages = async (sharp: any): Promise<void> => {
     }
 
     if (dataFile !== '') {
-      await writeFile(dataFile, JSON.stringify(store))
+      await writeFile(resolve(dataFile), JSON.stringify(store))
     }
   } catch (error) {
-    console.error('Error processing images: ', error)
+    console.error(config.console.red, '[SSF] Error processing images: ', error)
   }
 }
 

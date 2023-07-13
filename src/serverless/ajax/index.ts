@@ -4,7 +4,7 @@
 
 /* Imports */
 
-import { config, setConfig } from '../../config'
+import config, { setConfig } from '../../config'
 import sendForm from '../send-form'
 
 /**
@@ -15,11 +15,11 @@ import sendForm from '../send-form'
  * @return {object}
  */
 
-interface _NormalData extends Formation.AjaxActionArgs {
+interface _AjaxNormalData extends FRM.AjaxActionData {
   action?: string
 }
 
-const _normalizeBody = (data: object = {}): _NormalData => {
+const _normalizeBody = (data: object = {}): _AjaxNormalData => {
   const normalData = {
     id: '',
     inputs: {}
@@ -64,19 +64,34 @@ const _normalizeBody = (data: object = {}): _NormalData => {
 }
 
 /**
+ * Function - custom exception to include status code
+ *
+ * @private
+ * @param {object} args
+ * @param {string} args.message
+ * @param {number} args.code
+ * @return {void}
+ */
+
+function CustomError ({ message = '', code = 500 }: { message: string, code: number }): void {
+  this.message = message
+  this.httpStatusCode = code
+}
+
+/**
  * Function - set env variables, normalize request body, check for required props and call actions
  *
  * @param {object} args
  * @param {object} args.request
  * @param {object} args.env
  * @param {object} args.siteConfig
- * @return {object}
+ * @return {object} Response
  */
 
 interface AjaxArgs {
   request: any
   env: any
-  siteConfig: Formation.Config
+  siteConfig: FRM.Config
 }
 
 const ajax = async ({ request, env, siteConfig }: AjaxArgs): Promise<object> => {
@@ -118,8 +133,7 @@ const ajax = async ({ request, env, siteConfig }: AjaxArgs): Promise<object> => 
         })
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-      delete data.inputs[honeypotName]
+      data.inputs[honeypotName].exclude = true
     }
 
     /* Id required */
@@ -138,31 +152,49 @@ const ajax = async ({ request, env, siteConfig }: AjaxArgs): Promise<object> => 
 
     /* Call functions by action */
 
-    let res: Formation.AjaxActionReturn | null = null
+    let res: FRM.AjaxActionReturn | null = null
 
     if (action === 'sendForm') {
-      res = await sendForm(data)
+      res = await sendForm({ ...data, env, request })
     }
 
     if (config.ajaxFunctions?.[action] !== undefined && typeof config.ajaxFunctions?.[action] === 'function') {
-      res = await config.ajaxFunctions[action](data)
+      res = await config.ajaxFunctions[action]({ ...data, env, request })
     }
 
-    /* Result */
+    /* Result error */
 
     if (res === null) {
       throw new Error('No result')
     }
 
     if (res?.error !== undefined && typeof res?.error === 'string') {
-      throw new Error(res.error)
+      throw new CustomError(res.error)
     }
 
-    return new Response(JSON.stringify(res), {
+    /* Result success */
+
+    const options: { status: number, headers?: any } = {
       status: 200
-    })
+    }
+
+    let message = ''
+
+    if (res.success !== undefined) {
+      const { message: successMessage, headers } = res.success
+
+      if (successMessage !== undefined) {
+        message = successMessage
+      }
+
+      if (headers !== undefined) {
+        options.headers = headers
+      }
+    }
+
+    return new Response(message, options)
   } catch (error) {
-    console.error('Error with ajax function: ', error)
+    console.error(config.console.red, '[SSF] Error with ajax function: ', error)
 
     const statusCode = typeof error.httpStatusCode === 'number' ? error.httpStatusCode : 500
 

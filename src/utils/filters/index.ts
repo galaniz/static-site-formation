@@ -8,7 +8,7 @@
  * @type {object}
  */
 
-const filters: object = {}
+let filters: object = {}
 
 /**
  * Function - add filter to filters object
@@ -69,7 +69,7 @@ const removeFilter = (name: string, filter: Function): boolean => {
  * @return {*}
  */
 
-const applyFilters = (name: string, value: any, ...args: any[]): any => {
+const applyFilters = (name: string, value: any, ...args: any): any => {
   const callbacks = filters[name]
 
   if (Array.isArray(callbacks)) {
@@ -83,6 +83,16 @@ const applyFilters = (name: string, value: any, ...args: any[]): any => {
   return value
 }
 
+/**
+ * Function - empty filters object
+ *
+ * @return {void}
+ */
+
+const resetFilters = (): void => {
+  filters = {}
+}
+
 /* Exports */
 
-export { addFilter, removeFilter, applyFilters }
+export { addFilter, removeFilter, applyFilters, resetFilters }

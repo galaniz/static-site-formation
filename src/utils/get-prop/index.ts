@@ -4,7 +4,7 @@
 
 /* Imports */
 
-import { config } from '../../config'
+import config from '../../config'
 
 /**
  * Function - get prop from object with cms normalization
@@ -20,10 +20,14 @@ const getProp = (object: { [key: string]: any }, prop: string = ''): any => {
       return object.sys.id
     }
 
-    if (prop === 'renderType') {
+    if (prop === 'renderType' || prop === 'contentType') {
       let type: string = object?.sys?.contentType?.sys?.id
 
-      if (config.renderTypes?.[type] !== undefined) {
+      if (type === undefined) {
+        type = object?.sys?.type
+      }
+
+      if (prop === 'renderType' && config.renderTypes?.[type] !== undefined) {
         type = config.renderTypes[type]
       }
 

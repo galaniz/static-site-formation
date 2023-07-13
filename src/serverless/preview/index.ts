@@ -4,7 +4,7 @@
 
 /* Imports */
 
-import { config, setConfig } from '../../config'
+import config, { setConfig } from '../../config'
 import getAllContentfulData from '../../utils/get-all-contentful-data'
 import render from '../../render'
 
@@ -15,13 +15,13 @@ import render from '../../render'
  * @param {object} args.request
  * @param {function} args.next
  * @param {object} args.siteConfig
- * @return {object}
+ * @return {object} Response
  */
 
 interface PreviewArgs {
   request: any
   next: Function
-  siteConfig: Formation.Config
+  siteConfig: FRM.Config
 }
 
 const preview = async ({ request, next, siteConfig }: PreviewArgs): Promise<object> => {

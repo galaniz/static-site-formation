@@ -4,9 +4,9 @@
 
 /* Imports */
 
-import { config } from '../../config'
 import { readdir, readFile } from 'node:fs/promises'
 import { extname, basename, resolve } from 'node:path'
+import config from '../../config'
 import requireFile from '../../utils/require-file'
 
 /**
@@ -18,14 +18,14 @@ import requireFile from '../../utils/require-file'
  * @return {object}
  */
 
-interface Params {
+interface FileDataParams {
   all?: boolean
   id?: string
 }
 
 const getFileData = async (
   key: string = '',
-  params: Params = {},
+  params: FileDataParams = {},
   cache: boolean = false
 ): Promise<object> => {
   try {
@@ -60,7 +60,7 @@ const getFileData = async (
     const data = {}
 
     if (id !== '' && !all) {
-      const file = await readFile(resolve(`${config.static.dir}${id}.json`), { encoding: 'utf8' })
+      const file = await readFile(resolve(config.static.dir, `${id}.json`), { encoding: 'utf8' })
 
       if (file !== '') {
         const fileJson = JSON.parse(file)
@@ -74,7 +74,7 @@ const getFileData = async (
     /* All files */
 
     if (id === '' && all) {
-      const files = await readdir(config.static.dir)
+      const files = await readdir(resolve(config.static.dir))
 
       for (let i = 0; i < files.length; i += 1) {
         const file = files[i]
@@ -82,7 +82,7 @@ const getFileData = async (
         const fileName = basename(file, fileExt)
 
         if (fileExt === '.json') {
-          const fileContents = await readFile(resolve(`${config.static.dir}${file}`), { encoding: 'utf8' })
+          const fileContents = await readFile(resolve(config.static.dir, file), { encoding: 'utf8' })
 
           if (fileContents !== '') {
             const fileJson = JSON.parse(fileContents)
@@ -97,7 +97,7 @@ const getFileData = async (
 
     /* Data not empty check */
 
-    if (Object.keys(data).length > 0) {
+    if (Object.keys(data).length === 0) {
       throw new Error('No file data')
     }
 
@@ -111,7 +111,7 @@ const getFileData = async (
 
     return data
   } catch (error) {
-    console.error('Error getting file data: ', error)
+    console.error(config.console.red, '[SSF] Error getting file data: ', error)
 
     return {}
   }

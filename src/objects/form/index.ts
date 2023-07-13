@@ -5,9 +5,8 @@
 /* Imports */
 
 import { v4 as uuid } from 'uuid'
-import { config } from '../../config'
 import { applyFilters } from '../../utils/filters'
-import isString from '../../utils/is-string'
+import config from '../../config'
 
 /**
  * Function - output form wrapper
@@ -30,37 +29,8 @@ import isString from '../../utils/is-string'
  * @return {object}
  */
 
-interface Props {
-  args: {
-    id?: string
-    action?: string
-    subject?: string
-    toEmail?: string
-    senderEmail?: string
-    submitLabel?: string
-    successTitle?: string
-    successText?: string
-    successResult?: string
-    errorTitle?: string
-    errorText?: string
-    errorSummary?: string
-    errorResult?: string
-    formClasses?: string
-    formAttr?: string
-    fieldsClasses?: string
-    fieldsAttr?: string
-    submitFieldClasses?: string
-    submitClasses?: string
-    submitAttr?: string
-    submitLoader?: string
-    honeypotFieldClasses?: string
-    honeypotLabelClasses?: string
-    honeypotClasses?: string
-  }
-}
-
-const form = (props: Props = { args: {} }): Formation.Return => {
-  props = applyFilters('formProps', props, ['form'])
+const form = (props: FRM.FormProps = { args: {} }): FRM.StartEndReturn => {
+  props = applyFilters('formProps', props, { renderType: 'form' })
 
   const { args = {} } = props
 
@@ -149,25 +119,25 @@ const form = (props: Props = { args: {} }): Formation.Return => {
   const honeypotId: string = uuid()
   const honeypotName = `${config.namespace}_asi`
   const honeypot = `
-    <div${isString(honeypotFieldClasses) ? ` class="${honeypotFieldClasses}"` : ''} data-asi>
-      <label${isString(honeypotLabelClasses) ? ` class="${honeypotLabelClasses}"` : ''} for="${honeypotId}">Website</label>
-      <input${isString(honeypotClasses) ? ` class="${honeypotClasses}"` : ''} type="url" name="${honeypotName}" id="${honeypotId}" autocomplete="off">
+    <div${honeypotFieldClasses !== '' ? ` class="${honeypotFieldClasses}"` : ''} data-asi>
+      <label${honeypotLabelClasses !== '' ? ` class="${honeypotLabelClasses}"` : ''} for="${honeypotId}">Website</label>
+      <input${honeypotClasses !== '' ? ` class="${honeypotClasses}"` : ''} type="url" name="${honeypotName}" id="${honeypotId}" autocomplete="off">
     </div>
   `
 
   /* Output */
 
   const start = `
-    <form${isString(formClasses) ? ` class="${formClasses}"` : ''} id="${id}" data-action="${action}"${isString(formAttr) ? ` ${formAttr}` : ''} novalidate>
-      <div${isString(fieldsClasses) ? ` class="${fieldsClasses}"` : ''}${isString(fieldsAttr) ? ` ${fieldsAttr}` : ''}>
+    <form${formClasses !== '' ? ` class="${formClasses}"` : ''} id="${id}" data-action="${action}"${formAttr !== '' ? ` ${formAttr}` : ''} novalidate>
+      <div${fieldsClasses !== '' ? ` class="${fieldsClasses}"` : ''}${fieldsAttr !== '' ? ` ${fieldsAttr}` : ''}>
         ${errorSummary}
   `
 
   const end = `
         ${honeypot}
         ${errorResult}
-        <div${isString(submitFieldClasses) ? ` class="${submitFieldClasses}"` : ''} data-type="submit">
-          <button${isString(submitClasses) ? ` class="${submitClasses}"` : ''}${isString(submitAttr) ? ` ${submitAttr}` : ''} type="submit">
+        <div${submitFieldClasses !== '' ? ` class="${submitFieldClasses}"` : ''} data-type="submit">
+          <button${submitClasses !== '' ? ` class="${submitClasses}"` : ''}${submitAttr !== '' ? ` ${submitAttr}` : ''} type="submit">
             ${submitLoader}
             <span>${submitLabel}</span>
           </button>

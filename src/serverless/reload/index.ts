@@ -4,7 +4,7 @@
 
 /* Imports */
 
-import { config, setConfig } from '../../config'
+import config, { setConfig } from '../../config'
 import getAllContentfulData from '../../utils/get-all-contentful-data'
 import render from '../../render'
 
@@ -16,14 +16,14 @@ import render from '../../render'
  * @param {object} args.env
  * @param {function} args.next
  * @param {object} args.siteConfig
- * @return {object}
+ * @return {object} Response
  */
 
 interface ReloadArgs {
   request: any
   env: any
   next: any
-  siteConfig: Formation.Config
+  siteConfig: FRM.Config
 }
 
 const reload = async ({ request, env, next, siteConfig }: ReloadArgs): Promise<object> => {
@@ -83,14 +83,14 @@ const reload = async ({ request, env, next, siteConfig }: ReloadArgs): Promise<o
       }
     })
   } catch (error) {
-    console.error('Error with reload function: ', error)
+    console.error(config.console.red, '[SSF] Error with reload function: ', error)
 
     const statusCode = typeof error.httpStatusCode === 'number' ? error.httpStatusCode : 500
 
     let html = ''
 
     if (config.renderFunctions?.httpError !== undefined) {
-      html = config.renderFunctions.httpError(statusCode)
+      html = await config.renderFunctions.httpError(statusCode)
     }
 
     return new Response(html, {

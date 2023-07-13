@@ -44,6 +44,8 @@ const _getTag = (type: string = 'text'): string => {
       tag = 'code'
       break
     case 'hyperlink':
+    case 'entry-hyperlink':
+    case 'asset-hyperlink':
       tag = 'a'
       break
     case 'text':
@@ -88,47 +90,35 @@ const _getTag = (type: string = 'text'): string => {
     case 'table-header-cell':
       tag = 'th'
       break
+    default:
+      tag = ''
+      break
   }
 
   return tag
 }
 
 /**
- * Function -
+ * Function - convert to more standard objects
  *
  * @private
  * @param {array<object>} content
- * @return
+ * @return {array<object>}
  */
 
-interface _ContentMark {
-  type: string
-}
-
-interface _ContentItem {
-  tag?: string | string[]
-  link?: string
-  content?: string | _ContentItem[]
-  nodeType?: string
-  value?: string
-  marks?: _ContentMark[]
-  data?: {
-    uri?: string
-  }
-}
-
-interface _ContentReturn {
+interface _RichTextContentReturn {
   tag: string | string[]
   link?: string
-  content: string | _ContentReturn[]
+  internalLink?: any
+  content: string | _RichTextContentReturn[]
 }
 
-const _normalizeContent = (content: _ContentItem[]): _ContentReturn[] | [] => {
+const _normalizeContent = (content: FRM.RichTextContentItem[]): _RichTextContentReturn[] | [] => {
   if (!Array.isArray(content)) {
     return []
   }
 
-  return content.map((c: _ContentItem) => {
+  return content.map((c: FRM.RichTextContentItem) => {
     const {
       nodeType = '',
       data,
@@ -139,8 +129,13 @@ const _normalizeContent = (content: _ContentItem[]): _ContentReturn[] | [] => {
     let {
       tag = '',
       link = '',
+      internalLink,
       content: con
     } = c
+
+    /* Type for filter */
+
+    const filterType = nodeType !== '' ? nodeType : tag
 
     /* Tag */
 
@@ -150,7 +145,7 @@ const _normalizeContent = (content: _ContentItem[]): _ContentReturn[] | [] => {
 
     /* Content */
 
-    let contentValue: string | _ContentReturn[] = ''
+    let contentValue: string | _RichTextContentReturn[] = ''
 
     if (typeof value === 'string' && value !== '') {
       contentValue = value
@@ -167,22 +162,47 @@ const _normalizeContent = (content: _ContentItem[]): _ContentReturn[] | [] => {
       }
     }
 
+    if (typeof con === 'string' && con !== '') {
+      contentValue = con
+    }
+
     if (Array.isArray(con) && con !== undefined) {
       contentValue = _normalizeContent(con)
     }
+
+    const richTextNormalizeContentFilterArgs: FRM.RichTextNormalizeContentFilterArgs = {
+      type: filterType,
+      args: c
+    }
+
+    contentValue = applyFilters('richTextNormalizeContent', contentValue, richTextNormalizeContentFilterArgs)
 
     /* Link */
 
     if (data !== undefined && typeof data === 'object') {
       link = data?.uri !== undefined ? data.uri : ''
+
+      if (nodeType === 'entry-hyperlink' && data?.target !== undefined) {
+        internalLink = data.target
+      }
+
+      if (nodeType === 'asset-hyperlink' && data?.target?.fields?.file?.url !== undefined) {
+        const url: string = data.target.fields.file.url
+
+        link = `https:${url}`
+      }
     }
 
     /* Output */
 
-    const obj: _ContentReturn = { tag, content: contentValue }
+    const obj: _RichTextContentReturn = { tag, content: contentValue }
 
     if (link !== '') {
       obj.link = link
+    }
+
+    if (internalLink !== undefined && typeof internalLink === 'object') {
+      obj.internalLink = internalLink
     }
 
     return obj
@@ -198,14 +218,14 @@ const _normalizeContent = (content: _ContentItem[]): _ContentReturn[] | [] => {
  * @return {string}
  */
 
-interface _ContentProps {
+interface _RichTextContentProps {
   content: Array<{
     tag?: string
     link?: string
-    internalLink?: Formation.InternalLink
+    internalLink?: FRM.InternalLink
     content?: string | object[]
   }>
-  props?: object
+  props: FRM.RichTextProps
   _output?: string
 }
 
@@ -213,7 +233,7 @@ const _getContent = ({
   content = [],
   props,
   _output = ''
-}: _ContentProps): string => {
+}: _RichTextContentProps): string => {
   content.forEach(c => {
     const {
       tag = '',
@@ -233,12 +253,12 @@ const _getContent = ({
       })
     }
 
-    const attrs: string[] = ['data-inline']
+    const attrs: string[] = [`data-rich="${tag}"`]
 
     if (tag === 'a') {
       let anchorLink = link
 
-      if (internalLink !== undefined) {
+      if (internalLink !== undefined && internalLink !== null) {
         anchorLink = getLink(internalLink)
       }
 
@@ -254,7 +274,12 @@ const _getContent = ({
     }
 
     if (typeof cc === 'string') {
-      const ccc = applyFilters('richTextContent', cc, ['richText', c, props])
+      const richTextContentFilterArgs: FRM.RichTextContentFilterArgs = {
+        args: c,
+        props
+      }
+
+      const ccc = applyFilters('richTextContent', cc, richTextContentFilterArgs)
 
       if (typeof ccc === 'string') {
         cc = ccc
@@ -268,10 +293,15 @@ const _getContent = ({
     }
 
     if (outputStr !== '' && (tag === 'blockquote' || tag === 'table')) {
-      outputStr = `<figure data-inline-${tag === 'blockquote' ? 'quote' : 'table'}>${outputStr}</figure>`
+      outputStr = `<figure data-rich="${tag}">${outputStr}</figure>`
     }
 
-    outputStr = applyFilters('richTextContentOutput', outputStr, ['richText', c, props])
+    const richTextContentOutput: FRM.RichTextContentOutputFilterArgs = {
+      args: c,
+      props
+    }
+
+    outputStr = applyFilters('richTextContentOutput', outputStr, richTextContentOutput)
 
     _output += outputStr
   })
@@ -298,30 +328,8 @@ const _getContent = ({
  * @return {string}
  */
 
-interface RichTextProps {
-  args: {
-    type?: string
-    tag?: string
-    content?: string | object[]
-    classes?: string
-    textStyle?: string
-    headingStyle?: string
-    caption?: string
-    align?: string
-    link?: string
-    internalLink?: Formation.InternalLink
-    style?: string
-    attr?: string
-  }
-  parents?: Array<{
-    renderType: string
-    internalLink?: Formation.InternalLink
-    externalLink?: string
-  }>
-}
-
-const richText = (props: RichTextProps = { args: {}, parents: [] }): string => {
-  props = applyFilters('richTextProps', props, ['richText'])
+const richText = (props: FRM.RichTextProps = { args: {}, parents: [] }): string => {
+  props = applyFilters('richTextProps', props, { renderType: 'richText' })
 
   const { args = {} } = props
 
@@ -396,18 +404,16 @@ const richText = (props: RichTextProps = { args: {}, parents: [] }): string => {
 
   /* Attributes */
 
-  const attrs: string[] = []
+  const attrs: string[] = [`data-rich="${tag}"`]
 
   if (heading) {
     attrs.push(`id="${output.replace(/[\s,:;"'“”‘’]/g, '-').toLowerCase()}"`)
-  } else {
-    attrs.push('data-inline')
   }
 
   if (tag === 'a') {
     let anchorLink = link
 
-    if (internalLink !== undefined) {
+    if (internalLink !== undefined && internalLink !== null) {
       anchorLink = getLink(internalLink)
     }
 
@@ -430,6 +436,10 @@ const richText = (props: RichTextProps = { args: {}, parents: [] }): string => {
 
   /* Output */
 
+  const richTextOutputFilterArgs: FRM.RichTextProps = props
+
+  output = applyFilters('richTextOutput', output, richTextOutputFilterArgs)
+
   if (tag !== '') {
     output = `<${tag}${(attrs.length > 0) ? ` ${attrs.join(' ')}` : ''}>${output}</${tag}>`
 
@@ -438,11 +448,9 @@ const richText = (props: RichTextProps = { args: {}, parents: [] }): string => {
         output = `${output}<figcaption>${caption}</figcaption>`
       }
 
-      output = `<figure data-inline-${tag === 'blockquote' ? 'quote' : 'table'}>${output}</figure>`
+      output = `<figure data-rich="${tag}">${output}</figure>`
     }
   }
-
-  output = applyFilters('richTextOutput', output, ['richText', props])
 
   return output
 }

@@ -6,6 +6,7 @@
 
 import getPermalink from '../get-permalink'
 import getSlug from '../get-slug'
+import getProp from '../get-prop'
 
 /**
  * Function - get permalink from external or internal source
@@ -15,9 +16,16 @@ import getSlug from '../get-slug'
  * @return {string}
  */
 
-const getLink = (internalLink: Formation.InternalLink | undefined, externalLink: string = ''): string => {
+const getLink = (internalLink: FRM.InternalLink | undefined, externalLink: string = ''): string => {
   if (internalLink !== undefined) {
-    const slug = getSlug(internalLink)
+    const slugArgs = {
+      id: getProp(internalLink, 'id'),
+      contentType: getProp(internalLink, 'contentType'),
+      linkContentType: getProp(internalLink, 'linkContentType'),
+      slug: getProp(internalLink, 'slug')
+    }
+
+    const slug = getSlug(slugArgs)
 
     if (typeof slug === 'string') {
       return getPermalink(slug)

@@ -5,7 +5,6 @@
 /* Imports */
 
 import { applyFilters } from '../../utils/filters'
-import isString from '../../utils/is-string'
 
 /**
  * Function - output container wrapper
@@ -30,29 +29,8 @@ import isString from '../../utils/is-string'
  * @return {object}
  */
 
-interface Props {
-  args: {
-    tag?: string
-    layout?: string
-    maxWidth?: string
-    paddingTop?: string
-    paddingTopLarge?: string
-    paddingBottom?: string
-    paddingBottomLarge?: string
-    gap?: string
-    gapLarge?: string
-    justify?: string
-    align?: string
-    classes?: string
-    style?: string
-    attr?: string
-    richTextStyles?: boolean
-  }
-  parents?: object[]
-}
-
-const container = (props: Props = { args: {} }): Formation.Return => {
-  props = applyFilters('containerProps', props, ['container'])
+const container = (props: FRM.ContainerProps = { args: {} }): FRM.StartEndReturn => {
+  props = applyFilters('containerProps', props, { renderType: 'container' })
 
   const { args = {} } = props
 
@@ -77,7 +55,7 @@ const container = (props: Props = { args: {} }): Formation.Return => {
 
   const classesArray: string[] = []
 
-  if (isString(classes)) {
+  if (classes !== '') {
     classesArray.push(classes)
   }
 
@@ -87,53 +65,53 @@ const container = (props: Props = { args: {} }): Formation.Return => {
 
   /* Max width */
 
-  if (isString(maxWidth)) {
+  if (maxWidth !== '') {
     classesArray.push(maxWidth)
   }
 
   /* Layout */
 
-  if (isString(layout)) {
+  if (layout !== '') {
     classesArray.push(layout)
   }
 
   /* Gap */
 
-  if (isString(gap)) {
+  if (gap !== '') {
     classesArray.push(gap)
   }
 
-  if (isString(gapLarge) && gapLarge !== gap) {
+  if (gapLarge !== '' && gapLarge !== gap) {
     classesArray.push(gapLarge)
   }
 
   /* Justify */
 
-  if (isString(justify)) {
+  if (justify !== '') {
     classesArray.push(justify)
   }
 
   /* Align */
 
-  if (isString(align)) {
+  if (align !== '') {
     classesArray.push(align)
   }
 
   /* Padding */
 
-  if (isString(paddingTop)) {
+  if (paddingTop !== '') {
     classesArray.push(paddingTop)
   }
 
-  if (isString(paddingTopLarge) && paddingTopLarge !== paddingTop) {
+  if (paddingTopLarge !== '' && paddingTopLarge !== paddingTop) {
     classesArray.push(paddingTopLarge)
   }
 
-  if (isString(paddingBottom)) {
+  if (paddingBottom !== '') {
     classesArray.push(paddingBottom)
   }
 
-  if (isString(paddingBottomLarge) && paddingBottomLarge !== paddingBottom) {
+  if (paddingBottomLarge !== '' && paddingBottomLarge !== paddingBottom) {
     classesArray.push(paddingBottomLarge)
   }
 

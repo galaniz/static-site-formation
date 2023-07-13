@@ -2,9 +2,9 @@
  * Utils - write redirects file
  */
 
-import { config } from '../../config'
 import { writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
+import config from '../../config'
 
 /**
  * Function - write redirects file from config redirects array
@@ -15,7 +15,7 @@ import { resolve } from 'node:path'
 const writeRedirectsFile = async (): Promise<void> => {
   try {
     const redirects = config.redirects.data
-    const path = config.redirects.file
+    const path = resolve(config.redirects.file)
 
     let redirectsData = ''
 
@@ -25,11 +25,11 @@ const writeRedirectsFile = async (): Promise<void> => {
       })
     }
 
-    await writeFile(resolve(path), redirectsData)
+    await writeFile(path, redirectsData)
 
-    console.info(`Successfully wrote ${path}`)
+    console.info(config.console.green, `[SSF] Successfully wrote ${path}`)
   } catch (error) {
-    console.error('Error writing redirects file: ', error)
+    console.error(config.console.red, '[SSF] Error writing redirects file: ', error)
   }
 }
 

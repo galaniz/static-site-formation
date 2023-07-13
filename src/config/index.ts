@@ -19,10 +19,12 @@
  * @prop {string} slug.bases.page.slug
  * @prop {string} slug.bases.page.title
  * @prop {string} slug.bases.page.singular
- * @prop {string} slug.bases.page.archiveId
+ * @prop {string|object} slug.bases.page.archiveId
  * @prop {object} contentTypes
  * @prop {array<string>} contentTypes.partial
  * @prop {array<string>} contentTypes.whole
+ * @prop {array<string>} contentTypes.archive
+ * @prop {object} taxonomy
  * @prop {object} renderTypes
  * @prop {object} renderFunctions
  * @prop {object} ajaxFunctions
@@ -36,8 +38,8 @@
  * @prop {object} formMeta
  * @prop {object} archive
  * @prop {object} archive.ids
- * @prop {object} archive.counts
  * @prop {object} archive.posts
+ * @prop {object} archive.terms
  * @prop {object} env
  * @prop {boolean} env.dev
  * @prop {boolean} env.prod
@@ -60,12 +62,12 @@
  * @prop {object} store.files.archiveIds
  * @prop {string} store.files.archiveIds.data
  * @prop {string} store.files.archiveIds.name
- * @prop {object} store.files.archiveCounts
- * @prop {string} store.files.archiveCounts.data
- * @prop {string} store.files.archiveCounts.name
  * @prop {object} store.files.archivePosts
  * @prop {string} store.files.archivePosts.data
  * @prop {string} store.files.archivePosts.name
+ * @prop {object} store.files.archiveTerms
+ * @prop {string} store.files.archiveTerms.data
+ * @prop {string} store.files.archiveTerms.name
  * @prop {object} store.files.formMeta
  * @prop {string} store.files.formMeta.data
  * @prop {string} store.files.formMeta.name
@@ -102,10 +104,13 @@
  * @prop {boolean} modules.contentfulResolveResponse.local
  * @prop {object} apiKeys
  * @prop {string} apiKeys.smtp2go
+ * @prop {object} console
+ * @prop {string} console.green
+ * @prop {string} console.red
  */
 
-let config: Formation.Config = {
-  namespace: 'ss',
+let config: FRM.Config = {
+  namespace: 'ssf',
   source: 'static',
   title: 'Static Site',
   meta: {
@@ -119,7 +124,8 @@ let config: Formation.Config = {
         slug: '',
         title: '',
         singular: '',
-        archiveId: ''
+        plural: '',
+        archiveId: {}
       }
     }
   },
@@ -131,8 +137,10 @@ let config: Formation.Config = {
     ],
     whole: [
       'page'
-    ]
+    ],
+    archive: []
   },
+  taxonomy: {},
   renderTypes: {},
   renderFunctions: {},
   ajaxFunctions: {},
@@ -149,8 +157,8 @@ let config: Formation.Config = {
   formMeta: {},
   archive: {
     ids: {},
-    counts: {},
-    posts: {}
+    posts: {},
+    terms: {}
   },
   env: {
     dev: true,
@@ -162,7 +170,7 @@ let config: Formation.Config = {
     }
   },
   store: {
-    dir: './src/json/',
+    dir: 'src/json',
     files: {
       slugs: {
         data: '',
@@ -180,13 +188,13 @@ let config: Formation.Config = {
         data: '',
         name: 'archive-ids.json'
       },
-      archiveCounts: {
-        data: '',
-        name: 'archive-counts.json'
-      },
       archivePosts: {
         data: '',
         name: 'archive-posts.json'
+      },
+      archiveTerms: {
+        data: '',
+        name: 'archive-terms.json'
       },
       formMeta: {
         data: '',
@@ -195,18 +203,18 @@ let config: Formation.Config = {
     }
   },
   serverless: {
-    dir: './functions/',
+    dir: 'functions',
     files: {
       ajax: 'ajax/index.js',
-      preview: '_middleware.js',
-      reload: '_middleware.js'
+      preview: '',
+      reload: ''
     },
     routes: {
       reload: []
     }
   },
   redirects: {
-    file: './site/_redirects',
+    file: 'site/_redirects',
     data: []
   },
   cms: {
@@ -218,11 +226,11 @@ let config: Formation.Config = {
     deliveryHost: ''
   },
   static: {
-    dir: './json/',
+    dir: 'json',
     image: {
-      inputDir: './src/assets/img/',
-      outputDir: './site/assets/img/',
-      dataFile: './src/json/image-data.json'
+      inputDir: 'src/assets/img',
+      outputDir: 'site/assets/img',
+      dataFile: 'src/json/image-data.json'
     }
   },
   modules: {
@@ -237,6 +245,10 @@ let config: Formation.Config = {
   },
   apiKeys: {
     smtp2go: ''
+  },
+  console: {
+    green: '\x1b[32m%s\x1b[0m',
+    red: '\x1b[31m%s\x1b[0m'
   }
 }
 
@@ -244,13 +256,15 @@ let config: Formation.Config = {
  * Function - update default config with user options
  *
  * @param {object} args
- * @return {void}
+ * @return {object}
  */
 
-const setConfig = (args: Formation.Config): void => {
+export const setConfig = (args: object): FRM.Config => {
   config = Object.assign(config, args)
+
+  return config
 }
 
 /* Exports */
 
-export { config, setConfig }
+export default config

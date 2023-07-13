@@ -4,7 +4,7 @@
 
 /* Imports */
 
-import { config } from '../../config'
+import config from '../../config'
 
 /**
  * Function - get absolute or relative url

@@ -4,7 +4,7 @@
 
 /* Imports */
 
-import { config } from '../../config'
+import config from '../../config'
 
 /**
  * Function - consistent data object regardless of source
@@ -14,32 +14,15 @@ import { config } from '../../config'
  * @return {object|undefined}
  */
 
-interface ImageData {
-  base?: string
-  alt?: string
-  width?: number
-  height?: number
-  description?: string
-  file?: {
-    url: string
-    details: {
-      image: {
-        width: number
-        height: number
-      }
-    }
-  }
-}
-
-interface NormalData {
+interface _ImageNormalData {
   url: string
   alt: string
   naturalWidth: number
   naturalHeight: number
 }
 
-const _normalizeImageData = (data: ImageData): NormalData | undefined => {
-  if (config.source === 'file') {
+const _normalizeImageData = (data: FRM.ImageData): _ImageNormalData | undefined => {
+  if (config.source === 'static') {
     const {
       base = '',
       alt = '',
@@ -51,7 +34,7 @@ const _normalizeImageData = (data: ImageData): NormalData | undefined => {
       return
     }
 
-    const url = `${config.image.url}${base}.webp`
+    const url = `${config.image.url}${base}`
 
     return {
       url,
@@ -100,20 +83,7 @@ const _normalizeImageData = (data: ImageData): NormalData | undefined => {
  * @return {string|object}
  */
 
-interface Args {
-  data?: ImageData | undefined
-  classes?: string
-  attr?: string
-  width?: string | number
-  height?: string | number
-  returnAspectRatio?: boolean
-  lazy?: boolean
-  quality?: number
-  maxWidth?: number
-  viewportWidth?: number
-}
-
-const getImage = (args: Args = {}): string | { output: string, aspectRatio: number } => {
+const getImage = (args: FRM.ImageArgs = {}): string | { output: string, aspectRatio: number } => {
   const {
     data,
     classes = '',
@@ -173,7 +143,9 @@ const getImage = (args: Args = {}): string | { output: string, aspectRatio: numb
 
   let src = url
 
-  if (config.source !== 'file') {
+  if (config.source === 'static') {
+    src = `${url}.webp`
+  } else {
     src = `https:${url}?fm=webp&q=${quality}&w=${w}&h=${h}`
   }
 
@@ -190,7 +162,7 @@ const getImage = (args: Args = {}): string | { output: string, aspectRatio: numb
   srcset.sort((a, b) => a - b)
 
   srcset = srcset.map(s => {
-    if (config.source === 'file') {
+    if (config.source === 'static') {
       return `${url}${s !== naturalWidth ? `@${s}` : ''}.webp ${s}w`
     } else {
       return `https:${url}?fm=webp&q=${quality}&w=${s}&h=${Math.round(s * aspectRatio)} ${s}w`

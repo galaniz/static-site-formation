@@ -4,7 +4,7 @@
 
 /* Imports */
 
-import { config } from '../../config'
+import config from '../../config'
 import requireFile from '../require-file'
 import getContentfulData from '../get-contentful-data'
 
@@ -14,27 +14,33 @@ import getContentfulData from '../get-contentful-data'
  * @param {object} args
  * @param {object} args.serverlessData
  * @param {object} args.previewData
+ * @param {function} args.filterData
+ * @param {function} args.filterAllData
  * @param {boolean} args.cache
  * @return {object|undefined}
  */
 
-interface Args {
-  serverlessData?: Formation.ServerlessData
-  previewData?: Formation.PreviewData
+interface AllContentfulDataArgs {
+  serverlessData?: FRM.ServerlessData
+  previewData?: FRM.PreviewData
+  filterData?: Function
+  filterAllData?: Function
   cache?: boolean
 }
 
-const getAllContentfulData = async (args: Args): Promise<Formation.AllData | undefined> => {
+const getAllContentfulData = async (args: AllContentfulDataArgs): Promise<FRM.AllData | undefined> => {
   const {
     serverlessData,
     previewData,
+    filterData,
+    filterAllData,
     cache = false
   } = args
 
   try {
     /* Store all data */
 
-    const allData: Formation.AllData = {
+    let allData: FRM.AllData = {
       navigation: [],
       navigationItem: [],
       redirect: [],
@@ -43,25 +49,7 @@ const getAllContentfulData = async (args: Args): Promise<Formation.AllData | und
       }
     }
 
-    /* Get partial data */
-
-    const partial = config.contentTypes.partial
-
-    for (let i = 0; i < partial.length; i += 1) {
-      const contentType = partial[i]
-
-      allData[contentType] = []
-
-      const key = `all_${contentType}`
-      const params = { content_type: contentType }
-      const data = await getContentfulData(key, params, cache)
-
-      if (data?.items !== undefined) {
-        allData[contentType].push(data.items)
-      }
-    }
-
-    /* Get entry data if serverless or preview data */
+    /* Get single entry data if serverless or preview data */
 
     let entry: { items?: any[] } | undefined
 
@@ -101,6 +89,34 @@ const getAllContentfulData = async (args: Args): Promise<Formation.AllData | und
       }
     }
 
+    /* Get partial data - not serverless */
+
+    if (serverlessData === undefined || entry === undefined) {
+      const partial = config.contentTypes.partial
+
+      for (let i = 0; i < partial.length; i += 1) {
+        const contentType = partial[i]
+
+        allData[contentType] = []
+
+        const key = `all_${contentType}`
+        const params = {
+          content_type: contentType,
+          include: 5
+        }
+
+        let data = await getContentfulData(key, params, cache)
+
+        if (typeof filterData === 'function') {
+          data = filterData(data, serverlessData, previewData)
+        }
+
+        if (data?.items !== undefined) {
+          allData[contentType].push(data.items)
+        }
+      }
+    }
+
     /* Get whole data (for page generation) - not serverless or preview */
 
     if ((serverlessData === undefined && previewData === undefined) || entry === undefined) {
@@ -112,8 +128,16 @@ const getAllContentfulData = async (args: Args): Promise<Formation.AllData | und
         allData.content[contentType] = []
 
         const key = `all_${contentType}`
-        const params = { content_type: contentType }
-        const data = await getContentfulData(key, params, cache)
+        const params = {
+          content_type: contentType,
+          include: 10
+        }
+
+        let data = await getContentfulData(key, params, cache)
+
+        if (typeof filterData === 'function') {
+          data = filterData(data, serverlessData, previewData)
+        }
 
         if (data?.items !== undefined) {
           allData.content[contentType].push(data.items)
@@ -121,11 +145,17 @@ const getAllContentfulData = async (args: Args): Promise<Formation.AllData | und
       }
     }
 
+    /* Filter all data */
+
+    if (typeof filterAllData === 'function') {
+      allData = filterAllData(allData, serverlessData, previewData)
+    }
+
     /* Output */
 
     return allData
   } catch (error) {
-    console.error('Error getting all Contentful data: ', error)
+    console.error(config.console.red, '[SSF] Error getting all Contentful data: ', error)
   }
 }
 

@@ -4,7 +4,8 @@
 
 /* Imports */
 
-import { config } from '../../config'
+import config from '../../config'
+import getArchiveId from '../get-archive-id'
 import getPermalink from '../get-permalink'
 import getSlug from '../get-slug'
 
@@ -15,22 +16,22 @@ import getSlug from '../get-slug'
  * @return {object}
  */
 
-interface Return {
+interface ArchiveLinkReturn {
   title: string
   link: string
 }
 
-const getArchiveLink = (contentType: string = ''): Return => {
+const getArchiveLink = (contentType: string = '', linkContentType: string = ''): ArchiveLinkReturn => {
   let archiveLink = ''
   let archiveTitle = ''
 
   if (config.slug.bases[contentType] !== undefined) {
     archiveTitle = config.slug.bases[contentType].title
 
-    const archiveId: string | undefined = config.slug.bases[contentType].archiveId
+    const archiveId = getArchiveId(contentType, linkContentType)
     const archiveSlug: string = config.slug.bases[contentType].slug
 
-    if (archiveId !== '' && archiveId !== undefined && archiveSlug !== '') {
+    if (archiveId !== '' && archiveSlug !== '') {
       const s = getSlug({
         id: archiveId,
         slug: archiveSlug,

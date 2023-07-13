@@ -5,7 +5,7 @@
 /* Imports */
 
 import escape from 'validator/es/lib/escape'
-import { config } from '../../config'
+import config from '../../config'
 import getPermalink from '../../utils/get-permalink'
 import requireFile from '../../utils/require-file'
 
@@ -72,7 +72,7 @@ const _recurseEmailHtml = (data: object, output: { html: string, plain: string }
  * @param {object} args
  * @param {string} args.id
  * @param {array<object>} args.inputs
- * @return {object}
+ * @return {object} Response
  */
 
 interface SendFormBody {
@@ -85,7 +85,7 @@ interface SendFormBody {
   custom_headers?: any[]
 }
 
-const sendForm = async ({ id, inputs }: Formation.AjaxActionArgs): Promise<Formation.AjaxActionReturn> => {
+const sendForm = async ({ id, inputs }: FRM.AjaxActionArgs): Promise<FRM.AjaxActionReturn> => {
   /* Id required */
 
   if (id === undefined || id === '') {
@@ -147,6 +147,17 @@ const sendForm = async ({ id, inputs }: Formation.AjaxActionArgs): Promise<Forma
 
   Object.keys(inputs).forEach((name) => {
     const input = inputs[name]
+
+    /* Skip if exclude true */
+
+    const exclude = input?.exclude !== undefined ? input.exclude : false
+
+    if (exclude) {
+      return
+    }
+
+    /* Variables */
+
     const inputType = input.type
     const inputLabel = input.label.trim()
     const inputValue = input.value
@@ -156,11 +167,11 @@ const sendForm = async ({ id, inputs }: Formation.AjaxActionArgs): Promise<Forma
     let inputValueStr = ''
 
     if (Array.isArray(inputValue)) {
-      inputValueStr = inputValue.map(v => escape(v + '')).join('<br>')
+      inputValueStr = inputValue.map(v => escape(v.trim() + '')).join('<br>')
     }
 
     if (typeof inputValue === 'string') {
-      inputValueStr = escape(inputValue + '')
+      inputValueStr = escape(inputValue.trim() + '')
     }
 
     /* Subject */

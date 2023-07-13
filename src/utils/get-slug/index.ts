@@ -4,7 +4,8 @@
 
 /* Imports */
 
-import { config } from '../../config'
+import config from '../../config'
+import getArchiveId from '../get-archive-id'
 
 /**
  * Function - recurse to get ascendents
@@ -40,10 +41,11 @@ interface SlugArgs {
   slug: string
   page?: number
   contentType: string
+  linkContentType?: string
   returnParents?: boolean
 }
 
-interface SlugParent extends Formation.SlugBase {
+interface SlugParent extends FRM.SlugBase {
   contentType?: string
   id?: string
 }
@@ -54,6 +56,7 @@ const getSlug = (args: SlugArgs): string | { slug: string, parents: object[] } =
     slug = '',
     page = 0,
     contentType = 'page',
+    linkContentType = 'default',
     returnParents = false
   } = args
 
@@ -65,14 +68,18 @@ const getSlug = (args: SlugArgs): string | { slug: string, parents: object[] } =
 
   /* Slug base */
 
-  const slugBase: Formation.SlugBase = config.slug.bases[contentType]
+  const slugBase: FRM.SlugBase = config.slug.bases[contentType]
+
+  /* Archive id */
+
+  const archiveId = getArchiveId(contentType, linkContentType)
 
   /* Parents */
 
-  let p: string | Formation.SlugBase[] = []
+  let p: string | FRM.SlugBase[] = []
   let pp: SlugParent[] = []
 
-  _getParentSlug(contentType === 'page' ? id : slugBase.archiveId, p)
+  _getParentSlug(contentType === 'page' ? id : archiveId, p)
 
   if (p.length > 0) {
     pp = p
@@ -89,11 +96,11 @@ const getSlug = (args: SlugArgs): string | { slug: string, parents: object[] } =
   /* Parents and slug return */
 
   if (returnParents) {
-    if (slugBase?.slug !== undefined && slugBase?.archiveId !== undefined) {
-      pp.push({
+    if (slugBase?.slug !== undefined && archiveId !== '') {
+      pp.unshift({
         ...slugBase,
         contentType: 'page',
-        id: slugBase.archiveId
+        id: archiveId
       })
     }
 

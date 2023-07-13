@@ -8,7 +8,7 @@
  * @type {object}
  */
 
-const actions: object = {}
+let actions: object = {}
 
 /**
  * Function - add action to action object
@@ -68,7 +68,7 @@ const removeAction = (name: string, action: Function): boolean => {
  * @return {void}
  */
 
-const doActions = (name: string, ...args: any[]): void => {
+const doActions = (name: string, ...args: any): void => {
   const callbacks = actions[name]
 
   if (Array.isArray(callbacks)) {
@@ -81,6 +81,16 @@ const doActions = (name: string, ...args: any[]): void => {
   }
 }
 
+/**
+ * Function - empty actions object
+ *
+ * @return {void}
+ */
+
+const resetActions = (): void => {
+  actions = {}
+}
+
 /* Exports */
 
-export { addAction, removeAction, doActions }
+export { addAction, removeAction, doActions, resetActions }

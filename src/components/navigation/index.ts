@@ -13,17 +13,17 @@ import getProp from '../../utils/get-prop'
  * Class - recursively generate navigation output
  */
 
-interface ItemBreadcrumb extends Formation.NavigationItem {
+interface NavigationBreadcrumbItem extends FRM.NavigationItem {
   slug: string
   contentType: string
 }
 
-interface Args {
-  navs: Formation.Navigation[]
-  items: Formation.NavigationItem[]
+interface NavigationArgs {
+  navigations: FRM.Navigation[]
+  items: FRM.NavigationItem[]
 }
 
-interface RecurseArgs {
+interface NavigationRecurseArgs {
   listClass?: string
   listAttr?: string
   itemClass?: string
@@ -39,7 +39,7 @@ interface RecurseArgs {
   filterAfterLinkText?: Function
 }
 
-interface BreadcrumbRecurseArgs extends RecurseArgs {
+interface NavigationBreadcrumbRecurseArgs extends NavigationRecurseArgs {
   currentClass?: string
   a11yClass?: string
 }
@@ -49,25 +49,25 @@ class Navigation {
    * Set properties and initialize
    *
    * @param {object} args
-   * @param {array<object>} args.navs
+   * @param {array<object>} args.navigations
    * @param {array<object>} args.items
    * @return {void|boolean} - False if init errors
    */
 
-  public navs: Formation.Navigation[]
-  public items: Formation.NavigationItem[]
+  public navigations: FRM.Navigation[]
+  public items: FRM.NavigationItem[]
   public init: boolean
 
   private _itemsById: object
-  private _navsByLocation: object
+  private _navigationsByLocation: object
 
-  constructor (args: Args) {
+  constructor (args: NavigationArgs) {
     const {
-      navs = [],
+      navigations = [],
       items = []
     } = args
 
-    this.navs = navs
+    this.navigations = navigations
     this.items = items
 
     /**
@@ -80,13 +80,13 @@ class Navigation {
     this._itemsById = {}
 
     /**
-     * Store navs by location
+     * Store navigations by location
      *
      * @private
      * @type {object}
      */
 
-    this._navsByLocation = {}
+    this._navigationsByLocation = {}
 
     /* Initialize */
 
@@ -103,7 +103,7 @@ class Navigation {
   _initialize (): boolean {
     /* Check that required items exist */
 
-    if (this.navs.length === 0 || this.items.length === 0) {
+    if (this.navigations.length === 0 || this.items.length === 0) {
       return false
     }
 
@@ -117,9 +117,9 @@ class Navigation {
       }
     })
 
-    /* Navs by location */
+    /* Navigations by location */
 
-    this.navs.forEach(nav => {
+    this.navigations.forEach(nav => {
       const navFields = Object.assign({
         title: '',
         location: '',
@@ -128,7 +128,7 @@ class Navigation {
 
       const { title, location, items } = navFields
 
-      this._navsByLocation[location.toLowerCase().replace(/ /g, '')] = {
+      this._navigationsByLocation[location.toLowerCase().replace(/ /g, '')] = {
         title,
         items
       }
@@ -147,7 +147,7 @@ class Navigation {
    * @return {object}
    */
 
-  _getItemInfo (item: Formation.NavigationItem): Formation.NavigationItem {
+  _getItemInfo (item: FRM.NavigationItem): FRM.NavigationItem {
     const fields = getProp(item)
 
     const {
@@ -171,7 +171,7 @@ class Navigation {
       id = getProp(internalLink, 'id')
     }
 
-    const props: Formation.NavigationItem = {
+    const props: FRM.NavigationItem = {
       id,
       title,
       link,
@@ -198,7 +198,7 @@ class Navigation {
    * @return {void}
    */
 
-  _recurseItemChildren (children: Formation.NavigationItem[] = [], store: object[] = []): void {
+  _recurseItemChildren (children: FRM.NavigationItem[] = [], store: object[] = []): void {
     children.forEach(child => {
       const info = this._getItemInfo(child)
 
@@ -215,7 +215,7 @@ class Navigation {
    * @return {array<object>}
    */
 
-  _getItems (items: Formation.NavigationItem[] = [], current: string = ''): Formation.NavigationItem[] {
+  _getItems (items: FRM.NavigationItem[] = [], current: string = ''): FRM.NavigationItem[] {
     if (items.length === 0) {
       return []
     }
@@ -263,7 +263,7 @@ class Navigation {
    * @return {void}
    */
 
-  _recurseOutput = (items: Formation.NavigationItem[] = [], output: { html: string }, depth: number = -1, args: RecurseArgs): void => {
+  _recurseOutput = (items: FRM.NavigationItem[] = [], output: { html: string }, depth: number = -1, args: NavigationRecurseArgs): void => {
     depth += 1
 
     const listClasses = args.listClass !== undefined ? ` class="${args.listClass}"` : ''
@@ -387,12 +387,12 @@ class Navigation {
    * @return {string} HTML - ul
    */
 
-  getOutput (location: string = '', current: string = '', args: RecurseArgs): string {
-    if (this._navsByLocation?.[location] === null) {
+  getOutput (location: string = '', current: string = '', args: NavigationRecurseArgs): string {
+    if (this._navigationsByLocation?.[location] === undefined) {
       return ''
     }
 
-    const items = this._navsByLocation[location].items
+    const items = this._navigationsByLocation[location].items
     const normalizedItems = this._getItems(items, current)
 
     args = Object.assign({
@@ -429,7 +429,7 @@ class Navigation {
    * @return {string} HTML - ol
    */
 
-  getBreadcrumbs (items: ItemBreadcrumb[] = [], current: string = '', args: BreadcrumbRecurseArgs): string {
+  getBreadcrumbs (items: NavigationBreadcrumbItem[] = [], current: string = '', args: NavigationBreadcrumbRecurseArgs): string {
     /* Items required */
 
     if (items.length === 0) {
@@ -494,7 +494,8 @@ class Navigation {
       const slug = getSlug({
         id: item.id,
         slug: item.slug,
-        contentType: item.contentType
+        contentType: item.contentType,
+        linkContentType: item?.linkContentType
       })
 
       const permalink = typeof slug === 'string' ? getPermalink(slug) : ''

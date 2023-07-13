@@ -4,7 +4,7 @@
 
 /* Imports */
 
-import { config } from '../../config'
+import config from '../../config'
 import requireFile from '../../utils/require-file'
 
 /**
@@ -16,20 +16,20 @@ import requireFile from '../../utils/require-file'
  * @return {object}
  */
 
-interface Params {
+interface ContentfulDataParams {
   [key: string]: string | number | boolean
 }
 
-interface Items {
+interface ContentfulDataItems {
   items?: any[]
   [key: string]: any
 }
 
 const getContentfulData = async (
   key: string = '',
-  params: Params = {},
+  params: ContentfulDataParams = {},
   cache: boolean = false
-): Promise<Items> => {
+): Promise<ContentfulDataItems> => {
   try {
     /* Resolve module required */
 
@@ -63,7 +63,7 @@ const getContentfulData = async (
 
     /* Credentials */
 
-    const credentials: Formation.Cms = config.cms
+    const credentials: FRM.Cms = config.cms
 
     const {
       space,
@@ -114,7 +114,7 @@ const getContentfulData = async (
 
     return data
   } catch (error) {
-    console.error('Error fetching Contentful data: ', error)
+    console.error(config.console.red, '[SSF] Error fetching Contentful data: ', error)
 
     return {}
   }

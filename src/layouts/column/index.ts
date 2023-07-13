@@ -5,7 +5,6 @@
 /* Imports */
 
 import { applyFilters } from '../../utils/filters'
-import isString from '../../utils/is-string'
 
 /**
  * Function - output column wrapper
@@ -32,32 +31,8 @@ import isString from '../../utils/is-string'
  * @return {object}
  */
 
-interface Props {
-  args: {
-    tag?: string
-    width?: string
-    widthSmall?: string
-    widthMedium?: string
-    widthLarge?: string
-    widthCustom?: {
-      class?: string
-      default: string
-      small: string
-      medium: string
-      large: string
-    }
-    justify?: string
-    align?: string
-    grow?: boolean
-    classes?: string
-    style?: string
-    attr?: string
-  }
-  parents?: object[]
-}
-
-const column = (props: Props = { args: {} }): Formation.Return => {
-  props = applyFilters('columnProps', props, ['column'])
+const column = (props: FRM.ColumnProps = { args: {} }): FRM.StartEndReturn => {
+  props = applyFilters('columnProps', props, { renderType: 'column' })
 
   const { args = {} } = props
 
@@ -79,37 +54,37 @@ const column = (props: Props = { args: {} }): Formation.Return => {
 
   const classesArray: string[] = []
 
-  if (isString(classes)) {
+  if (classes !== '') {
     classesArray.push(classes)
   }
 
   /* Width */
 
-  if (isString(width)) {
+  if (width !== '') {
     classesArray.push(width)
   }
 
-  if (isString(widthSmall) && widthSmall !== width) {
+  if (widthSmall !== '' && widthSmall !== width) {
     classesArray.push(widthSmall)
   }
 
-  if (isString(widthMedium) && widthMedium !== widthSmall) {
+  if (widthMedium !== '' && widthMedium !== widthSmall) {
     classesArray.push(widthMedium)
   }
 
-  if (isString(widthLarge) && widthLarge !== widthMedium) {
+  if (widthLarge !== '' && widthLarge !== widthMedium) {
     classesArray.push(widthLarge)
   }
 
   /* Justify */
 
-  if (isString(justify)) {
+  if (justify !== '') {
     classesArray.push(justify)
   }
 
   /* Align */
 
-  if (isString(align)) {
+  if (align !== '') {
     classesArray.push(align)
   }
 
