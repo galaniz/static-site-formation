@@ -18,7 +18,7 @@ const getArchiveId = (contentType: string = '', linkContentType: string = 'defau
   let id = ''
 
   if (config.slug.bases[contentType] !== undefined) {
-    const archiveId: string | object | undefined = config.slug.bases[contentType].archiveId
+    const archiveId: string | FRM.AnyObject | undefined = config.slug.bases[contentType].archiveId
 
     if (typeof archiveId === 'object' && archiveId !== undefined) {
       id = archiveId[linkContentType]

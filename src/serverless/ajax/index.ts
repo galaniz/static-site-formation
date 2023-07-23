@@ -4,78 +4,35 @@
 
 /* Imports */
 
-import config, { setConfig } from '../../config'
+import { setConfig } from '../../config'
+import { setActions } from '../../utils/actions'
+import { applyFilters, setFilters } from '../../utils/filters'
 import sendForm from '../send-form'
 
 /**
- * Function - normalize inputs body data to reflect nested structures
+ * Class - custom exception to include status code
  *
  * @private
- * @param {object} data
- * @return {object}
  */
 
-interface _AjaxNormalData extends FRM.AjaxActionData {
-  action?: string
-}
+class _CustomError extends Error {
+  /**
+   * Set properties
+   *
+   * @param {object} args
+   * @param {string} args.message
+   * @param {number} args.code
+   * @return {void}
+   */
 
-const _normalizeBody = (data: object = {}): _AjaxNormalData => {
-  const normalData = {
-    id: '',
-    inputs: {}
+  public message: string
+  public httpStatusCode: number
+
+  constructor ({ message = '', code = 500 }) {
+    super(message)
+    this.message = message
+    this.httpStatusCode = code
   }
-
-  Object.keys(data).forEach((d) => {
-    if (d.startsWith('inputs')) {
-      const key = d.replace('inputs', '').replace('][', '.').replace('[', '').replace(']', '')
-      const keys = key.split('.')
-      const lastIndex = keys.length - 1
-      const obj = {}
-
-      let lastLevel = obj
-
-      keys.forEach((k, i) => {
-        if (i === 0) {
-          return
-        }
-
-        if (lastLevel?.[k] === undefined) {
-          lastLevel[k] = i === lastIndex ? data[d] : {}
-        }
-
-        lastLevel = obj[k]
-      })
-
-      if (normalData.inputs?.[keys[0]] !== undefined) {
-        const existingObj = normalData.inputs?.[keys[0]]
-
-        Object.keys(obj).forEach((o) => {
-          existingObj[o] = obj[o]
-        })
-      } else {
-        normalData.inputs[keys[0]] = obj
-      }
-    } else {
-      normalData[d] = data[d]
-    }
-  })
-
-  return normalData
-}
-
-/**
- * Function - custom exception to include status code
- *
- * @private
- * @param {object} args
- * @param {string} args.message
- * @param {number} args.code
- * @return {void}
- */
-
-function CustomError ({ message = '', code = 500 }: { message: string, code: number }): void {
-  this.message = message
-  this.httpStatusCode = code
 }
 
 /**
@@ -89,30 +46,28 @@ function CustomError ({ message = '', code = 500 }: { message: string, code: num
  */
 
 interface AjaxArgs {
-  request: any
-  env: any
+  request: Request
+  env: FRM.EnvCloudflare
   siteConfig: FRM.Config
 }
 
-const ajax = async ({ request, env, siteConfig }: AjaxArgs): Promise<object> => {
+const ajax = async ({ request, env, siteConfig }: AjaxArgs): Promise<Response> => {
   try {
     /* Config */
 
     setConfig(siteConfig)
+    setFilters(siteConfig.filters)
+    setActions(siteConfig.actions)
 
-    config.env.dev = env.ENVIRONMENT === 'dev'
-    config.env.prod = env.ENVIRONMENT === 'production'
+    if (typeof env === 'object' && env !== undefined && env !== null) {
+      siteConfig.env.dev = env.ENVIRONMENT === 'dev'
+      siteConfig.env.prod = env.ENVIRONMENT === 'production'
+      siteConfig.apiKeys.smtp2go = env.SMPT2GO_API_KEY !== undefined ? env.SMPT2GO_API_KEY : ''
+    }
 
     /* Get form data */
 
-    const formData = await request.formData()
-    const body = {}
-
-    for (const entry of formData.entries()) {
-      body[entry[0]] = entry[1]
-    }
-
-    const data = _normalizeBody(body)
+    const data = await request.json()
 
     /* Inputs required */
 
@@ -122,15 +77,20 @@ const ajax = async ({ request, env, siteConfig }: AjaxArgs): Promise<object> => 
 
     /* Honeypot check */
 
-    const honeypotName = `${config.namespace}_asi`
+    const honeypotName = `${siteConfig.namespace}_asi`
 
     if (data.inputs?.[honeypotName] !== undefined) {
       const honeypotValue = data.inputs[honeypotName].value
 
       if (honeypotValue !== '' && honeypotValue !== undefined) {
-        return new Response(JSON.stringify({ success: 'Form successully sent.' }), {
-          status: 200
-        })
+        const options = {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+
+        return new Response(JSON.stringify({ success: 'Form successully sent' }), options)
       }
 
       data.inputs[honeypotName].exclude = true
@@ -158,9 +118,18 @@ const ajax = async ({ request, env, siteConfig }: AjaxArgs): Promise<object> => 
       res = await sendForm({ ...data, env, request })
     }
 
-    if (config.ajaxFunctions?.[action] !== undefined && typeof config.ajaxFunctions?.[action] === 'function') {
-      res = await config.ajaxFunctions[action]({ ...data, env, request })
+    if (siteConfig.ajaxFunctions?.[action] !== undefined) {
+      res = await siteConfig.ajaxFunctions[action]({ ...data, env, request })
     }
+
+    const ajaxResFilterArgs: FRM.AjaxActionArgs = {
+      action,
+      ...data,
+      env,
+      request
+    }
+
+    res = applyFilters('ajaxRes', res, ajaxResFilterArgs)
 
     /* Result error */
 
@@ -169,13 +138,16 @@ const ajax = async ({ request, env, siteConfig }: AjaxArgs): Promise<object> => 
     }
 
     if (res?.error !== undefined && typeof res?.error === 'string') {
-      throw new CustomError(res.error)
+      throw new _CustomError(res.error)
     }
 
     /* Result success */
 
-    const options: { status: number, headers?: any } = {
-      status: 200
+    const options: { status: number, headers?: { [key: string]: string } } = {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json'
+      }
     }
 
     let message = ''
@@ -188,19 +160,22 @@ const ajax = async ({ request, env, siteConfig }: AjaxArgs): Promise<object> => 
       }
 
       if (headers !== undefined) {
-        options.headers = headers
+        options.headers = { ...options.headers, ...headers }
       }
     }
 
-    return new Response(message, options)
-  } catch (error) {
-    console.error(config.console.red, '[SSF] Error with ajax function: ', error)
+    return new Response(JSON.stringify({ success: message }), options)
+  } catch (error: any) {
+    console.error(siteConfig.console.red, '[SSF] Error with ajax function: ', error)
 
-    const statusCode = typeof error.httpStatusCode === 'number' ? error.httpStatusCode : 500
+    const options = {
+      status: typeof error.httpStatusCode === 'number' ? error.httpStatusCode : 500,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }
 
-    return new Response(error.message, {
-      status: statusCode
-    })
+    return new Response(JSON.stringify({ error: error.message }), options)
   }
 }
 

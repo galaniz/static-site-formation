@@ -13,8 +13,8 @@
  */
 
 const resolveInternalLinks = (
-  data: object = {},
-  currentData: object = {},
+  data: FRM.AnyObject = {},
+  currentData: FRM.AnyObject = {},
   props: string[] = ['internalLink'],
   filterValue?: Function
 ): void => {

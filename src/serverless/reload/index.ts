@@ -20,13 +20,13 @@ import render from '../../render'
  */
 
 interface ReloadArgs {
-  request: any
-  env: any
-  next: any
+  request: Request
+  env: FRM.EnvCloudflare
+  next: Function
   siteConfig: FRM.Config
 }
 
-const reload = async ({ request, env, next, siteConfig }: ReloadArgs): Promise<object> => {
+const reload = async ({ request, env, next, siteConfig }: ReloadArgs): Promise<Response> => {
   try {
     /* Query */
 
@@ -54,8 +54,10 @@ const reload = async ({ request, env, next, siteConfig }: ReloadArgs): Promise<o
 
     setConfig(siteConfig)
 
-    config.env.dev = env.ENVIRONMENT === 'dev'
-    config.env.prod = env.ENVIRONMENT === 'production'
+    if (typeof env === 'object' && env !== undefined && env !== null) {
+      config.env.dev = env.ENVIRONMENT === 'dev'
+      config.env.prod = env.ENVIRONMENT === 'production'
+    }
 
     /* Data params */
 
@@ -79,10 +81,10 @@ const reload = async ({ request, env, next, siteConfig }: ReloadArgs): Promise<o
     return new Response(html, {
       status: 200,
       headers: {
-        'content-type': 'text/html;charset=UTF-8'
+        'Content-Type': 'text/html;charset=UTF-8'
       }
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error(config.console.red, '[SSF] Error with reload function: ', error)
 
     const statusCode = typeof error.httpStatusCode === 'number' ? error.httpStatusCode : 500
@@ -94,7 +96,10 @@ const reload = async ({ request, env, next, siteConfig }: ReloadArgs): Promise<o
     }
 
     return new Response(html, {
-      status: statusCode
+      status: statusCode,
+      headers: {
+        'Content-Type': 'text/html;charset=UTF-8'
+      }
     })
   }
 }

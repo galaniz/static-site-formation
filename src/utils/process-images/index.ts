@@ -22,8 +22,16 @@ interface ProcessImagesSharp {
   newPath: string
 }
 
+interface ProcessImagesStore {
+  [key: string]: {
+    base: string
+    width: number
+    height: number
+  }
+}
+
 const processImages = async (): Promise<void> => {
-  const store = {}
+  const store: ProcessImagesStore = {}
 
   try {
     const inputDir = config.static.image.inputDir
@@ -59,7 +67,7 @@ const processImages = async (): Promise<void> => {
         const metadata = await sharp(path).metadata()
         const id = `${folders !== '' ? `${folders}/` : ''}${base}`
 
-        const { width = 0, height } = metadata
+        const { width = 0, height = 0 } = metadata
 
         store[id] = { base: id, width, height }
 

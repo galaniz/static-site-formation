@@ -5,7 +5,6 @@
 /* Imports */
 
 import config from '../../config'
-import requireFile from '../require-file'
 import getContentfulData from '../get-contentful-data'
 
 /**
@@ -16,7 +15,6 @@ import getContentfulData from '../get-contentful-data'
  * @param {object} args.previewData
  * @param {function} args.filterData
  * @param {function} args.filterAllData
- * @param {boolean} args.cache
  * @return {object|undefined}
  */
 
@@ -25,7 +23,6 @@ interface AllContentfulDataArgs {
   previewData?: FRM.PreviewData
   filterData?: Function
   filterAllData?: Function
-  cache?: boolean
 }
 
 const getAllContentfulData = async (args: AllContentfulDataArgs): Promise<FRM.AllData | undefined> => {
@@ -33,8 +30,7 @@ const getAllContentfulData = async (args: AllContentfulDataArgs): Promise<FRM.Al
     serverlessData,
     previewData,
     filterData,
-    filterAllData,
-    cache = false
+    filterAllData
   } = args
 
   try {
@@ -58,7 +54,8 @@ const getAllContentfulData = async (args: AllContentfulDataArgs): Promise<FRM.Al
       let id = ''
 
       if (serverlessData !== undefined) {
-        const slugsJson = requireFile(`${config.store.dir}${config.store.files.slugs.name}`)
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const slugsJson = require(`${config.store.dir}${config.store.files.slugs.name}`)
         const path = serverlessData.path
 
         if (slugsJson?.[path] !== undefined) {
@@ -81,7 +78,7 @@ const getAllContentfulData = async (args: AllContentfulDataArgs): Promise<FRM.Al
           include: 10
         }
 
-        entry = await getContentfulData(key, params, cache)
+        entry = await getContentfulData(key, params)
 
         if (entry?.items !== undefined) {
           allData.content[contentType] = entry.items
@@ -105,7 +102,7 @@ const getAllContentfulData = async (args: AllContentfulDataArgs): Promise<FRM.Al
           include: 5
         }
 
-        let data = await getContentfulData(key, params, cache)
+        let data = await getContentfulData(key, params)
 
         if (typeof filterData === 'function') {
           data = filterData(data, serverlessData, previewData)
@@ -133,7 +130,7 @@ const getAllContentfulData = async (args: AllContentfulDataArgs): Promise<FRM.Al
           include: 10
         }
 
-        let data = await getContentfulData(key, params, cache)
+        let data = await getContentfulData(key, params)
 
         if (typeof filterData === 'function') {
           data = filterData(data, serverlessData, previewData)

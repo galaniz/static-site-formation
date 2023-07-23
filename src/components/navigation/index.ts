@@ -58,8 +58,8 @@ class Navigation {
   public items: FRM.NavigationItem[]
   public init: boolean
 
-  private _itemsById: object
-  private _navigationsByLocation: object
+  private _itemsById: { [key: string]: FRM.NavigationItem }
+  private _navigationsByLocation: { [key: string]: { title: string, items: FRM.NavigationItem[] } }
 
   constructor (args: NavigationArgs) {
     const {
@@ -179,7 +179,7 @@ class Navigation {
     }
 
     if (children !== undefined) {
-      const c = []
+      const c: FRM.NavigationItem[] = []
 
       this._recurseItemChildren(children, c)
 
@@ -245,8 +245,14 @@ class Navigation {
 
       const obj = this._itemsById[id]
 
-      obj.current = externalLink !== '' ? false : obj.link === current
-      obj.descendentCurrent = current.includes(obj.link)
+      if (obj?.link !== undefined) {
+        obj.current = obj.link === current
+        obj.descendentCurrent = current.includes(obj.link)
+      }
+
+      if (externalLink !== '') {
+        obj.current = false
+      }
 
       return this._itemsById[id]
     })

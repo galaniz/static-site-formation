@@ -10,8 +10,8 @@
  * @return {object|array<object>}
  */
 
-const undefineProps = (obj: object | object[], props: string[] = []): object | object[] => {
-  if (typeof obj !== 'object' || obj === null) {
+const undefineProps = (obj: FRM.AnyObject | FRM.AnyObject[], props: string[] = []): FRM.AnyObject | FRM.AnyObject[] => {
+  if (typeof obj !== 'object' || obj === null || obj === undefined) {
     return obj
   }
 
@@ -21,7 +21,11 @@ const undefineProps = (obj: object | object[], props: string[] = []): object | o
 
   objArr = structuredClone(objArr)
 
-  objArr.forEach((o: object) => {
+  objArr.forEach((o: FRM.AnyObject) => {
+    if (typeof o !== 'object' || o === null || o === undefined) {
+      return
+    }
+
     Object.keys(o).forEach((k) => {
       if (props.includes(k) && o[k] !== undefined) {
         o[k] = undefined

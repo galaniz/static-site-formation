@@ -8,7 +8,7 @@
  * @type {object}
  */
 
-let filters: object = {}
+let filters: FRM.AnyObject = {}
 
 /**
  * Function - add filter to filters object
@@ -93,6 +93,31 @@ const resetFilters = (): void => {
   filters = {}
 }
 
+/**
+ * Function - fill filters object
+ *
+ * @param {object} args
+ * @return {boolean}
+ */
+
+const setFilters = (args: { [key: string]: Function }): boolean => {
+  if (typeof args !== 'object' || args === undefined || args === null) {
+    return false
+  }
+
+  if (Object.keys(args).length === 0) {
+    return false
+  }
+
+  resetFilters()
+
+  Object.keys(args).forEach((a) => {
+    addFilter(a, args[a])
+  })
+
+  return true
+}
+
 /* Exports */
 
-export { addFilter, removeFilter, applyFilters, resetFilters }
+export { addFilter, removeFilter, applyFilters, resetFilters, setFilters }

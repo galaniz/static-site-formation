@@ -1,23 +1,33 @@
 {
   "name": "static-site-formation",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "types": "frm.d.ts",
-  "scripts": {
-    "build": "tsc && npx ts-standard"
+  "description": "Helpers for static sites built with Contentful or from the file system",
+  "main": "./lib/index.js",
+  "types": "index.d.ts",
+  "engines": {
+    "node": ">=17"
   },
-  "author": "",
-  "license": "ISC",
+  "scripts": {
+    "build": "npx tsc --module commonjs --outDir cjs/ && npx tsc --module esnext --outDir esm/ && npx tsc --module commonjs --esModuleInterop --outDir lib/",
+    "lint": "npx ts-standard"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/galaniz/static-site-formation.git"
+  },
+  "author": "Graciela Alaniz (https://alanizcreative.com/)",
+  "license": "MIT",
   "devDependencies": {
-    "@types/node": "^20.4.1",
+    "@types/contentful-resolve-response": "^0.1.31",
+    "@types/node": "^20.4.2",
+    "@types/uuid": "^9.0.2",
     "jsdoc": "^4.0.2",
-    "sharp": "^0.32.1",
+    "sharp": "^0.32.3",
     "ts-standard": "^12.0.2",
     "typescript": "^5.1.6"
   },
   "dependencies": {
-    "uuid": "^9.0.0",
-    "validator": "^13.9.0"
+    "contentful-resolve-response": "^1.7.0",
+    "uuid": "^9.0.0"
   }
 }

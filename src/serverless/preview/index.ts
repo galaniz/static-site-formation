@@ -19,12 +19,12 @@ import render from '../../render'
  */
 
 interface PreviewArgs {
-  request: any
+  request: Request
   next: Function
   siteConfig: FRM.Config
 }
 
-const preview = async ({ request, next, siteConfig }: PreviewArgs): Promise<object> => {
+const preview = async ({ request, next, siteConfig }: PreviewArgs): Promise<Response> => {
   /* Params */
 
   const { searchParams } = new URL(request.url)
@@ -66,7 +66,7 @@ const preview = async ({ request, next, siteConfig }: PreviewArgs): Promise<obje
   return new Response(html, {
     status: 200,
     headers: {
-      'content-type': 'text/html;charset=UTF-8'
+      'Content-Type': 'text/html;charset=UTF-8'
     }
   })
 }

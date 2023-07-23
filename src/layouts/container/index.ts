@@ -23,9 +23,9 @@ import { applyFilters } from '../../utils/filters'
  * @param {string} props.args.justify
  * @param {string} props.args.align
  * @param {boolean} props.args.richTextStyles
- * @param {string} props.args.classes // Back end option
- * @param {string} props.args.style // Back end option
- * @param {string} props.args.attr // Back end option
+ * @param {string} props.args.classes - Back end option
+ * @param {string} props.args.style - Back end option
+ * @param {string} props.args.attr - Back end option
  * @return {object}
  */
 

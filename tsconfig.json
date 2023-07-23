@@ -1,11 +1,21 @@
 {
   "compilerOptions": {
     "target": "esnext",
-    "module": "commonjs",
-    "resolveJsonModule": true,
-    "esModuleInterop": true,
-    "strictNullChecks": true
+    "module": "esnext",
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "noUnusedLocals": true,
+    "strict": true,
+    "outDir": "esm",
+    "declaration": true
   },
-  "include": ["**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "**/*.ts"
+  ],
+  "exclude": [
+    "./esm",
+    "./cjs",
+    "./lib",
+    "node_modules"
+  ]
 }

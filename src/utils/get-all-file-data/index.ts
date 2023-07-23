@@ -12,14 +12,13 @@ import undefineProps from '../undefine-props'
 import resolveInternalLinks from '../resolve-internal-links'
 
 /**
- * Function - get data from file system/cache if available
+ * Function - get data from file system
  *
  * @param {object} args
  * @param {object} args.resolveProps
  * @param {object} args.excludeProps
  * @param {function} args.filterData
  * @param {function} args.filterAllData
- * @param {boolean} args.cache
  * @return {object|undefined}
  */
 
@@ -37,7 +36,6 @@ interface AllFileDataArgs {
   }
   filterData?: Function
   filterAllData?: Function
-  cache?: boolean
 }
 
 const getAllFileData = async (args: AllFileDataArgs): Promise<FRM.AllData | undefined> => {
@@ -54,14 +52,13 @@ const getAllFileData = async (args: AllFileDataArgs): Promise<FRM.AllData | unde
       }
     },
     filterData,
-    filterAllData,
-    cache = false
+    filterAllData
   } = args
 
   try {
     /* Get data */
 
-    let data = await getFileData('all_file_data', { all: true }, cache)
+    let data: FRM.AnyObject = await getFileData('all_file_data', { all: true })
 
     /* Store all data */
 

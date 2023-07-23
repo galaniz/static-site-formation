@@ -28,6 +28,8 @@
  * @prop {object} renderTypes
  * @prop {object} renderFunctions
  * @prop {object} ajaxFunctions
+ * @prop {object} actions
+ * @prop {object} filters
  * @prop {object} image
  * @prop {string} image.url
  * @prop {number} image.quality
@@ -95,13 +97,6 @@
  * @prop {string} static.image.inputDir
  * @prop {string} static.image.outputDir
  * @prop {string} static.image.dataFile
- * @prop {object} modules
- * @prop {object} modules.cache
- * @prop {string} modules.cache.path
- * @prop {boolean} modules.cache.local
- * @prop {object} modules.contentfulResolveResponse
- * @prop {string} modules.contentfulResolveResponse.path
- * @prop {boolean} modules.contentfulResolveResponse.local
  * @prop {object} apiKeys
  * @prop {string} apiKeys.smtp2go
  * @prop {object} console
@@ -144,6 +139,8 @@ let config: FRM.Config = {
   renderTypes: {},
   renderFunctions: {},
   ajaxFunctions: {},
+  actions: {},
+  filters: {},
   image: {
     url: '/assets/img/',
     quality: 75,
@@ -164,6 +161,7 @@ let config: FRM.Config = {
     dev: true,
     prod: false,
     build: false,
+    cache: false,
     urls: {
       dev: '/',
       prod: ''
@@ -204,6 +202,7 @@ let config: FRM.Config = {
   },
   serverless: {
     dir: 'functions',
+    import: 'lib',
     files: {
       ajax: 'ajax/index.js',
       preview: '',
@@ -233,23 +232,14 @@ let config: FRM.Config = {
       dataFile: 'src/json/image-data.json'
     }
   },
-  modules: {
-    cache: {
-      path: '',
-      local: false
-    },
-    contentfulResolveResponse: {
-      path: '',
-      local: false
-    }
-  },
   apiKeys: {
     smtp2go: ''
   },
   console: {
     green: '\x1b[32m%s\x1b[0m',
     red: '\x1b[31m%s\x1b[0m'
-  }
+  },
+  vars: {}
 }
 
 /**

@@ -8,7 +8,7 @@
  * @type {object}
  */
 
-let actions: object = {}
+let actions: FRM.AnyObject = {}
 
 /**
  * Function - add action to action object
@@ -91,6 +91,31 @@ const resetActions = (): void => {
   actions = {}
 }
 
+/**
+ * Function - fill actions object
+ *
+ * @param {object} args
+ * @return {boolean}
+ */
+
+const setActions = (args: { [key: string]: Function }): boolean => {
+  if (typeof args !== 'object' || args === undefined || args === null) {
+    return false
+  }
+
+  if (Object.keys(args).length === 0) {
+    return false
+  }
+
+  resetActions()
+
+  Object.keys(args).forEach((a) => {
+    addAction(a, args[a])
+  })
+
+  return true
+}
+
 /* Exports */
 
-export { addAction, removeAction, doActions, resetActions }
+export { addAction, removeAction, doActions, resetActions, setActions }

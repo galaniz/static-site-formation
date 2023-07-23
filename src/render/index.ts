@@ -5,12 +5,11 @@
 /* Imports */
 
 import config from '../config'
-import { doActions } from '../utils/actions'
-import { applyFilters } from '../utils/filters'
+import { setActions, doActions } from '../utils/actions'
+import { setFilters, applyFilters } from '../utils/filters'
 import getSlug from '../utils/get-slug'
 import getPermalink from '../utils/get-permalink'
 import getProp from '../utils/get-prop'
-import requireFile from '../utils/require-file'
 import container from '../layouts/container'
 import column from '../layouts/column'
 import form from '../objects/form'
@@ -23,7 +22,7 @@ import richText from '../text/rich-text'
  * @type {object}
  */
 
-const _slugs: object = {}
+const _slugs: { [key: string]: { contentType: string, id: string } } = {}
 
 /**
  * Function - normalize meta properties into one object
@@ -133,9 +132,9 @@ const _renderContent = async ({
 
       /* Store html string and filter info */
 
-      let html = ''
       let filterType = ''
       let filterArgs = { args: {} }
+      let richTextOutput = ''
 
       /* Check for embedded entries and rich text */
 
@@ -153,7 +152,7 @@ const _renderContent = async ({
             parents
           }
 
-          html = richText(richTextArgs)
+          richTextOutput = richText(richTextArgs)
           filterType = 'richText'
           filterArgs = richTextArgs
         }
@@ -184,7 +183,7 @@ const _renderContent = async ({
         }
       }
 
-      /* Render and recursion */
+      /* Render props */
 
       const normalProps = getProp(c)
       const normalRenderType = getProp(c, 'renderType')
@@ -192,12 +191,18 @@ const _renderContent = async ({
       const props: { id?: string, [key: string]: any } = typeof normalProps === 'object' ? normalProps : {}
       const renderType: string = typeof normalRenderType === 'string' ? normalRenderType : ''
 
+      const id = getProp(c, 'id')
+
+      if (id !== undefined && id !== '') {
+        props.id = id
+      }
+
+      /* Render output */
+
       let renderObj = {
         start: '',
         end: ''
       }
-
-      props.id = getProp(c, 'id')
 
       const renderFunction = renderFunctions[renderType]
 
@@ -225,10 +230,33 @@ const _renderContent = async ({
         filterArgs = renderArgs
       }
 
-      const start = renderObj.start
-      const end = renderObj.end
+      let start = renderObj.start
+      let end = renderObj.end
 
+      /* Filter start and end output */
+
+      const renderContentFilterArgs: FRM.RenderContentFilterArgs = {
+        renderType: filterType,
+        args: filterArgs
+      }
+
+      if (start !== '' && end === '') {
+        start = applyFilters('renderContent', start, renderContentFilterArgs)
+      } else {
+        start = applyFilters('renderContentStart', start, renderContentFilterArgs)
+        end = applyFilters('renderContentEnd', end, renderContentFilterArgs)
+      }
+
+      if (richTextOutput !== '') {
+        richTextOutput = applyFilters('renderContent', start, renderContentFilterArgs)
+      }
+
+      /* Add to output object */
+
+      output.html += richTextOutput
       output.html += start
+
+      /* Recurse through children */
 
       if (Array.isArray(children) && children.length !== 0 && recurse) {
         const parentsCopy = [...parents]
@@ -251,17 +279,6 @@ const _renderContent = async ({
       }
 
       output.html += end
-
-      /* Filter output */
-
-      const renderContentFilterArgs: FRM.RenderContentFilterArgs = {
-        renderType: filterType,
-        args: filterArgs
-      }
-
-      html = applyFilters('renderContent', html, renderContentFilterArgs)
-
-      output.html += html
 
       /* Clear parents */
 
@@ -321,7 +338,12 @@ const _renderItem = async ({
     linkContentType: 'default'
   }, getProp(item))
 
-  doActions('renderStart', { contentType, props })
+  const renderItemStartArgs: FRM.RenderItemStartActionArgs = {
+    contentType,
+    props
+  }
+
+  doActions('renderItemStart', renderItemStartArgs)
 
   /* Store components contained in page  */
 
@@ -500,22 +522,22 @@ const _renderItem = async ({
     layoutOutput = await renderFunctions.layout(layoutArgs)
   }
 
-  const renderFilterArgs: FRM.RenderFilterArgs = {
+  const renderItemFilterArgs: FRM.RenderItemFilterArgs = {
     contentType,
     slug: formattedSlug,
     props: propsCopy
   }
 
-  layoutOutput = applyFilters('render', layoutOutput, renderFilterArgs)
+  layoutOutput = applyFilters('renderItem', layoutOutput, renderItemFilterArgs)
 
-  const renderEndArgs: FRM.RenderEndActionArgs = {
+  const renderItemEndArgs: FRM.RenderItemEndActionArgs = {
     contentType,
     slug: formattedSlug,
     output: layoutOutput,
     props
   }
 
-  doActions('renderEnd', renderEndArgs)
+  doActions('renderItemEnd', renderItemEndArgs)
 
   return {
     serverlessRender,
@@ -548,6 +570,13 @@ const render = async ({
   serverlessData,
   previewData
 }: RenderArgs): Promise<FRM.RenderReturn[] | FRM.RenderReturn> => {
+  /* Set filters and actions */
+
+  setFilters(config.filters)
+  setActions(config.actions)
+
+  doActions('renderStart')
+
   /* Data */
 
   if (allData === undefined) {
@@ -650,12 +679,13 @@ const render = async ({
     const dir = config.store.dir
     const files = config.store.files
 
-    const slugParentsJson = requireFile(`${dir}${files.slugParents.name}`)
-    const archiveIdsJson = requireFile(`${dir}${files.archiveIds.name}`)
-    const archiveTermsJson = requireFile(`${dir}${files.archiveTerms.name}`)
-    const archivePostsJson = requireFile(`${dir}${files.archivePosts.name}`)
-    const formMetaJson = requireFile(`${dir}${files.formMeta.name}`)
-    const navigationsJson = requireFile(`${dir}${files.navigations.name}`)
+    /* eslint-disable @typescript-eslint/no-var-requires */
+    const slugParentsJson = require(`${dir}${files.slugParents.name}`)
+    const archiveIdsJson = require(`${dir}${files.archiveIds.name}`)
+    const archiveTermsJson = require(`${dir}${files.archiveTerms.name}`)
+    const archivePostsJson = require(`${dir}${files.archivePosts.name}`)
+    const formMetaJson = require(`${dir}${files.formMeta.name}`)
+    const navigationsJson = require(`${dir}${files.navigations.name}`)
 
     if (slugParentsJson != null) {
       Object.keys(slugParentsJson).forEach((s) => {
@@ -754,6 +784,8 @@ const render = async ({
   }
 
   /* Output */
+
+  doActions('renderEnd', serverlessData !== undefined || previewData !== undefined ? data[0] : data)
 
   if (serverlessData !== undefined || previewData !== undefined) {
     return data[0]

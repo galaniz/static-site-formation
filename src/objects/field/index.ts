@@ -93,11 +93,11 @@ const _getCheckboxRadioOpts = (args: _FieldCheckboxRadioArgs = {}): string => {
  * @param {string} props.args.emptyErrorMessage
  * @param {string} props.args.invalidErrorMessage
  * @param {boolean} props.args.fieldset
- * @param {string} props.args.fieldsetClasses // Back end option
- * @param {string} props.args.fieldClasses // Back end option
- * @param {string} props.args.labelClasses // Back end option
- * @param {string} props.args.classes // Back end option
- * @param {string} props.args.visuallyHiddenClass // Back end option
+ * @param {string} props.args.fieldsetClasses - Back end option
+ * @param {string} props.args.fieldClasses - Back end option
+ * @param {string} props.args.labelClasses - Back end option
+ * @param {string} props.args.classes - Back end option
+ * @param {string} props.args.visuallyHiddenClass - Back end option
  * @return {string} HTML - div
  */
 

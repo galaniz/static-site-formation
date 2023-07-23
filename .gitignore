@@ -1,4 +1,6 @@
 node_modules/
 package-lock.json
-src/**/*.js
+cjs/
+esm/
+lib/
 .DS_Store

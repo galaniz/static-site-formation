@@ -1,19 +1,16 @@
 /**
- * Static Site Formation - interfaces
+ * Static Site Formation - type definitions
  */
 
 declare global {
   module FRM {
-    interface Env {
-      dev: boolean
-      prod: boolean
-      build: boolean
-      urls: {
-        dev: string
-        prod: string
-      }
+    /* General */
+
+    interface AnyObject {
       [key: string]: any
     }
+
+    /* Link data */
 
     interface InternalLink {
       id: string
@@ -29,8 +26,10 @@ declare global {
       title: string
       singular: string
       plural: string
-      archiveId?: object
+      archiveId?: AnyObject
     }
+
+    /* Navigation data */
 
     interface NavigationItem {
       id?: string
@@ -52,6 +51,8 @@ declare global {
       [key: string]: any
     }
 
+    /* Info for write files utilities */
+
     interface StoreFile {
       data: string
       name: string
@@ -64,10 +65,12 @@ declare global {
       [key: string]: StoreFile
     }
 
-    interface Module {
+    interface ServerlessRoute {
       path: string
-      local: boolean
+      content?: string
     }
+
+    /* Contentful info */
 
     interface Cms {
       name: string
@@ -77,6 +80,8 @@ declare global {
       deliveryAccessToken: string
       deliveryHost: string
     }
+
+    /* Render data */
 
     interface AllData {
       navigation: Navigation[]
@@ -95,15 +100,24 @@ declare global {
       }
     }
 
-    interface ServerlessRoute {
-      path: string
-      content?: string
-    }
-
     interface PreviewData {
       id: string
       contentType: string
     }
+
+    /* Render item data */
+
+    interface RenderItem {
+      id: string
+      title: string
+      slug: string
+      content?: any
+      meta?: object
+      basePermalink?: string
+      [key: string]: any
+    }
+
+    /* Common function return value */
 
     interface StartEndReturn {
       start: string
@@ -127,34 +141,19 @@ declare global {
       isIndex?: boolean
     }
 
-    interface AjaxActionData {
-      id: string
-      inputs: {
-        [key: string]: {
-          type: string
-          label: string
-          value: string | string[]
-          legend?: string
-          exclude?: boolean
-        }
-      }
+    /* Layout render function arguments */
+
+    interface LayoutArgs {
+      meta: MetaReturn
+      navigations?: object
+      contentType?: string
+      content: string
+      contains?: string[]
+      data?: RenderItem
+      serverlessData?: ServerlessData | undefined
     }
 
-    interface AjaxActionArgs extends AjaxActionData {
-      env: any
-      request: any
-    }
-
-    interface AjaxActionReturn {
-      error?: {
-        message: string
-        code?: number
-      }
-      success?: {
-        message: string
-        headers?: any
-      }
-    }
+    /* Container render function props */
 
     interface ContainerProps {
       args: {
@@ -177,6 +176,8 @@ declare global {
       }
       parents?: object[]
     }
+
+    /* Column render function props */
 
     interface ColumnProps {
       args: {
@@ -202,6 +203,8 @@ declare global {
       }
       parents?: object[]
     }
+
+    /* Field render function props */
 
     interface FieldProps {
       args: {
@@ -230,6 +233,8 @@ declare global {
         [key: string]: any
       }
     }
+
+    /* Form render function props */
 
     interface FormProps {
       args: {
@@ -261,6 +266,8 @@ declare global {
       }
     }
 
+    /* Rich text render function props */
+
     interface RichTextProps {
       args: {
         type?: string
@@ -284,62 +291,39 @@ declare global {
       }>
     }
 
-    interface RichTextContentMark {
-      type: string
-    }
+    /* Normalize content rich text render function */
 
     interface RichTextContentItem {
       tag?: string | string[]
       link?: string
-      internalLink?: any
+      internalLink?: InternalLink
       content?: string | RichTextContentItem[]
       nodeType?: string
       value?: string
-      marks?: RichTextContentMark[]
+      marks?: Array<{ type: string }>
       data?: {
         uri?: string
         target?: any
       }
     }
 
-    interface RichTextNormalizeContentFilterArgs {
-      type: string | string[]
-      args: RichTextContentItem
-    }
+    /* Action arguments */
 
-    interface RichTextContentFilterArgs {
-      args: RichTextContentItem
-      props: RichTextProps
-    }
-
-    interface RichTextContentOutputFilterArgs {
-      args: RichTextContentItem
-      props: RichTextProps
-    }
-
-    interface RenderItem {
-      id: string
-      title: string
-      slug: string
-      content?: any
-      meta?: object
-      basePermalink?: string
-      [key: string]: any
-    }
-
-    interface RenderStartActionArgs {
+    interface RenderItemStartActionArgs {
       contentType: string
       props: RenderItem
     }
 
-    interface RenderEndActionArgs {
+    interface RenderItemEndActionArgs {
       contentType: string
       slug: string
       output: string
       props: RenderItem
     }
 
-    interface RenderFilterArgs {
+    /* Filter arguments */
+
+    interface RenderItemFilterArgs {
       contentType: string
       slug: string
       props: RenderItem
@@ -360,6 +344,68 @@ declare global {
       }
     }
 
+    interface RichTextNormalizeContentFilterArgs {
+      type: string | string[]
+      args: RichTextContentItem
+    }
+
+    interface RichTextContentFilterArgs {
+      args: RichTextContentItem
+      props: RichTextProps
+    }
+
+    interface RichTextContentOutputFilterArgs {
+      args: RichTextContentItem
+      props: RichTextProps
+    }
+
+    interface CacheDataFilterArgs {
+      key: string
+      type: string
+      data?: any
+    }
+
+    /* Serverless functions arguments */
+
+    interface EnvCloudflare {
+      ENVIRONMENT?: string
+      SMPT2GO_API_KEY?: string
+      [key: string]: any
+    }
+
+    interface AjaxActionData {
+      id: string
+      inputs: {
+        [key: string]: {
+          type: string
+          label: string
+          value: string | string[]
+          legend?: string
+          exclude?: boolean
+        }
+      }
+    }
+
+    interface AjaxActionArgs extends AjaxActionData {
+      env: EnvCloudflare
+      request: Request
+    }
+
+    interface AjaxActionReturn {
+      error?: {
+        message: string
+        code?: number
+      }
+      success?: {
+        message: string
+        headers?: {
+          [key: string]: string
+        }
+      }
+    }
+
+    /* Normalize image utility arguments */
+
     interface ImageData {
       base?: string
       alt?: string
@@ -377,6 +423,8 @@ declare global {
       }
     }
 
+    /* Get image utility arguments */
+
     interface ImageArgs {
       data?: ImageData | undefined
       classes?: string
@@ -390,15 +438,7 @@ declare global {
       viewportWidth?: number
     }
 
-    interface LayoutArgs {
-      meta: MetaReturn
-      navigations?: object
-      contentType?: string
-      content: string
-      contains?: string[]
-      data?: RenderItem
-      serverlessData?: ServerlessData | undefined
-    }
+    /* Config options */
 
     interface Config {
       namespace: string
@@ -442,6 +482,12 @@ declare global {
       ajaxFunctions: {
         [key: string]: Function
       }
+      actions: {
+        [key: string]: Function
+      }
+      filters: {
+        [key: string]: Function
+      }
       image: {
         url: string
         sizes: number[]
@@ -457,7 +503,7 @@ declare global {
       }
       archive: {
         ids: {
-          [key: string]: object
+          [key: string]: any
         }
         posts: {
           [key: string]: any
@@ -466,13 +512,23 @@ declare global {
           [key: string]: any
         }
       }
-      env: Env
+      env: {
+        dev: boolean
+        prod: boolean
+        build: boolean
+        cache: boolean
+        urls: {
+          dev: string
+          prod: string
+        }
+      }
       store: {
         dir: string
         files: StoreFiles
       }
       serverless: {
         dir: string
+        import: string
         files: {
           ajax: string
           preview: string
@@ -496,10 +552,6 @@ declare global {
           dataFile: string
         }
       }
-      modules: {
-        cache?: Module
-        contentfulResolveResponse?: Module
-      }
       apiKeys: {
         smtp2go: string
       }
@@ -507,7 +559,9 @@ declare global {
         green: string
         red: string
       }
-      [key: string]: any
+      vars: {
+        [key: string]: any
+      }
     }
   }
 }

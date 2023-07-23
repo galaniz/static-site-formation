@@ -4,10 +4,9 @@
 
 /* Imports */
 
-import escape from 'validator/es/lib/escape'
 import config from '../../config'
+import escape from '../../utils/escape'
 import getPermalink from '../../utils/get-permalink'
-import requireFile from '../../utils/require-file'
 
 /**
  * Function - recurse through data to output plain and html email body
@@ -19,7 +18,7 @@ import requireFile from '../../utils/require-file'
  * @return {void}
  */
 
-const _recurseEmailHtml = (data: object, output: { html: string, plain: string }, depth: number = 1): void => {
+const _recurseEmailHtml = (data: FRM.AnyObject, output: { html: string, plain: string }, depth: number = 1): void => {
   const isArray = Array.isArray(data)
 
   Object.keys(data).forEach((label: string) => {
@@ -98,8 +97,16 @@ const sendForm = async ({ id, inputs }: FRM.AjaxActionArgs): Promise<FRM.AjaxAct
 
   /* Meta information - to email and subject */
 
-  const formMeta = requireFile(`${config.store.dir}${config.store.files.formMeta.name}`)
-  const meta = formMeta[id]
+  const formMetaJson = require(`${config.store.dir}${config.store.files.formMeta.name}`) // eslint-disable-line @typescript-eslint/no-var-requires
+  const meta = formMetaJson[id]
+
+  if (meta === undefined) {
+    return {
+      error: {
+        message: 'No meta information'
+      }
+    }
+  }
 
   /* To email */
 
@@ -139,7 +146,7 @@ const sendForm = async ({ id, inputs }: FRM.AjaxActionArgs): Promise<FRM.AjaxAct
 
   const header = `${config.title} contact form submission`
   const footer = `This email was sent from a contact form on ${config.title} (${getPermalink()})`
-  const outputData = {}
+  const outputData: FRM.AnyObject = {}
   const output = {
     html: '',
     plain: ''
@@ -298,7 +305,7 @@ const sendForm = async ({ id, inputs }: FRM.AjaxActionArgs): Promise<FRM.AjaxAct
     }
   )
 
-  const resJson = await res.json()
+  const resJson: { data: { succeeded: number } } = await res.json()
 
   /* Success */
 

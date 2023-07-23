@@ -36,7 +36,7 @@ const form = (props: FRM.FormProps = { args: {} }): FRM.StartEndReturn => {
 
   const {
     id = '',
-    action = 'send-form',
+    action = 'sendForm',
     subject = '',
     toEmail = '',
     senderEmail = '',

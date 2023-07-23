@@ -109,7 +109,7 @@ const _getTag = (type: string = 'text'): string => {
 interface _RichTextContentReturn {
   tag: string | string[]
   link?: string
-  internalLink?: any
+  internalLink?: FRM.InternalLink
   content: string | _RichTextContentReturn[]
 }
 
@@ -445,7 +445,7 @@ const richText = (props: FRM.RichTextProps = { args: {}, parents: [] }): string 
 
     if (tag === 'blockquote' || tag === 'table') {
       if (caption !== '') {
-        output = `${output}<figcaption>${caption}</figcaption>`
+        output = `${output}<figcaption data-rich="figcaption">${caption}</figcaption>`
       }
 
       output = `<figure data-rich="${tag}">${output}</figure>`

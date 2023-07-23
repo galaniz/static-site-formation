@@ -15,7 +15,7 @@ import config from '../../config'
 
 const writeServerlessFiles = async (): Promise<void> => {
   try {
-    const formationPackage = '@alanizcreative/static-site-formation/src/serverless/'
+    const formationPackage = `@alanizcreative/static-site-formation/${config.serverless.import}/serverless/`
 
     /* Serverless folder */
 
@@ -26,7 +26,8 @@ const writeServerlessFiles = async (): Promise<void> => {
     /* Ajax file */
 
     if (config.serverless.files.ajax !== '') {
-      const content = `import ajax from '${formationPackage}ajax'; export const onRequestPost = [ajax];`
+      const content = `import config from '${getPathDepth(`${config.serverless.dir}/${config.serverless.files.ajax}`)}src/config'\nimport ajax from '${formationPackage}ajax'\nconst render = async ({ request, env }) => { return await ajax({ request, env, siteConfig: config }) }\nexport const onRequestPost = [render]\n`
+
       const path = resolve(config.serverless.dir, config.serverless.files.ajax)
       const dir = dirname(path)
 
@@ -39,7 +40,7 @@ const writeServerlessFiles = async (): Promise<void> => {
     /* Preview file */
 
     if (config.env.dev && config.serverless.files.preview !== '') {
-      const content = `import config from '${getPathDepth(`${config.serverless.dir}/${config.serverless.files.preview}`)}src/config'; import preview from '${formationPackage}preview'; const render = async ({ request, next }) => { return await preview({ request, next, siteConfig: config }); }; export const onRequestGet = [render];`
+      const content = `import config from '${getPathDepth(`${config.serverless.dir}/${config.serverless.files.preview}`)}src/config'\nimport preview from '${formationPackage}preview'\nconst render = async ({ request, next }) => { return await preview({ request, next, siteConfig: config }) }\nexport const onRequestGet = [render]\n`
 
       const path = resolve(config.serverless.dir, config.serverless.files.preview)
       const dir = dirname(path)
@@ -67,7 +68,7 @@ const writeServerlessFiles = async (): Promise<void> => {
           if (type === 'reload' && reloadFile !== '' && path !== '') {
             path = `${path}/${reloadFile}`
 
-            content = `import config from '${getPathDepth(`${config.serverless.dir}/${path}`)}src/config'; import reload from '${formationPackage}reload'; const render = async ({ request, env, next }) => { return await reload({ request, env, next, siteConfig: config }); }; export const onRequestGet = [render];`
+            content = `import config from '${getPathDepth(`${config.serverless.dir}/${path}`)}src/config'\nimport reload from '${formationPackage}reload'\nconst render = async ({ request, env, next }) => { return await reload({ request, env, next, siteConfig: config }) }\nexport const onRequestGet = [render]\n`
           }
 
           if (path !== '' && content !== '') {

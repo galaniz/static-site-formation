@@ -6,15 +6,14 @@
 
 import { readdir, readFile } from 'node:fs/promises'
 import { extname, basename, resolve } from 'node:path'
+import { applyFilters } from '../../utils/filters'
 import config from '../../config'
-import requireFile from '../../utils/require-file'
 
 /**
- * Function -
+ * Function - get data from file or cache
  *
  * @param {string} key
  * @param {object} params
- * @param {boolean} cache
  * @return {object}
  */
 
@@ -25,8 +24,7 @@ interface FileDataParams {
 
 const getFileData = async (
   key: string = '',
-  params: FileDataParams = {},
-  cache: boolean = false
+  params: FileDataParams = {}
 ): Promise<object> => {
   try {
     /* Key required for cache */
@@ -37,17 +35,18 @@ const getFileData = async (
 
     /* Check cache */
 
-    let cacheModule: Function | null = null
+    if (config.env.cache) {
+      let cacheData: FRM.AnyObject = {}
 
-    if (cache) {
-      cacheModule = requireFile(config.modules.cache?.path, config.modules.cache?.local)
+      const cacheDataFilterArgs: FRM.CacheDataFilterArgs = {
+        key,
+        type: 'get'
+      }
 
-      if (cacheModule !== null && typeof cacheModule === 'function') {
-        const data = cacheModule(key)
+      cacheData = applyFilters('cacheData', cacheData, cacheDataFilterArgs)
 
-        if (data !== undefined) {
-          return data
-        }
+      if (Object.keys(cacheData).length > 0) {
+        return structuredClone(cacheData)
       }
     }
 
@@ -57,7 +56,7 @@ const getFileData = async (
 
     /* Single file */
 
-    const data = {}
+    const data: FRM.AnyObject = {}
 
     if (id !== '' && !all) {
       const file = await readFile(resolve(config.static.dir, `${id}.json`), { encoding: 'utf8' })
@@ -103,8 +102,14 @@ const getFileData = async (
 
     /* Store in cache */
 
-    if (cacheModule !== null && typeof cacheModule === 'function') {
-      await cacheModule(data)
+    if (config.env.cache) {
+      const cacheDataFilterArgs: FRM.CacheDataFilterArgs = {
+        key,
+        type: 'set',
+        data
+      }
+
+      applyFilters('cacheData', data, cacheDataFilterArgs)
     }
 
     /* Output */
