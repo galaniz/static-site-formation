@@ -19,6 +19,7 @@ interface _ImageNormalData {
   alt: string
   naturalWidth: number
   naturalHeight: number
+  format: string
 }
 
 const _normalizeImageData = (data: FRM.ImageData): _ImageNormalData | undefined => {
@@ -27,7 +28,8 @@ const _normalizeImageData = (data: FRM.ImageData): _ImageNormalData | undefined 
       base = '',
       alt = '',
       width = 0,
-      height = 0
+      height = 0,
+      format = 'jpg'
     } = data
 
     if (base === '' || width === 0 || height === 0) {
@@ -40,7 +42,8 @@ const _normalizeImageData = (data: FRM.ImageData): _ImageNormalData | undefined 
       url,
       alt,
       naturalWidth: width,
-      naturalHeight: height
+      naturalHeight: height,
+      format
     }
   } else {
     const { file, description = '' } = data
@@ -51,7 +54,7 @@ const _normalizeImageData = (data: FRM.ImageData): _ImageNormalData | undefined 
       return
     }
 
-    const { url = '', details } = file
+    const { url = '', contentType = 'image/jpg', details } = file
 
     /* Url and details required */
 
@@ -63,7 +66,8 @@ const _normalizeImageData = (data: FRM.ImageData): _ImageNormalData | undefined 
       url,
       alt: description,
       naturalWidth: details.image.width,
-      naturalHeight: details.image.height
+      naturalHeight: details.image.height,
+      format: contentType.split('/')[1]
     }
   }
 }
@@ -79,7 +83,10 @@ const _normalizeImageData = (data: FRM.ImageData): _ImageNormalData | undefined 
  * @param {string|number} args.height
  * @param {boolean} args.returnAspectRatio
  * @param {boolean} args.lazy
- * @param {number} args.max
+ * @param {boolean} args.source
+ * @param {number} args.quality
+ * @param {number} args.maxWidth
+ * @param {number} args.viewportWidth
  * @return {string|object}
  */
 
@@ -92,6 +99,7 @@ const getImage = (args: FRM.ImageArgs = {}): string | { output: string, aspectRa
     height = 'auto',
     returnAspectRatio = false,
     lazy = true,
+    source = false,
     quality = config.image.quality,
     maxWidth = 1200,
     viewportWidth = 100
@@ -113,7 +121,8 @@ const getImage = (args: FRM.ImageArgs = {}): string | { output: string, aspectRa
     url = '',
     alt = '',
     naturalWidth,
-    naturalHeight
+    naturalHeight,
+    format = 'jpg'
   } = normalData
 
   /* Dimensions */
@@ -142,16 +151,22 @@ const getImage = (args: FRM.ImageArgs = {}): string | { output: string, aspectRa
   /* Src and sizes attributes */
 
   let src = url
+  let srcFallback = url
 
   if (config.source === 'static') {
     src = `${url}.webp`
+    srcFallback = `${url}.${format}`
   } else {
-    src = `https:${url}?fm=webp&q=${quality}&w=${w}&h=${h}`
+    const common = `&q=${quality}&w=${w}&h=${h}`
+
+    src = `https:${url}?fm=webp${common}`
+    srcFallback = `https:${url}?fm=${format}${common}`
   }
 
   const sizes = `(min-width: ${w / 16}rem) ${w / 16}rem, ${viewportWidth}vw`
 
   let srcset: string[] | number[] = config.image.sizes
+  const srcsetFallback: string[] = []
 
   if (!srcset.includes(w)) {
     srcset.push(w)
@@ -163,16 +178,31 @@ const getImage = (args: FRM.ImageArgs = {}): string | { output: string, aspectRa
 
   srcset = srcset.map(s => {
     if (config.source === 'static') {
-      return `${url}${s !== naturalWidth ? `@${s}` : ''}.webp ${s}w`
+      const common = `${url}${s !== naturalWidth ? `@${s}` : ''}`
+
+      srcsetFallback.push(`${common}.${format} ${s}w`)
+
+      return `${common}.webp ${s}w`
     } else {
-      return `https:${url}?fm=webp&q=${quality}&w=${s}&h=${Math.round(s * aspectRatio)} ${s}w`
+      const common = `&q=${quality}&w=${s}&h=${Math.round(s * aspectRatio)} ${s}w`
+
+      srcsetFallback.push(`https:${url}?fm=${format}${common}`)
+
+      return `https:${url}?fm=webp${common}`
     }
   })
 
   /* Output */
 
+  let sourceOutput = ''
+
+  if (source) {
+    sourceOutput = `<source srcset="${srcset.join(', ')}" sizes="${sizes}" type="image/webp">`
+  }
+
   const output = `
-    <img${classes !== '' ? ` class="${classes}"` : ''} alt="${alt}" src="${src}" srcset="${srcset.join(', ')}" sizes="${sizes}" width="${w}" height="${h}"${attr !== '' ? ` ${attr}` : ''}${lazy ? ' loading="lazy" decoding="async"' : ' loading="eager"'}>
+    ${sourceOutput}
+    <img${classes !== '' ? ` class="${classes}"` : ''} alt="${alt}" src="${source ? srcFallback : src}" srcset="${source ? srcsetFallback.join(', ') : srcset.join(', ')}" sizes="${sizes}" width="${w}" height="${h}"${attr !== '' ? ` ${attr}` : ''}${lazy ? ' loading="lazy" decoding="async"' : ' loading="eager"'}>
   `
 
   if (returnAspectRatio) {

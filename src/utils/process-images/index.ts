@@ -18,6 +18,7 @@ import getAllFilePaths from '../get-all-file-paths'
 
 interface ProcessImagesSharp {
   size: number
+  ext: string
   path: string
   newPath: string
 }
@@ -27,6 +28,7 @@ interface ProcessImagesStore {
     base: string
     width: number
     height: number
+    format: string
   }
 }
 
@@ -66,10 +68,11 @@ const processImages = async (): Promise<void> => {
 
         const metadata = await sharp(path).metadata()
         const id = `${folders !== '' ? `${folders}/` : ''}${base}`
+        const format = ext.split('.')[1]
 
         const { width = 0, height = 0 } = metadata
 
-        store[id] = { base: id, width, height }
+        store[id] = { base: id, width, height, format }
 
         /* Sizes */
 
@@ -82,8 +85,9 @@ const processImages = async (): Promise<void> => {
         sizes.forEach((size) => {
           sharpImages.push({
             size,
+            ext: format,
             path: resolve(path),
-            newPath: resolve(outputDir, folders, `${base}${size !== width ? `@${size}` : ''}.webp`)
+            newPath: resolve(outputDir, folders, `${base}${size !== width ? `@${size}` : ''}`)
           })
         })
       }
@@ -92,12 +96,16 @@ const processImages = async (): Promise<void> => {
     if (sharpImages.length > 0) {
       await Promise.all(
         sharpImages.map(async (c) => {
-          const { size, path, newPath } = c
+          const { size, path, newPath, ext } = c
+
+          await sharp(path)
+            .resize(size)
+            .toFile(`${newPath}.${ext}`)
 
           const create = await sharp(path)
             .webp({ quality: config.image.quality })
             .resize(size)
-            .toFile(newPath)
+            .toFile(`${newPath}.webp`)
 
           return create
         })

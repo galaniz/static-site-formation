@@ -129,7 +129,7 @@ const ajax = async ({ request, env, siteConfig }: AjaxArgs): Promise<Response> =
       request
     }
 
-    res = applyFilters('ajaxRes', res, ajaxResFilterArgs)
+    res = await applyFilters('ajaxRes', res, ajaxResFilterArgs)
 
     /* Result error */
 

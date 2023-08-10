@@ -64,20 +64,22 @@ const removeAction = (name: string, action: Function): boolean => {
  * Function - run callback functions from actions object
  *
  * @param {string} name
- * @param {array<*>} args
+ * @param {*[]} args
  * @return {void}
  */
 
-const doActions = (name: string, ...args: any): void => {
+const doActions = async (name: string, ...args: any): Promise<void> => {
   const callbacks = actions[name]
 
   if (Array.isArray(callbacks)) {
-    callbacks.forEach((callback) => {
+    for (let i = 0; i < callbacks.length; i += 1) {
+      const callback = callbacks[i]
+
       if (typeof callback === 'function') {
         // eslint-disable-next-line n/no-callback-literal
-        callback(...args)
+        await callback(...args)
       }
-    })
+    }
   }
 }
 

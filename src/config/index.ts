@@ -18,13 +18,11 @@
  * @prop {object} slug.bases.page
  * @prop {string} slug.bases.page.slug
  * @prop {string} slug.bases.page.title
- * @prop {string} slug.bases.page.singular
- * @prop {string|object} slug.bases.page.archiveId
  * @prop {object} contentTypes
- * @prop {array<string>} contentTypes.partial
- * @prop {array<string>} contentTypes.whole
- * @prop {array<string>} contentTypes.archive
- * @prop {object} taxonomy
+ * @prop {string[]} contentTypes.partial
+ * @prop {string[]} contentTypes.whole
+ * @prop {object} contentTypes.archive
+ * @prop {object} contentTypes.taxonomy
  * @prop {object} renderTypes
  * @prop {object} renderFunctions
  * @prop {object} ajaxFunctions
@@ -33,10 +31,10 @@
  * @prop {object} image
  * @prop {string} image.url
  * @prop {number} image.quality
- * @prop {array<number>} image.sizes
- * @prop {array<object>} navigation
- * @prop {array<object>} navigationItem
- * @prop {object} script
+ * @prop {number[]} image.sizes
+ * @prop {object[]} navigation
+ * @prop {object[]} navigationItem
+ * @prop {object} scriptMeta
  * @prop {object} formMeta
  * @prop {object} archive
  * @prop {object} archive.ids
@@ -80,10 +78,10 @@
  * @prop {string} serverless.files.preview
  * @prop {string} serverless.files.reload
  * @prop {object} serverless.routes
- * @prop {array<object>} serverless.routes.reload
+ * @prop {object[]} serverless.routes.reload
  * @prop {object} redirects
  * @prop {string} redirects.file
- * @prop {array<string>} redirects.data
+ * @prop {string[]} redirects.data
  * @prop {object} cms
  * @prop {string} cms.name
  * @prop {string} cms.space
@@ -117,10 +115,7 @@ let config: FRM.Config = {
     bases: {
       page: {
         slug: '',
-        title: '',
-        singular: '',
-        plural: '',
-        archiveId: {}
+        title: ''
       }
     }
   },
@@ -133,9 +128,9 @@ let config: FRM.Config = {
     whole: [
       'page'
     ],
-    archive: []
+    archive: {},
+    taxonomy: {}
   },
-  taxonomy: {},
   renderTypes: {},
   renderFunctions: {},
   ajaxFunctions: {},
@@ -150,7 +145,7 @@ let config: FRM.Config = {
   },
   navigation: [],
   navigationItem: [],
-  script: {},
+  scriptMeta: {},
   formMeta: {},
   archive: {
     ids: {},

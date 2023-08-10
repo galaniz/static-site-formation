@@ -65,19 +65,21 @@ const removeFilter = (name: string, filter: Function): boolean => {
  *
  * @param {string} name
  * @param {*} value
- * @param {array<*>} args
+ * @param {*[]} args
  * @return {*}
  */
 
-const applyFilters = (name: string, value: any, ...args: any): any => {
+const applyFilters = async (name: string, value: any, ...args: any): Promise<any> => {
   const callbacks = filters[name]
 
   if (Array.isArray(callbacks)) {
-    callbacks.forEach((callback) => {
+    for (let i = 0; i < callbacks.length; i += 1) {
+      const callback = callbacks[i]
+
       if (typeof callback === 'function') {
-        value = callback(value, ...args)
+        value = await callback(value, ...args)
       }
-    })
+    }
   }
 
   return value

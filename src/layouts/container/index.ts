@@ -29,8 +29,8 @@ import { applyFilters } from '../../utils/filters'
  * @return {object}
  */
 
-const container = (props: FRM.ContainerProps = { args: {} }): FRM.StartEndReturn => {
-  props = applyFilters('containerProps', props, { renderType: 'container' })
+const container = async (props: FRM.ContainerProps = { args: {} }): Promise<FRM.StartEndReturn> => {
+  props = await applyFilters('containerProps', props, { renderType: 'container' })
 
   const { args = {} } = props
 

@@ -70,7 +70,7 @@ const _recurseEmailHtml = (data: FRM.AnyObject, output: { html: string, plain: s
  *
  * @param {object} args
  * @param {string} args.id
- * @param {array<object>} args.inputs
+ * @param {object[]} args.inputs
  * @return {object} Response
  */
 

@@ -26,10 +26,10 @@ const getArchiveLink = (contentType: string = '', linkContentType: string = ''):
   let archiveTitle = ''
 
   if (config.slug.bases[contentType] !== undefined) {
-    archiveTitle = config.slug.bases[contentType].title
+    archiveTitle = config.contentTypes.archive[contentType].plural
 
     const archiveId = getArchiveId(contentType, linkContentType)
-    const archiveSlug: string = config.slug.bases[contentType].slug
+    const archiveSlug = config.slug.bases[contentType].slug
 
     if (archiveId !== '' && archiveSlug !== '') {
       const s = getSlug({

@@ -29,8 +29,8 @@ import config from '../../config'
  * @return {object}
  */
 
-const form = (props: FRM.FormProps = { args: {} }): FRM.StartEndReturn => {
-  props = applyFilters('formProps', props, { renderType: 'form' })
+const form = async (props: FRM.FormProps = { args: {} }): Promise<FRM.StartEndReturn> => {
+  props = await applyFilters('formProps', props, { renderType: 'form' })
 
   const { args = {} } = props
 
@@ -92,7 +92,7 @@ const form = (props: FRM.FormProps = { args: {} }): FRM.StartEndReturn => {
 
   /* Add to script data */
 
-  if (config.script[`form-${id}`] === undefined && (successTitle !== '' || errorTitle !== '')) {
+  if (config.scriptMeta[`form-${id}`] === undefined && (successTitle !== '' || errorTitle !== '')) {
     const messages: { successMessage?: object, errorMessage?: object } = {}
 
     if (successTitle !== '') {
@@ -109,10 +109,10 @@ const form = (props: FRM.FormProps = { args: {} }): FRM.StartEndReturn => {
       }
     }
 
-    config.script[`form-${id}`] = messages
+    config.scriptMeta[`form-${id}`] = messages
   }
 
-  config.script.sendUrl = '/ajax/'
+  config.scriptMeta.sendUrl = '/ajax/'
 
   /* Honeypot */
 

@@ -12,21 +12,38 @@ declare global {
 
     /* Link data */
 
-    interface InternalLink {
+    interface InternalLinkBase {
       id: string
       contentType: string
       slug: string
       title?: string
       linkContentType?: string
+    }
+
+    interface InternalLink extends InternalLinkBase {
       [key: string]: any
     }
 
     interface SlugBase {
       slug: string
       title: string
+    }
+
+    /* Archive meta data */
+
+    interface ArchiveMeta {
       singular: string
       plural: string
-      archiveId?: AnyObject
+      layout?: string
+      order?: string
+      display?: number
+      linkContentType?: string[]
+      id: AnyObject
+    }
+
+    interface TaxonomyMeta {
+      contentTypes: string[]
+      props: string[]
     }
 
     /* Navigation data */
@@ -42,6 +59,31 @@ declare global {
       external?: boolean
       descendentCurrent?: boolean
       [key: string]: any
+    }
+
+    interface NavigationBreadcrumbItem extends NavigationItem {
+      slug: string
+      contentType: string
+    }
+
+    interface NavigationArgs {
+      listClass?: string
+      listAttr?: string
+      itemClass?: string
+      itemAttr?: string
+      linkClass?: string
+      internalLinkClass?: string
+      linkAttr?: string
+      filterBeforeItem?: Function
+      filterAfterItem?: Function
+      filterBeforeLink?: Function
+      filterAfterLink?: Function
+      filterBeforeLinkText?: Function
+      filterAfterLinkText?: Function
+    }
+
+    interface NavigationOutput {
+      html: string
     }
 
     interface Navigation {
@@ -131,9 +173,10 @@ declare global {
 
     interface MetaReturn {
       title: string
+      paginationTitle?: string
       description?: string
       url?: string
-      image?: string
+      image?: string | object
       canonical?: string
       prev?: string
       next?: string
@@ -144,13 +187,22 @@ declare global {
     /* Layout render function arguments */
 
     interface LayoutArgs {
+      id: string
       meta: MetaReturn
-      navigations?: object
-      contentType?: string
+      navigations?: AnyObject
+      contentType: string
       content: string
-      contains?: string[]
-      data?: RenderItem
+      slug: string
+      pageContains: string[]
+      pageData: RenderItem
       serverlessData?: ServerlessData | undefined
+    }
+
+    /* Parent args in render functions */
+
+    interface ParentArgs {
+      renderType: string
+      args: object
     }
 
     /* Container render function props */
@@ -174,7 +226,7 @@ declare global {
         richTextStyles?: boolean
         [key: string]: any
       }
-      parents?: object[]
+      parents?: ParentArgs[]
     }
 
     /* Column render function props */
@@ -201,7 +253,7 @@ declare global {
         attr?: string
         [key: string]: any
       }
-      parents?: object[]
+      parents?: ParentArgs[]
     }
 
     /* Field render function props */
@@ -284,11 +336,7 @@ declare global {
         attr?: string
         [key: string]: any
       }
-      parents?: Array<{
-        renderType: string
-        internalLink?: InternalLink
-        externalLink?: string
-      }>
+      parents?: ParentArgs[]
     }
 
     /* Normalize content rich text render function */
@@ -310,38 +358,33 @@ declare global {
     /* Action arguments */
 
     interface RenderItemStartActionArgs {
+      id: string
       contentType: string
-      props: RenderItem
+      pageData: RenderItem
+      pageContains: string[]
+      serverlessData: ServerlessData | undefined
     }
 
     interface RenderItemEndActionArgs {
+      id: string
       contentType: string
       slug: string
       output: string
-      props: RenderItem
+      pageData: RenderItem
+      pageContains: string[]
+      serverlessData: ServerlessData | undefined
     }
 
     /* Filter arguments */
 
     interface RenderItemFilterArgs {
+      id: string
       contentType: string
       slug: string
-      props: RenderItem
-    }
-
-    interface RenderContentFilterArgs {
-      renderType: string
-      args: {
-        args: any
-        parents?: Array<{
-          renderType: string
-          props: object
-        }>
-        pageData?: object
-        pageContains?: string[]
-        navigations?: object
-        serverlessData?: ServerlessData
-      }
+      output: string
+      pageData: RenderItem
+      pageContains: string[]
+      serverlessData: ServerlessData | undefined
     }
 
     interface RichTextNormalizeContentFilterArgs {
@@ -411,9 +454,11 @@ declare global {
       alt?: string
       width?: number
       height?: number
+      format?: string
       description?: string
       file?: {
         url: string
+        contentType: string
         details: {
           image: {
             width: number
@@ -433,6 +478,7 @@ declare global {
       height?: string | number
       returnAspectRatio?: boolean
       lazy?: boolean
+      source?: boolean
       quality?: number
       maxWidth?: number
       viewportWidth?: number
@@ -465,12 +511,11 @@ declare global {
       contentTypes: {
         partial: string[]
         whole: string[]
-        archive: string[]
-      }
-      taxonomy: {
-        [key: string]: {
-          contentTypes: string[]
-          props: string[]
+        archive: {
+          [key: string]: ArchiveMeta
+        }
+        taxonomy: {
+          [key: string]: TaxonomyMeta
         }
       }
       renderTypes: {
@@ -495,7 +540,7 @@ declare global {
       }
       navigation: Navigation[]
       navigationItem: NavigationItem[]
-      script: {
+      scriptMeta: {
         [key: string]: any
       }
       formMeta: {
@@ -559,9 +604,7 @@ declare global {
         green: string
         red: string
       }
-      vars: {
-        [key: string]: any
-      }
+      vars: any
     }
   }
 }

@@ -19,6 +19,9 @@ const _getTag = (type: string = 'text'): string => {
   let tag = ''
 
   switch (type) {
+    case 'hr':
+      tag = 'hr'
+      break
     case 'paragraph':
       tag = 'p'
       break
@@ -102,8 +105,8 @@ const _getTag = (type: string = 'text'): string => {
  * Function - convert to more standard objects
  *
  * @private
- * @param {array<object>} content
- * @return {array<object>}
+ * @param {object[]} content
+ * @return {object[]}
  */
 
 interface _RichTextContentReturn {
@@ -113,12 +116,16 @@ interface _RichTextContentReturn {
   content: string | _RichTextContentReturn[]
 }
 
-const _normalizeContent = (content: FRM.RichTextContentItem[]): _RichTextContentReturn[] | [] => {
+const _normalizeContent = async (content: FRM.RichTextContentItem[]): Promise<_RichTextContentReturn[] | []> => {
   if (!Array.isArray(content)) {
     return []
   }
 
-  return content.map((c: FRM.RichTextContentItem) => {
+  const normalContent = []
+
+  for (let i = 0; i < content.length; i += 1) {
+    const c: FRM.RichTextContentItem = content[i]
+
     const {
       nodeType = '',
       data,
@@ -167,7 +174,7 @@ const _normalizeContent = (content: FRM.RichTextContentItem[]): _RichTextContent
     }
 
     if (Array.isArray(con) && con !== undefined) {
-      contentValue = _normalizeContent(con)
+      contentValue = await _normalizeContent(con)
     }
 
     const richTextNormalizeContentFilterArgs: FRM.RichTextNormalizeContentFilterArgs = {
@@ -175,7 +182,7 @@ const _normalizeContent = (content: FRM.RichTextContentItem[]): _RichTextContent
       args: c
     }
 
-    contentValue = applyFilters('richTextNormalizeContent', contentValue, richTextNormalizeContentFilterArgs)
+    contentValue = await applyFilters('richTextNormalizeContent', contentValue, richTextNormalizeContentFilterArgs)
 
     /* Link */
 
@@ -205,8 +212,10 @@ const _normalizeContent = (content: FRM.RichTextContentItem[]): _RichTextContent
       obj.internalLink = internalLink
     }
 
-    return obj
-  })
+    normalContent[i] = obj
+  }
+
+  return normalContent
 }
 
 /**
@@ -229,12 +238,14 @@ interface _RichTextContentProps {
   _output?: string
 }
 
-const _getContent = ({
+const _getContent = async ({
   content = [],
   props,
   _output = ''
-}: _RichTextContentProps): string => {
-  content.forEach(c => {
+}: _RichTextContentProps): Promise<string> => {
+  for (let i = 0; i < content.length; i += 1) {
+    const c = content[i]
+
     const {
       tag = '',
       link = '',
@@ -247,7 +258,7 @@ const _getContent = ({
     /* Nested content */
 
     if (Array.isArray(con)) {
-      cc = _getContent({
+      cc = await _getContent({
         content: con,
         props
       })
@@ -269,17 +280,13 @@ const _getContent = ({
 
     let outputStr = ''
 
-    if (tag !== '') {
-      outputStr += `<${tag}${(attrs.length > 0) ? ` ${attrs.join(' ')}` : ''}>`
-    }
-
     if (typeof cc === 'string') {
       const richTextContentFilterArgs: FRM.RichTextContentFilterArgs = {
         args: c,
         props
       }
 
-      const ccc = applyFilters('richTextContent', cc, richTextContentFilterArgs)
+      const ccc = await applyFilters('richTextContent', cc, richTextContentFilterArgs)
 
       if (typeof ccc === 'string') {
         cc = ccc
@@ -288,12 +295,8 @@ const _getContent = ({
       outputStr += cc
     }
 
-    if (tag !== '') {
-      outputStr += `</${tag}>`
-    }
-
-    if (outputStr !== '' && (tag === 'blockquote' || tag === 'table')) {
-      outputStr = `<figure data-rich="${tag}">${outputStr}</figure>`
+    if (tag !== '' && outputStr !== '') {
+      outputStr = `<${tag}${(attrs.length > 0) ? ` ${attrs.join(' ')}` : ''}>${outputStr}</${tag}>`
     }
 
     const richTextContentOutput: FRM.RichTextContentOutputFilterArgs = {
@@ -301,10 +304,10 @@ const _getContent = ({
       props
     }
 
-    outputStr = applyFilters('richTextContentOutput', outputStr, richTextContentOutput)
+    outputStr = await applyFilters('richTextContentOutput', outputStr, richTextContentOutput)
 
     _output += outputStr
-  })
+  }
 
   return _output
 }
@@ -316,7 +319,7 @@ const _getContent = ({
  * @param {object} props.args
  * @param {string} props.args.type
  * @param {string} props.args.tag
- * @param {string|array<object>} props.args.content
+ * @param {string|object[]} props.args.content
  * @param {string} props.args.classes
  * @param {string} props.args.textStyle
  * @param {string} props.args.headingStyle
@@ -324,19 +327,18 @@ const _getContent = ({
  * @param {string} props.args.link
  * @param {object} props.args.internalLink
  * @param {string} props.args.style
- * @param {array<object>} props.parents
+ * @param {object[]} props.parents
  * @return {string}
  */
 
-const richText = (props: FRM.RichTextProps = { args: {}, parents: [] }): string => {
-  props = applyFilters('richTextProps', props, { renderType: 'richText' })
+const richText = async (props: FRM.RichTextProps = { args: {}, parents: [] }): Promise<string> => {
+  props = await applyFilters('richTextProps', props, { renderType: 'richText' })
 
   const { args = {} } = props
 
   const {
     type = '',
     classes = '',
-    caption = '',
     link = '',
     internalLink,
     textStyle = '',
@@ -356,7 +358,7 @@ const richText = (props: FRM.RichTextProps = { args: {}, parents: [] }): string 
   }
 
   if (Array.isArray(content)) {
-    content = _normalizeContent(content)
+    content = await _normalizeContent(content)
   }
 
   /* Hr */
@@ -394,7 +396,7 @@ const richText = (props: FRM.RichTextProps = { args: {}, parents: [] }): string 
   let output = ''
 
   if (Array.isArray(content)) {
-    output = _getContent({
+    output = await _getContent({
       content,
       props
     })
@@ -406,8 +408,8 @@ const richText = (props: FRM.RichTextProps = { args: {}, parents: [] }): string 
 
   const attrs: string[] = [`data-rich="${tag}"`]
 
-  if (heading) {
-    attrs.push(`id="${output.replace(/[\s,:;"'“”‘’]/g, '-').toLowerCase()}"`)
+  if (heading && typeof content === 'string') {
+    attrs.push(`id="${content.replace(/[\s,:;"'“”‘’]/g, '-').toLowerCase()}"`)
   }
 
   if (tag === 'a') {
@@ -436,21 +438,13 @@ const richText = (props: FRM.RichTextProps = { args: {}, parents: [] }): string 
 
   /* Output */
 
+  if (tag !== '' && output !== '') {
+    output = `<${tag}${(attrs.length > 0) ? ` ${attrs.join(' ')}` : ''}>${output}</${tag}>`
+  }
+
   const richTextOutputFilterArgs: FRM.RichTextProps = props
 
-  output = applyFilters('richTextOutput', output, richTextOutputFilterArgs)
-
-  if (tag !== '') {
-    output = `<${tag}${(attrs.length > 0) ? ` ${attrs.join(' ')}` : ''}>${output}</${tag}>`
-
-    if (tag === 'blockquote' || tag === 'table') {
-      if (caption !== '') {
-        output = `${output}<figcaption data-rich="figcaption">${caption}</figcaption>`
-      }
-
-      output = `<figure data-rich="${tag}">${output}</figure>`
-    }
-  }
+  output = await applyFilters('richTextOutput', output, richTextOutputFilterArgs)
 
   return output
 }

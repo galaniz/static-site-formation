@@ -12,12 +12,12 @@ import { applyFilters } from '../../utils/filters'
  *
  * @private
  * @param {object} args
- * @param {array<object>} args.opts
+ * @param {object[]} args.opts
  * @param {string} args.name
  * @param {string} args.classes
  * @param {string} args.attr
  * @param {string} args.type
- * @return {array<string>}
+ * @return {string[]}
  */
 
 interface _FieldOption {
@@ -88,7 +88,7 @@ const _getCheckboxRadioOpts = (args: _FieldCheckboxRadioArgs = {}): string => {
  * @param {boolean} props.args.grow
  * @param {string} props.args.autoCompleteToken
  * @param {string} props.args.placeholder
- * @param {array<string>} props.args.options
+ * @param {string[]} props.args.options
  * @param {number} props.args.rows
  * @param {string} props.args.emptyErrorMessage
  * @param {string} props.args.invalidErrorMessage
@@ -101,8 +101,8 @@ const _getCheckboxRadioOpts = (args: _FieldCheckboxRadioArgs = {}): string => {
  * @return {string} HTML - div
  */
 
-const field = (props: FRM.FieldProps = { args: {} }): string => {
-  props = applyFilters('fieldProps', props, { renderType: 'field' })
+const field = async (props: FRM.FieldProps = { args: {} }): Promise<string> => {
+  props = await applyFilters('fieldProps', props, { renderType: 'field' })
 
   const { args = {} } = props
 

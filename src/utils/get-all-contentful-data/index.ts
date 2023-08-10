@@ -25,7 +25,7 @@ interface AllContentfulDataArgs {
   filterAllData?: Function
 }
 
-const getAllContentfulData = async (args: AllContentfulDataArgs): Promise<FRM.AllData | undefined> => {
+const getAllContentfulData = async (args: AllContentfulDataArgs = {}): Promise<FRM.AllData | undefined> => {
   const {
     serverlessData,
     previewData,
@@ -98,8 +98,7 @@ const getAllContentfulData = async (args: AllContentfulDataArgs): Promise<FRM.Al
 
         const key = `all_${contentType}`
         const params = {
-          content_type: contentType,
-          include: 5
+          content_type: contentType
         }
 
         let data = await getContentfulData(key, params)
@@ -109,7 +108,7 @@ const getAllContentfulData = async (args: AllContentfulDataArgs): Promise<FRM.Al
         }
 
         if (data?.items !== undefined) {
-          allData[contentType].push(data.items)
+          allData[contentType] = data.items
         }
       }
     }
@@ -137,7 +136,7 @@ const getAllContentfulData = async (args: AllContentfulDataArgs): Promise<FRM.Al
         }
 
         if (data?.items !== undefined) {
-          allData.content[contentType].push(data.items)
+          allData.content[contentType] = data.items
         }
       }
     }

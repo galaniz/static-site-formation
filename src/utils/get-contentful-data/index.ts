@@ -47,7 +47,7 @@ const getContentfulData = async (
         type: 'get'
       }
 
-      cacheData = applyFilters('cacheData', cacheData, cacheDataFilterArgs)
+      cacheData = await applyFilters('cacheData', cacheData, cacheDataFilterArgs)
 
       if (Object.keys(cacheData).length > 0) {
         return structuredClone(cacheData)
@@ -106,7 +106,7 @@ const getContentfulData = async (
         data
       }
 
-      applyFilters('cacheData', data, cacheDataFilterArgs)
+      await applyFilters('cacheData', data, cacheDataFilterArgs)
     }
 
     /* Output */

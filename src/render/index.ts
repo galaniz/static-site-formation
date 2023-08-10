@@ -84,9 +84,9 @@ const _getMeta = (item: {
  *
  * @private
  * @param {object} args
- * @param {array<object>} args.contentData
+ * @param {object[]} args.contentData
  * @param {object} args.output
- * @param {array<object>} args.parents
+ * @param {object[]} args.parents
  * @param {object} args.renderFunctions
  * @return {void}
  */
@@ -106,11 +106,8 @@ interface _RenderContentArgs {
   output: {
     html: string
   }
-  parents: Array<{
-    renderType: string
-    props: object
-  }>
-  pageData: object
+  parents: FRM.ParentArgs[]
+  pageData: FRM.RenderItem
   pageContains: string[]
   navigations: object
   renderFunctions: _RenderFunctions
@@ -121,7 +118,7 @@ const _renderContent = async ({
   serverlessData,
   output,
   parents = [],
-  pageData = {},
+  pageData,
   pageContains = [],
   navigations = {},
   renderFunctions = {}
@@ -133,7 +130,7 @@ const _renderContent = async ({
       /* Store html string and filter info */
 
       let filterType = ''
-      let filterArgs = { args: {} }
+      let filterArgs = {}
       let richTextOutput = ''
 
       /* Check for embedded entries and rich text */
@@ -152,9 +149,12 @@ const _renderContent = async ({
             parents
           }
 
-          richTextOutput = richText(richTextArgs)
+          richTextOutput = await richText(richTextArgs)
           filterType = 'richText'
-          filterArgs = richTextArgs
+          filterArgs = {
+            type: richTextNode,
+            content: c.content
+          }
         }
       }
 
@@ -185,7 +185,7 @@ const _renderContent = async ({
 
       /* Render props */
 
-      const normalProps = getProp(c)
+      const normalProps: object = getProp(c, '', {})
       const normalRenderType = getProp(c, 'renderType')
 
       const props: { id?: string, [key: string]: any } = typeof normalProps === 'object' ? normalProps : {}
@@ -227,7 +227,7 @@ const _renderContent = async ({
         pageContains.push(renderType)
 
         filterType = renderType
-        filterArgs = renderArgs
+        filterArgs = props
       }
 
       let start = renderObj.start
@@ -235,20 +235,20 @@ const _renderContent = async ({
 
       /* Filter start and end output */
 
-      const renderContentFilterArgs: FRM.RenderContentFilterArgs = {
+      const renderContentFilterArgs: FRM.ParentArgs = {
         renderType: filterType,
         args: filterArgs
       }
 
       if (start !== '' && end === '') {
-        start = applyFilters('renderContent', start, renderContentFilterArgs)
+        start = await applyFilters('renderContent', start, renderContentFilterArgs)
       } else {
-        start = applyFilters('renderContentStart', start, renderContentFilterArgs)
-        end = applyFilters('renderContentEnd', end, renderContentFilterArgs)
+        start = await applyFilters('renderContentStart', start, renderContentFilterArgs)
+        end = await applyFilters('renderContentEnd', end, renderContentFilterArgs)
       }
 
       if (richTextOutput !== '') {
-        richTextOutput = applyFilters('renderContent', start, renderContentFilterArgs)
+        richTextOutput = await applyFilters('renderContent', richTextOutput, renderContentFilterArgs)
       }
 
       /* Add to output object */
@@ -263,7 +263,7 @@ const _renderContent = async ({
 
         parentsCopy.unshift({
           renderType,
-          props
+          args: props
         })
 
         await _renderContent({
@@ -308,7 +308,7 @@ interface _RenderItemArgs {
 
 interface _RenderItemReturn {
   serverlessRender: boolean
-  props?: FRM.RenderItem
+  pageData?: FRM.RenderItem
   data?: {
     slug: string
     output: string
@@ -336,18 +336,23 @@ const _renderItem = async ({
     slug: '',
     content: [],
     linkContentType: 'default'
-  }, getProp(item))
-
-  const renderItemStartArgs: FRM.RenderItemStartActionArgs = {
-    contentType,
-    props
-  }
-
-  doActions('renderItemStart', renderItemStartArgs)
+  }, getProp(item, '', {}))
 
   /* Store components contained in page  */
 
   const pageContains: string[] = []
+
+  /* Start action */
+
+  const renderItemStartArgs: FRM.RenderItemStartActionArgs = {
+    id,
+    pageData: props,
+    contentType,
+    pageContains,
+    serverlessData
+  }
+
+  await doActions('renderItemStart', renderItemStartArgs)
 
   /* Meta */
 
@@ -427,13 +432,13 @@ const _renderItem = async ({
   let itemServerlessData: FRM.ServerlessData | undefined
 
   if (serverlessData !== undefined) {
-    if (serverlessData?.path !== undefined && serverlessData?.query !== undefined) {
-      if (serverlessData.path === formattedSlug) {
-        itemServerlessData = serverlessData
-      } else { // Avoid re-rendering non dynamic pages
-        return {
-          serverlessRender: false
-        }
+    const serverlessPath = serverlessData.path !== undefined ? serverlessData.path : ''
+
+    if (serverlessPath === formattedSlug && serverlessData?.query !== undefined) {
+      itemServerlessData = serverlessData
+    } else { // Avoid re-rendering non dynamic pages
+      return {
+        serverlessRender: false
       }
     }
   }
@@ -451,16 +456,18 @@ const _renderItem = async ({
     })
   }
 
-  /* Prev next pagination - end for pagination update from posts */
+  /* Pagination variables for meta object */
 
-  const updatedItem = getProp(item)
-
-  if (updatedItem?.pagination !== undefined) {
+  if (item.pagination !== undefined) {
     serverlessRender = true
 
-    const pagination = updatedItem.pagination
+    const pagination = item.pagination
 
-    const { currentFilters, prevFilters, nextFilters } = pagination
+    const {
+      currentFilters,
+      prevFilters,
+      nextFilters
+    } = pagination
 
     slugArgs.page = pagination.current > 1 ? pagination.current : 0
 
@@ -470,7 +477,11 @@ const _renderItem = async ({
       meta.canonical = `${getPermalink(c.slug, pagination.current === 1)}${typeof currentFilters === 'string' ? currentFilters : ''}`
     }
 
-    if (pagination?.prev !== undefined) {
+    if (pagination.title !== undefined) {
+      meta.paginationTitle = pagination.title
+    }
+
+    if (pagination.prev !== undefined) {
       slugArgs.page = pagination.prev > 1 ? pagination.prev : 0
 
       const p = getSlug(slugArgs)
@@ -480,7 +491,7 @@ const _renderItem = async ({
       }
     }
 
-    if (pagination?.next !== undefined) {
+    if (pagination.next !== undefined) {
       if (pagination.next > 1) {
         slugArgs.page = pagination.next
 
@@ -491,18 +502,15 @@ const _renderItem = async ({
         }
       }
     }
-
-    meta.title = updatedItem.metaTitle
   }
 
-  /* Props copy */
+  /* Page data (props) for layout and actions */
 
-  const propsCopy = { ...props }
+  const pageData = { ...props }
 
-  propsCopy.id = id
-  propsCopy.title = title
-  propsCopy.parents = parents
-  propsCopy.content = undefined
+  pageData.id = id
+  pageData.parents = parents
+  pageData.content = undefined
 
   /* Output */
 
@@ -510,12 +518,14 @@ const _renderItem = async ({
 
   if (renderFunctions?.layout !== undefined) {
     const layoutArgs: FRM.LayoutArgs = {
+      id,
       meta,
       navigations,
       contentType,
       content: contentOutput.html,
-      contains: pageContains,
-      data: propsCopy,
+      slug: formattedSlug,
+      pageContains,
+      pageData,
       serverlessData
     }
 
@@ -523,25 +533,36 @@ const _renderItem = async ({
   }
 
   const renderItemFilterArgs: FRM.RenderItemFilterArgs = {
-    contentType,
-    slug: formattedSlug,
-    props: propsCopy
-  }
-
-  layoutOutput = applyFilters('renderItem', layoutOutput, renderItemFilterArgs)
-
-  const renderItemEndArgs: FRM.RenderItemEndActionArgs = {
+    id,
     contentType,
     slug: formattedSlug,
     output: layoutOutput,
-    props
+    pageData,
+    pageContains,
+    serverlessData
   }
 
-  doActions('renderItemEnd', renderItemEndArgs)
+  layoutOutput = await applyFilters('renderItem', layoutOutput, renderItemFilterArgs)
+
+  /* End action */
+
+  const renderItemEndArgs: FRM.RenderItemEndActionArgs = {
+    id,
+    contentType,
+    slug: formattedSlug,
+    output: layoutOutput,
+    pageData,
+    pageContains,
+    serverlessData
+  }
+
+  await doActions('renderItemEnd', renderItemEndArgs)
+
+  /* Output */
 
   return {
     serverlessRender,
-    props: propsCopy,
+    pageData,
     data: {
       slug: formattedSlug,
       output: layoutOutput
@@ -553,7 +574,7 @@ const _renderItem = async ({
  * Function - loop through all content types to output pages and posts
  *
  * @param {object} args
- * @param {array<object>} args.allData
+ * @param {object[]} args.allData
  * @param {object} args.serverlessData
  * @param {object} args.previewData
  * @return {array|object}
@@ -575,7 +596,7 @@ const render = async ({
   setFilters(config.filters)
   setActions(config.actions)
 
-  doActions('renderStart')
+  await doActions('renderStart')
 
   /* Data */
 
@@ -629,15 +650,21 @@ const render = async ({
   /* Loop through pages first to set parent slugs */
 
   if (serverlessData === undefined) {
-    content.page.forEach(item => {
-      const { parent, archive = '', linkContentType = 'default' } = getProp(item)
+    for (let i = 0; i < content.page.length; i += 1) {
+      const item = content.page[i]
+      const itemData: { parent: object, archive: string, linkContentType: string } = getProp(item, '', {})
+
+      let { parent, archive = '', linkContentType = 'default' } = itemData
+
+      archive = await applyFilters('renderArchiveName', archive)
+      linkContentType = await applyFilters('renderLinkContentTypeName', linkContentType)
 
       const id = getProp(item, 'id')
       const isArchive = archive !== '' && id !== ''
 
       if (isArchive) {
         const archiveIds = config.archive.ids
-        const slugBasesArchive = config.slug.bases?.[archive]?.archiveId
+        const contentTypeArchive = config.contentTypes.archive?.[archive]?.id
 
         if (archiveIds[archive] === undefined) {
           archiveIds[archive] = {}
@@ -645,8 +672,8 @@ const render = async ({
 
         archiveIds[archive][linkContentType] = id
 
-        if (slugBasesArchive !== undefined && typeof slugBasesArchive === 'object') {
-          slugBasesArchive[linkContentType] = id
+        if (contentTypeArchive !== undefined && typeof contentTypeArchive === 'object') {
+          contentTypeArchive[linkContentType] = id
         }
       }
 
@@ -664,11 +691,11 @@ const render = async ({
           }
         }
       }
-    })
+    }
 
     if (redirect !== undefined && Array.isArray(redirect)) {
       redirect.forEach((r) => {
-        const { redirect: rr } = getProp(r)
+        const { redirect: rr = [] } = getProp(r, '', {})
 
         if (rr.length > 0) {
           config.redirects.data = config.redirects.data.concat(rr)
@@ -697,8 +724,8 @@ const render = async ({
       config.archive.ids = archiveIdsJson
 
       Object.keys(archiveIdsJson).forEach((a) => {
-        if (config.slug.bases?.[a] != null) {
-          config.slug.bases[a].archiveId = archiveIdsJson[a]
+        if (config.contentTypes.archive?.[a] != null) {
+          config.contentTypes.archive[a].id = archiveIdsJson[a]
         }
       })
     }
@@ -719,15 +746,6 @@ const render = async ({
       config.navigation = navigationsJson.navigation
       config.navigationItem = navigationsJson.navigationItem
     }
-  }
-
-  /* 404 page */
-
-  if (serverlessData === undefined && previewData === undefined && renderFunctions?.httpError !== undefined) {
-    data.push({
-      slug: '404.html',
-      output: await renderFunctions.httpError(404)
-    })
   }
 
   /* Empty serverless reload */
@@ -785,7 +803,7 @@ const render = async ({
 
   /* Output */
 
-  doActions('renderEnd', serverlessData !== undefined || previewData !== undefined ? data[0] : data)
+  await doActions('renderEnd', serverlessData !== undefined || previewData !== undefined ? data[0] : data)
 
   if (serverlessData !== undefined || previewData !== undefined) {
     return data[0]

@@ -38,7 +38,7 @@ interface AllFileDataArgs {
   filterAllData?: Function
 }
 
-const getAllFileData = async (args: AllFileDataArgs): Promise<FRM.AllData | undefined> => {
+const getAllFileData = async (args: AllFileDataArgs = {}): Promise<FRM.AllData | undefined> => {
   const {
     resolveProps = {
       image: ['image'],
@@ -148,7 +148,7 @@ const getAllFileData = async (args: AllFileDataArgs): Promise<FRM.AllData | unde
 
         /* Archive */
 
-        if (config.contentTypes.archive.includes(contentType)) {
+        if (config.contentTypes.archive[contentType] !== undefined) {
           const ddCopy = undefineProps(dd, excludeProps.archive.posts)
 
           if (config.archive.posts[contentType] === undefined) {
@@ -161,8 +161,8 @@ const getAllFileData = async (args: AllFileDataArgs): Promise<FRM.AllData | unde
 
       /* Term content */
 
-      Object.keys(config.taxonomy).forEach((tax) => {
-        const { contentTypes, props } = config.taxonomy[tax]
+      Object.keys(config.contentTypes.taxonomy).forEach((tax) => {
+        const { contentTypes, props } = config.contentTypes.taxonomy[tax]
 
         if (config.archive.terms?.[tax] === undefined) {
           config.archive.terms[tax] = {}

@@ -17,8 +17,8 @@ import config from '../../config'
 const getArchiveId = (contentType: string = '', linkContentType: string = 'default'): string => {
   let id = ''
 
-  if (config.slug.bases[contentType] !== undefined) {
-    const archiveId: string | FRM.AnyObject | undefined = config.slug.bases[contentType].archiveId
+  if (config.contentTypes.archive[contentType] !== undefined) {
+    const archiveId: string | FRM.AnyObject | undefined = config.contentTypes.archive[contentType].id
 
     if (typeof archiveId === 'object' && archiveId !== undefined) {
       id = archiveId[linkContentType]

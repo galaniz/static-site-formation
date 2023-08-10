@@ -7,7 +7,7 @@
  *
  * @param {object} data
  * @param {object} currentData
- * @param {array<string>} props
+ * @param {string[]} props
  * @param {function} filterValue
  * @return {void}
  */

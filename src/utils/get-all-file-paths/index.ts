@@ -11,7 +11,7 @@ import { join } from 'node:path'
  * Function - recurse directory to get all file paths in it
  *
  * @param {string} dir
- * @yield {array<string>}
+ * @yield {string[]}
  */
 
 const getAllFilePaths = async function * (dir: string): AsyncIterable<string> {

@@ -13,33 +13,12 @@ import getProp from '../../utils/get-prop'
  * Class - recursively generate navigation output
  */
 
-interface NavigationBreadcrumbItem extends FRM.NavigationItem {
-  slug: string
-  contentType: string
-}
-
 interface NavigationArgs {
   navigations: FRM.Navigation[]
   items: FRM.NavigationItem[]
 }
 
-interface NavigationRecurseArgs {
-  listClass?: string
-  listAttr?: string
-  itemClass?: string
-  itemAttr?: string
-  linkClass?: string
-  internalLinkClass?: string
-  linkAttr?: string
-  filterBeforeItem?: Function
-  filterAfterItem?: Function
-  filterBeforeLink?: Function
-  filterAfterLink?: Function
-  filterBeforeLinkText?: Function
-  filterAfterLinkText?: Function
-}
-
-interface NavigationBreadcrumbRecurseArgs extends NavigationRecurseArgs {
+interface NavigationBreadcrumbRecurseArgs extends FRM.NavigationArgs {
   currentClass?: string
   a11yClass?: string
 }
@@ -49,8 +28,8 @@ class Navigation {
    * Set properties and initialize
    *
    * @param {object} args
-   * @param {array<object>} args.navigations
-   * @param {array<object>} args.items
+   * @param {object[]} args.navigations
+   * @param {object[]} args.items
    * @return {void|boolean} - False if init errors
    */
 
@@ -124,7 +103,7 @@ class Navigation {
         title: '',
         location: '',
         items: []
-      }, getProp(nav))
+      }, getProp(nav, '', {}))
 
       const { title, location, items } = navFields
 
@@ -148,7 +127,7 @@ class Navigation {
    */
 
   _getItemInfo (item: FRM.NavigationItem): FRM.NavigationItem {
-    const fields = getProp(item)
+    const fields = getProp(item, '', {})
 
     const {
       title = '',
@@ -193,8 +172,8 @@ class Navigation {
    * Loop through items to check and set children
    *
    * @private
-   * @param {array<object>} children
-   * @param {array<object>} store
+   * @param {object[]} children
+   * @param {object[]} store
    * @return {void}
    */
 
@@ -210,9 +189,9 @@ class Navigation {
    * Return navigation items by id
    *
    * @private
-   * @param {array<object>} items
+   * @param {object[]} items
    * @param {string} current
-   * @return {array<object>}
+   * @return {object[]}
    */
 
   _getItems (items: FRM.NavigationItem[] = [], current: string = ''): FRM.NavigationItem[] {
@@ -221,7 +200,7 @@ class Navigation {
     }
 
     return items.map(item => {
-      const fields = getProp(item)
+      const fields = getProp(item, '', {})
 
       const {
         title = '',
@@ -262,14 +241,14 @@ class Navigation {
    * Loop through items to create html
    *
    * @private
-   * @param {array<object>} items
+   * @param {object[]} items
    * @param {object} output
    * @param {number} depth
    * @param {object} args
    * @return {void}
    */
 
-  _recurseOutput = (items: FRM.NavigationItem[] = [], output: { html: string }, depth: number = -1, args: NavigationRecurseArgs): void => {
+  _recurseOutput = (items: FRM.NavigationItem[] = [], output: { html: string }, depth: number = -1, args: FRM.NavigationArgs): void => {
     depth += 1
 
     const listClasses = args.listClass !== undefined ? ` class="${args.listClass}"` : ''
@@ -393,7 +372,7 @@ class Navigation {
    * @return {string} HTML - ul
    */
 
-  getOutput (location: string = '', current: string = '', args: NavigationRecurseArgs): string {
+  getOutput (location: string = '', current: string = '', args: FRM.NavigationArgs): string {
     if (this._navigationsByLocation?.[location] === undefined) {
       return ''
     }
@@ -429,13 +408,13 @@ class Navigation {
   /**
    * Return breadcrumbs html output
    *
-   * @param {array<object>} items
+   * @param {object[]} items
    * @param {string} current
    * @param {object} args
    * @return {string} HTML - ol
    */
 
-  getBreadcrumbs (items: NavigationBreadcrumbItem[] = [], current: string = '', args: NavigationBreadcrumbRecurseArgs): string {
+  getBreadcrumbs (items: FRM.NavigationBreadcrumbItem[] = [], current: string = '', args: NavigationBreadcrumbRecurseArgs): string {
     /* Items required */
 
     if (items.length === 0) {

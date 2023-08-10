@@ -11,13 +11,14 @@ import config from '../../config'
  *
  * @param {object} object
  * @param {string} prop
+ * @param {*} undefinedFallback
  * @return {*}
  */
 
-const getProp = (object: { [key: string]: any }, prop: string = ''): any => {
+const getProp = (object: { [key: string]: any } = {}, prop: string = '', undefinedFallback?: any): any => {
   if (config.cms.name === 'contentful') {
     if (prop === 'id') {
-      return object.sys.id
+      return object?.sys?.id !== undefined ? object.sys.id : ''
     }
 
     if (prop === 'renderType' || prop === 'contentType') {
@@ -35,14 +36,14 @@ const getProp = (object: { [key: string]: any }, prop: string = ''): any => {
     }
 
     if (prop === '') {
-      return object.fields
+      return object.fields !== undefined ? object.fields : undefinedFallback
     }
 
-    return object.fields[prop]
+    return object?.fields?.[prop] !== undefined ? object.fields[prop] : undefinedFallback
   }
 
   if (prop !== '') {
-    return object[prop]
+    return object[prop] !== undefined ? object[prop] : undefinedFallback
   }
 
   return object

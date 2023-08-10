@@ -31,8 +31,8 @@ import { applyFilters } from '../../utils/filters'
  * @return {object}
  */
 
-const column = (props: FRM.ColumnProps = { args: {} }): FRM.StartEndReturn => {
-  props = applyFilters('columnProps', props, { renderType: 'column' })
+const column = async (props: FRM.ColumnProps = { args: {} }): Promise<FRM.StartEndReturn> => {
+  props = await applyFilters('columnProps', props, { renderType: 'column' })
 
   const { args = {} } = props
 

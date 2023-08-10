@@ -5,9 +5,9 @@
 /**
  * Function - set property in object or array of objects to undefined
  *
- * @param {object|array<object>} obj
- * @param {array<string>} props
- * @return {object|array<object>}
+ * @param {object|object[]} obj
+ * @param {string[]} props
+ * @return {object|object[]}
  */
 
 const undefineProps = (obj: FRM.AnyObject | FRM.AnyObject[], props: string[] = []): FRM.AnyObject | FRM.AnyObject[] => {
