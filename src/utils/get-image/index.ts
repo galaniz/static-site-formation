@@ -200,7 +200,14 @@ const getImage = (args: FRM.ImageArgs = {}): string | { output: string, aspectRa
     sourceOutput = `<source srcset="${srcset.join(', ')}" sizes="${sizes}" type="image/webp">`
   }
 
+  let eagerHackOutput = ''
+
+  if (!lazy) {
+    eagerHackOutput = `<img alt="" role="presentation" aria-hidden="true" src="data:image/svg+xml;charset=utf-8,%3Csvg height='${h}' width='${w}' xmlns='http://www.w3.org/2000/svg' version='1.1'%3E%3C/svg%3E'" style="pointerEvents: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%">`
+  }
+
   const output = `
+    ${eagerHackOutput}
     ${sourceOutput}
     <img${classes !== '' ? ` class="${classes}"` : ''} alt="${alt}" src="${source ? srcFallback : src}" srcset="${source ? srcsetFallback.join(', ') : srcset.join(', ')}" sizes="${sizes}" width="${w}" height="${h}"${attr !== '' ? ` ${attr}` : ''}${lazy ? ' loading="lazy" decoding="async"' : ' loading="eager"'}>
   `

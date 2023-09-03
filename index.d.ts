@@ -597,6 +597,22 @@ declare global {
           dataFile: string
         }
       }
+      styles: {
+        item: {
+          [key: string]: number
+        }
+        build: {
+          [key: string]: string
+        }
+      }
+      scripts: {
+        item: {
+          [key: string]: number
+        }
+        build: {
+          [key: string]: string
+        }
+      }
       apiKeys: {
         smtp2go: string
       }

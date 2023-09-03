@@ -354,6 +354,11 @@ const _renderItem = async ({
 
   await doActions('renderItemStart', renderItemStartArgs)
 
+  /* Reset script and style files */
+
+  config.scripts.item = {}
+  config.styles.item = {}
+
   /* Meta */
 
   const title = props.title
@@ -597,6 +602,11 @@ const render = async ({
   setActions(config.actions)
 
   await doActions('renderStart')
+
+  /* Reset script and style directories */
+
+  config.scripts.build = {}
+  config.styles.build = {}
 
   /* Data */
 

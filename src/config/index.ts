@@ -95,6 +95,12 @@
  * @prop {string} static.image.inputDir
  * @prop {string} static.image.outputDir
  * @prop {string} static.image.dataFile
+ * @prop {object} styles
+ * @prop {object} styles.item
+ * @prop {object} styles.build
+ * @prop {object} scripts
+ * @prop {object} scripts.item
+ * @prop {object} scripts.build
  * @prop {object} apiKeys
  * @prop {string} apiKeys.smtp2go
  * @prop {object} console
@@ -226,6 +232,14 @@ let config: FRM.Config = {
       outputDir: 'site/assets/img',
       dataFile: 'src/json/image-data.json'
     }
+  },
+  styles: {
+    item: {},
+    build: {}
+  },
+  scripts: {
+    item: {},
+    build: {}
   },
   apiKeys: {
     smtp2go: ''
