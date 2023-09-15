@@ -74,6 +74,8 @@ declare global {
       linkClass?: string
       internalLinkClass?: string
       linkAttr?: string
+      filterBeforeList?: Function
+      filterAfterList?: Function
       filterBeforeItem?: Function
       filterAfterItem?: Function
       filterBeforeLink?: Function
@@ -91,6 +93,33 @@ declare global {
       location: string
       items: NavigationItem[]
       [key: string]: any
+    }
+
+    interface NavigationListFilterArgs {
+      args: NavigationArgs
+      output: {
+        html: string
+      }
+      items: NavigationItem[]
+      depth: number
+    }
+
+    interface NavigationFilterArgs {
+      args: NavigationArgs
+      item: NavigationItem
+      output: {
+        html: string
+      }
+      index: number
+      items: NavigationItem[]
+      depth: number
+    }
+
+    interface NavigationBreadcrumbFilterArgs {
+      output: {
+        html: string
+      }
+      isLastLevel: boolean
     }
 
     /* Info for write files utilities */

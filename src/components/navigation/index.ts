@@ -16,6 +16,7 @@ import getProp from '../../utils/get-prop'
 interface NavigationArgs {
   navigations: FRM.Navigation[]
   items: FRM.NavigationItem[]
+  current?: string
 }
 
 interface NavigationBreadcrumbRecurseArgs extends FRM.NavigationArgs {
@@ -30,24 +31,28 @@ class Navigation {
    * @param {object} args
    * @param {object[]} args.navigations
    * @param {object[]} args.items
-   * @return {void|boolean} - False if init errors
+   * @param {string} args.current
+   * @return {void}
    */
 
-  public navigations: FRM.Navigation[]
-  public items: FRM.NavigationItem[]
-  public init: boolean
+  navigations: FRM.Navigation[]
+  items: FRM.NavigationItem[]
+  current: string
+  init: boolean
 
-  private _itemsById: { [key: string]: FRM.NavigationItem }
-  private _navigationsByLocation: { [key: string]: { title: string, items: FRM.NavigationItem[] } }
+  #itemsById: { [key: string]: FRM.NavigationItem }
+  #navigationsByLocation: { [key: string]: { title: string, items: FRM.NavigationItem[] } }
 
   constructor (args: NavigationArgs) {
     const {
       navigations = [],
-      items = []
+      items = [],
+      current = ''
     } = args
 
     this.navigations = navigations
     this.items = items
+    this.current = current
 
     /**
      * Store items by od
@@ -56,7 +61,7 @@ class Navigation {
      * @type {object}
      */
 
-    this._itemsById = {}
+    this.#itemsById = {}
 
     /**
      * Store navigations by location
@@ -65,11 +70,15 @@ class Navigation {
      * @type {object}
      */
 
-    this._navigationsByLocation = {}
+    this.#navigationsByLocation = {}
 
-    /* Initialize */
+    /**
+     * Initialize
+     *
+     * @type {boolean}
+     */
 
-    this.init = this._initialize()
+    this.init = this.#initialize()
   }
 
   /**
@@ -79,7 +88,7 @@ class Navigation {
    * @return {boolean}
    */
 
-  _initialize (): boolean {
+  #initialize (): boolean {
     /* Check that required items exist */
 
     if (this.navigations.length === 0 || this.items.length === 0) {
@@ -89,10 +98,10 @@ class Navigation {
     /* Items by id */
 
     this.items.forEach(item => {
-      const info = this._getItemInfo(item)
+      const info = this.#getItemInfo(item)
 
-      if (info?.id !== undefined) {
-        this._itemsById[info.id] = info
+      if (info.id !== undefined) {
+        this.#itemsById[info.id] = info
       }
     })
 
@@ -107,7 +116,7 @@ class Navigation {
 
       const { title, location, items } = navFields
 
-      this._navigationsByLocation[location.toLowerCase().replace(/ /g, '')] = {
+      this.#navigationsByLocation[location.toLowerCase().replace(/ /g, '')] = {
         title,
         items
       }
@@ -126,7 +135,7 @@ class Navigation {
    * @return {object}
    */
 
-  _getItemInfo (item: FRM.NavigationItem): FRM.NavigationItem {
+  #getItemInfo (item: FRM.NavigationItem): FRM.NavigationItem {
     const fields = getProp(item, '', {})
 
     const {
@@ -157,13 +166,29 @@ class Navigation {
       external
     }
 
+    if (link !== undefined && internalLink !== undefined) {
+      props.current = props.link === this.current
+    }
+
+    let descendentCurrent = false
+
     if (children !== undefined) {
       const c: FRM.NavigationItem[] = []
 
-      this._recurseItemChildren(children, c)
+      descendentCurrent = this.#recurseItemChildren(children, c)
 
       props.children = c
     }
+
+    if (descendentCurrent) {
+      props.descendentCurrent = descendentCurrent
+    }
+
+    Object.keys(fields).forEach((f) => {
+      if (props[f] === undefined) {
+        props[f] = fields[f]
+      }
+    })
 
     return props
   }
@@ -174,15 +199,25 @@ class Navigation {
    * @private
    * @param {object[]} children
    * @param {object[]} store
-   * @return {void}
+   * @return {boolean}
    */
 
-  _recurseItemChildren (children: FRM.NavigationItem[] = [], store: object[] = []): void {
+  #recurseItemChildren (children: FRM.NavigationItem[] = [], store: object[] = []): boolean {
+    let childCurrent = false
+
     children.forEach(child => {
-      const info = this._getItemInfo(child)
+      const info = this.#getItemInfo(child)
+
+      const { current = false } = info
+
+      if (current) {
+        childCurrent = true
+      }
 
       store.push(info)
     })
+
+    return childCurrent
   }
 
   /**
@@ -190,11 +225,10 @@ class Navigation {
    *
    * @private
    * @param {object[]} items
-   * @param {string} current
    * @return {object[]}
    */
 
-  _getItems (items: FRM.NavigationItem[] = [], current: string = ''): FRM.NavigationItem[] {
+  #getItems (items: FRM.NavigationItem[] = []): FRM.NavigationItem[] {
     if (items.length === 0) {
       return []
     }
@@ -222,18 +256,7 @@ class Navigation {
         }
       }
 
-      const obj = this._itemsById[id]
-
-      if (obj?.link !== undefined) {
-        obj.current = obj.link === current
-        obj.descendentCurrent = current.includes(obj.link)
-      }
-
-      if (externalLink !== '') {
-        obj.current = false
-      }
-
-      return this._itemsById[id]
+      return this.#itemsById[id]
     })
   }
 
@@ -243,20 +266,37 @@ class Navigation {
    * @private
    * @param {object[]} items
    * @param {object} output
-   * @param {number} depth
    * @param {object} args
+   * @param {number} depth
+   * @param {number} maxDepth
    * @return {void}
    */
 
-  _recurseOutput = (items: FRM.NavigationItem[] = [], output: { html: string }, depth: number = -1, args: FRM.NavigationArgs): void => {
+  #recurseOutput = (
+    items: FRM.NavigationItem[] = [],
+    output: { html: string },
+    args: FRM.NavigationArgs,
+    depth: number = -1,
+    maxDepth?: number
+  ): void => {
     depth += 1
+
+    if (maxDepth !== undefined && depth > maxDepth) {
+      return
+    }
+
+    const listFilterArgs: FRM.NavigationListFilterArgs = { args, output, items, depth }
+
+    if (typeof args.filterBeforeList === 'function') {
+      args.filterBeforeList(listFilterArgs)
+    }
 
     const listClasses = args.listClass !== undefined ? ` class="${args.listClass}"` : ''
     const listAttrs = args.listAttr !== undefined ? ` ${args.listAttr}` : ''
 
     output.html += `<ul data-depth="${depth}"${listClasses}${listAttrs}>`
 
-    items.forEach(item => {
+    items.forEach((item, index) => {
       const {
         title = '',
         link = '',
@@ -266,10 +306,14 @@ class Navigation {
         descendentCurrent = false
       } = item
 
+      /* Filters args */
+
+      const filterArgs: FRM.NavigationFilterArgs = { args, item, output, index, items, depth }
+
       /* Item start */
 
       if (typeof args.filterBeforeItem === 'function') {
-        args.filterBeforeItem(args, item, output)
+        args.filterBeforeItem(filterArgs)
       }
 
       const itemClasses = args.itemClass !== undefined ? ` class="${args.itemClass}"` : ''
@@ -288,7 +332,7 @@ class Navigation {
       /* Link start */
 
       if (typeof args.filterBeforeLink === 'function') {
-        args.filterBeforeLink(args, item, output)
+        args.filterBeforeLink(filterArgs)
       }
 
       const linkClassesArray: string[] = []
@@ -328,13 +372,13 @@ class Navigation {
       output.html += `<${linkTag} data-depth="${depth}"${linkClasses}${linkAttrs}>`
 
       if (typeof args.filterBeforeLinkText === 'function') {
-        args.filterBeforeLinkText(args, item, output)
+        args.filterBeforeLinkText(filterArgs)
       }
 
       output.html += title
 
       if (typeof args.filterAfterLinkText === 'function') {
-        args.filterAfterLinkText(args, item, output)
+        args.filterAfterLinkText(filterArgs)
       }
 
       /* Link end */
@@ -342,13 +386,13 @@ class Navigation {
       output.html += `</${linkTag}>`
 
       if (typeof args.filterAfterLink === 'function') {
-        args.filterAfterLink(args, item, output)
+        args.filterAfterLink(filterArgs)
       }
 
       /* Nested content */
 
       if (children.length > 0) {
-        this._recurseOutput(children, output, depth, args)
+        this.#recurseOutput(children, output, args, depth, maxDepth)
       }
 
       /* Item end */
@@ -356,29 +400,37 @@ class Navigation {
       output.html += '</li>'
 
       if (typeof args.filterAfterItem === 'function') {
-        args.filterAfterItem(args, item, output)
+        args.filterAfterItem(filterArgs)
       }
     })
 
     output.html += '</ul>'
+
+    if (typeof args.filterAfterList === 'function') {
+      args.filterAfterList(listFilterArgs)
+    }
   }
 
   /**
    * Return navigation html output
    *
    * @param {string} location
-   * @param {string} current
    * @param {object} args
+   * @param {number} maxDepth
    * @return {string} HTML - ul
    */
 
-  getOutput (location: string = '', current: string = '', args: FRM.NavigationArgs): string {
-    if (this._navigationsByLocation?.[location] === undefined) {
+  getOutput (
+    location: string = '',
+    args: FRM.NavigationArgs,
+    maxDepth?: number
+  ): string {
+    if (this.#navigationsByLocation?.[location] === undefined) {
       return ''
     }
 
-    const items = this._navigationsByLocation[location].items
-    const normalizedItems = this._getItems(items, current)
+    const items = this.#navigationsByLocation[location].items
+    const normalizedItems = this.#getItems(items)
 
     args = Object.assign({
       listClass: '',
@@ -388,6 +440,8 @@ class Navigation {
       linkClass: '',
       internalLinkClass: '',
       linkAttr: '',
+      filterBeforeList: () => {},
+      filterAfterList: () => {},
       filterBeforeItem: () => {},
       filterAfterItem: () => {},
       filterBeforeLink: () => {},
@@ -400,7 +454,7 @@ class Navigation {
       html: ''
     }
 
-    this._recurseOutput(normalizedItems, output, -1, args)
+    this.#recurseOutput(normalizedItems, output, args, -1, maxDepth)
 
     return output.html
   }
@@ -452,6 +506,10 @@ class Navigation {
       const output = { html: '' }
       const isLastLevel = lastItemIndex === index
 
+      /* Filter args */
+
+      const filterArgs: FRM.NavigationBreadcrumbFilterArgs = { output, isLastLevel }
+
       /* Item */
 
       output.html += `<li${itemClasses}${itemAttrs} data-last-level="${isLastLevel.toString()}">`
@@ -459,7 +517,7 @@ class Navigation {
       /* Link */
 
       if (typeof args.filterBeforeLink === 'function') {
-        args.filterBeforeLink(output, isLastLevel)
+        args.filterBeforeLink(filterArgs)
       }
 
       const linkClassesArray: string[] = []
@@ -488,7 +546,7 @@ class Navigation {
       output.html += `<a${linkClasses} href="${permalink}"${linkAttrs}>${item.title}</a>`
 
       if (typeof args.filterAfterLink === 'function') {
-        args.filterAfterLink(output, isLastLevel)
+        args.filterAfterLink(filterArgs)
       }
 
       /* Close item */
