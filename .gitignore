@@ -3,4 +3,5 @@ package-lock.json
 cjs/
 esm/
 lib/
+jsdocs/
 .DS_Store
