@@ -8,16 +8,66 @@ import { v4 as uuid } from 'uuid'
 import { applyFilters } from '../../utils/filters/filters'
 
 /**
- * Function - output checkbox and radio inputs from options
- *
+ * @typedef {object} FieldProps
+ * @prop {object} args
+ * @prop {string} [args.type]
+ * @prop {string} [args.name]
+ * @prop {string} [args.label]
+ * @prop {string} [args.value]
+ * @prop {boolean} [args.required]
+ * @prop {string} [args.width]
+ * @prop {string} [args.widthSmall]
+ * @prop {string} [args.widthMedium]
+ * @prop {string} [args.widthLarge]
+ * @prop {boolean} [args.grow]
+ * @prop {string} [args.autoCompleteToken]
+ * @prop {string} [args.placeholder]
+ * @prop {string[]} [args.options]
+ * @prop {number} [args.rows]
+ * @prop {string} [args.emptyErrorMessage]
+ * @prop {string} [args.invalidErrorMessage]
+ * @prop {boolean} [args.fieldset]
+ * @prop {string} [args.fieldsetClasses] - Back end option
+ * @prop {string} [args.fieldClasses] - Back end option
+ * @prop {string} [args.labelClasses] - Back end option
+ * @prop {string} [args.classes] - Back end option
+ * @prop {string} [args.visuallyHiddenClass] - Back end option
+ */
+
+export interface FieldProps {
+  args: {
+    type?: string
+    name?: string
+    label?: string
+    value?: string
+    required?: boolean
+    width?: string
+    widthSmall?: string
+    widthMedium?: string
+    widthLarge?: string
+    grow?: boolean
+    autoCompleteToken?: string
+    placeholder?: string
+    options?: string[]
+    rows?: number
+    emptyErrorMessage?: string
+    invalidErrorMessage?: string
+    fieldset?: boolean
+    fieldsetClasses?: string
+    fieldClasses?: string
+    labelClasses?: string
+    classes?: string
+    visuallyHiddenClass?: string
+    [key: string]: unknown
+  }
+}
+
+/**
  * @private
- * @param {object} args
- * @param {object[]} args.opts
- * @param {string} args.name
- * @param {string} args.classes
- * @param {string} args.attr
- * @param {string} args.type
- * @return {string[]}
+ * @typedef {object} _FieldOption
+ * @prop {string} text
+ * @prop {string} value
+ * @prop {boolean} [selected]
  */
 
 interface _FieldOption {
@@ -25,6 +75,16 @@ interface _FieldOption {
   value: string
   selected?: boolean
 }
+
+/**
+ * @private
+ * @typedef {object} _FieldCheckboxRadioArgs
+ * @prop {_FieldOption[]} [opts]
+ * @prop {string} [name]
+ * @prop {string} [classes]
+ * @prop {string} [attr]
+ * @prop {string} [type]
+ */
 
 interface _FieldCheckboxRadioArgs {
   opts?: _FieldOption[]
@@ -34,6 +94,14 @@ interface _FieldCheckboxRadioArgs {
   type?: string
   labelClass?: string
 }
+
+/**
+ * Function - output checkbox and radio inputs from options
+ *
+ * @private
+ * @param {_FieldCheckboxRadioArgs} args
+ * @return {string[]}
+ */
 
 const _getCheckboxRadioOpts = (args: _FieldCheckboxRadioArgs = {}): string => {
   const {
@@ -76,32 +144,11 @@ const _getCheckboxRadioOpts = (args: _FieldCheckboxRadioArgs = {}): string => {
 /**
  * Function - output form field
  *
- * @param {object} props
- * @param {object} props.args
- * @param {string} props.args.type
- * @param {string} props.args.name
- * @param {string} props.args.label
- * @param {string} props.args.value
- * @param {boolean} props.args.required
- * @param {string} props.args.width
- * @param {string} props.args.widthLarge
- * @param {boolean} props.args.grow
- * @param {string} props.args.autoCompleteToken
- * @param {string} props.args.placeholder
- * @param {string[]} props.args.options
- * @param {number} props.args.rows
- * @param {string} props.args.emptyErrorMessage
- * @param {string} props.args.invalidErrorMessage
- * @param {boolean} props.args.fieldset
- * @param {string} props.args.fieldsetClasses - Back end option
- * @param {string} props.args.fieldClasses - Back end option
- * @param {string} props.args.labelClasses - Back end option
- * @param {string} props.args.classes - Back end option
- * @param {string} props.args.visuallyHiddenClass - Back end option
- * @return {string} HTML - div
+ * @param {FieldProps} props
+ * @return {romise<string>} HTML - div
  */
 
-const Field = async (props: FRM.FieldProps = { args: {} }): Promise<string> => {
+const Field = async (props: FieldProps = { args: {} }): Promise<string> => {
   props = await applyFilters('fieldProps', props, { renderType: 'Field' })
 
   const { args = {} } = props

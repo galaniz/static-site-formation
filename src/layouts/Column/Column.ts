@@ -4,12 +4,40 @@
 
 /* Imports */
 
-import { applyFilters } from '../../utils/filters/filters'
+import type { ParentArgs } from '../../global/types/types'
+import { applyFilters, isStringStrict } from '../../utils'
+
+/* Public types */
+
+export interface ColumnProps {
+  args: {
+    tag?: string
+    width?: string
+    widthSmall?: string
+    widthMedium?: string
+    widthLarge?: string
+    widthCustom?: {
+      class?: string
+      default: string
+      small: string
+      medium: string
+      large: string
+    }
+    justify?: string
+    align?: string
+    grow?: boolean
+    classes?: string
+    style?: string
+    attr?: string
+    [key: string]: unknown
+  }
+  parents?: ParentArgs[]
+}
 
 /**
  * Function - output column wrapper
  *
- * @param {object} props
+ * @param {ColumnProps} props
  * @param {object} props.args
  * @param {string} props.args.tag
  * @param {string} props.args.width
@@ -31,7 +59,14 @@ import { applyFilters } from '../../utils/filters/filters'
  * @return {object}
  */
 
-const Column = async (props: FRM.ColumnProps = { args: {} }): Promise<FRM.StartEndReturn> => {
+const Column = async (
+  props: ColumnProps = {
+    args: {}
+  }
+): Promise<{
+  start: string
+  end: string
+}> => {
   props = await applyFilters('columnProps', props, { renderType: 'Column' })
 
   const { args = {} } = props
@@ -97,7 +132,7 @@ const Column = async (props: FRM.ColumnProps = { args: {} }): Promise<FRM.StartE
   }
 
   if (widthCustom !== undefined) {
-    if (widthCustom.class !== '' && typeof widthCustom.class === 'string') {
+    if (isStringStrict(widthCustom.class)) {
       classesArray.push(widthCustom.class)
     }
 

@@ -4,48 +4,53 @@
 
 /* Imports */
 
+import type { Generic } from '../../global/types/types'
 import { readdir, readFile } from 'node:fs/promises'
 import { extname, basename, resolve } from 'node:path'
-import { applyFilters } from '../../utils/filters/filters'
+import { applyFilters, isObject, isStringStrict } from '../../utils'
 import { config } from '../../config/config'
 
 /**
- * Function - get data from file or cache
- *
- * @param {string} key
- * @param {object} params
- * @return {object}
+ * @typedef {object} FileDataParams
+ * @prop {boolean} [all]
+ * @prop {string} [id]
  */
-
 interface FileDataParams {
   all?: boolean
   id?: string
 }
 
+/**
+ * Function - get data from file or cache
+ *
+ * @param {string} key
+ * @param {FileDataParams} params
+ * @return {Promise<Generic>}
+ */
 const getFileData = async (
   key: string = '',
   params: FileDataParams = {}
-): Promise<object> => {
+): Promise<Generic> => {
   try {
     /* Key required for cache */
 
-    if (key === '') {
+    if (!isStringStrict(key)) {
       throw new Error('No key')
     }
 
     /* Check cache */
 
     if (config.env.cache) {
-      let cacheData: FRM.AnyObject = {}
+      let cacheData: Generic = {}
 
-      const cacheDataFilterArgs: FRM.CacheDataFilterArgs = {
+      const cacheDataFilterArgs = {
         key,
         type: 'get'
       }
 
       cacheData = await applyFilters('cacheData', cacheData, cacheDataFilterArgs)
 
-      if (Object.keys(cacheData).length > 0) {
+      if (isObject(cacheData)) {
         return structuredClone(cacheData)
       }
     }
@@ -56,15 +61,15 @@ const getFileData = async (
 
     /* Single file */
 
-    const data: FRM.AnyObject = {}
+    const data: Generic = {}
 
-    if (id !== '' && !all) {
+    if (isStringStrict(id) && !all) {
       const file = await readFile(resolve(config.static.dir, `${id}.json`), { encoding: 'utf8' })
 
-      if (file !== '') {
+      if (isStringStrict(file)) {
         const fileJson = JSON.parse(file)
 
-        if (fileJson !== '') {
+        if (isObject(fileJson)) {
           data[id] = fileJson
         }
       }
@@ -72,7 +77,7 @@ const getFileData = async (
 
     /* All files */
 
-    if (id === '' && all) {
+    if (!isStringStrict(id) && all) {
       const files = await readdir(resolve(config.static.dir))
 
       for (let i = 0; i < files.length; i += 1) {
@@ -83,10 +88,10 @@ const getFileData = async (
         if (fileExt === '.json') {
           const fileContents = await readFile(resolve(config.static.dir, file), { encoding: 'utf8' })
 
-          if (fileContents !== '') {
+          if (isStringStrict(fileContents)) {
             const fileJson = JSON.parse(fileContents)
 
-            if (fileJson !== '') {
+            if (isObject(fileJson)) {
               data[fileName] = fileJson
             }
           }
@@ -103,7 +108,7 @@ const getFileData = async (
     /* Store in cache */
 
     if (config.env.cache) {
-      const cacheDataFilterArgs: FRM.CacheDataFilterArgs = {
+      const cacheDataFilterArgs = {
         key,
         type: 'set',
         data

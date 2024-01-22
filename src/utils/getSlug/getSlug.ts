@@ -4,6 +4,7 @@
 
 /* Imports */
 
+import type { SlugBase } from '../../global/types/types'
 import { config } from '../../config/config'
 import { getArchiveId } from '../getArchiveId/getArchiveId'
 
@@ -36,7 +37,7 @@ const _getParentSlug = (id: string = '', p: object[] = []): void => {
  * @return {string|object}
  */
 
-interface SlugArgs {
+export interface SlugArgs {
   id?: string
   slug: string
   page?: number
@@ -45,7 +46,7 @@ interface SlugArgs {
   returnParents?: boolean
 }
 
-interface SlugParent extends FRM.SlugBase {
+export interface SlugParent extends SlugBase {
   contentType?: string
   id?: string
 }
@@ -68,7 +69,7 @@ const getSlug = (args: SlugArgs): string | { slug: string, parents: object[] } =
 
   /* Slug base */
 
-  const slugBase: FRM.SlugBase = config.slug.bases[contentType]
+  const slugBase: SlugBase = config.slug.bases[contentType]
 
   /* Archive id */
 
@@ -76,7 +77,7 @@ const getSlug = (args: SlugArgs): string | { slug: string, parents: object[] } =
 
   /* Parents */
 
-  let p: string | FRM.SlugBase[] = []
+  let p: string | SlugBase[] = []
   let pp: SlugParent[] = []
 
   _getParentSlug(contentType === 'page' ? id : archiveId, p)

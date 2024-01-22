@@ -4,28 +4,32 @@
 
 /* Imports */
 
+import type { EnvCloudflare, CustomErrorObject } from '../types/types'
+import type { Config } from '../../config/config'
 import { config, setConfig } from '../../config/config'
-import { getAllContentfulData } from '../../utils/getAllContentfulData/getAllContentfulData'
+import { getAllContentfulData, isObject, isArray } from '../../utils'
 import { Render } from '../../render/Render'
+
+/**
+ * @typedef {object} ReloadArgs
+ * @prop {Request} request
+ * @prop {EnvCloudflare} env
+ * @prop {function} next
+ * @prop {Config} siteConfig
+ */
+interface ReloadArgs {
+  request: Request
+  env: EnvCloudflare
+  next: Function
+  siteConfig: Config
+}
 
 /**
  * Function - output paginated and/or filtered page on browser reload
  *
- * @param {object} args
- * @param {object} args.request
- * @param {object} args.env
- * @param {function} args.next
- * @param {object} args.siteConfig
- * @return {object} Response
+ * @param {ReloadArgs} args
+ * @return {Promise<Response>} Response
  */
-
-interface ReloadArgs {
-  request: Request
-  env: FRM.EnvCloudflare
-  next: Function
-  siteConfig: FRM.Config
-}
-
 const Reload = async ({ request, env, next, siteConfig }: ReloadArgs): Promise<Response> => {
   try {
     /* Query */
@@ -54,7 +58,7 @@ const Reload = async ({ request, env, next, siteConfig }: ReloadArgs): Promise<R
 
     setConfig(siteConfig)
 
-    if (typeof env === 'object' && env !== undefined && env !== null) {
+    if (isObject(env)) {
       config.env.dev = env.ENVIRONMENT === 'dev'
       config.env.prod = env.ENVIRONMENT === 'production'
     }
@@ -74,7 +78,7 @@ const Reload = async ({ request, env, next, siteConfig }: ReloadArgs): Promise<R
 
     let html = ''
 
-    if (!Array.isArray(data)) {
+    if (!isArray(data)) {
       html = data?.output !== undefined ? data.output : ''
     }
 
@@ -84,10 +88,18 @@ const Reload = async ({ request, env, next, siteConfig }: ReloadArgs): Promise<R
         'Content-Type': 'text/html;charset=UTF-8'
       }
     })
-  } catch (error: any) {
+  } catch (error) {
     console.error(config.console.red, '[SSF] Error with reload function: ', error)
 
-    const statusCode = typeof error.httpStatusCode === 'number' ? error.httpStatusCode : 500
+    let statusCode = 500
+
+    if (isObject(error)) {
+      const errorObj = error as CustomErrorObject
+
+      if (typeof errorObj.httpStatusCode === 'number') {
+        statusCode = errorObj.httpStatusCode
+      }
+    }
 
     let html = ''
 

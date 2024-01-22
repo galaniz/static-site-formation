@@ -5,6 +5,8 @@
 /* Imports */
 
 import { config } from '../../config/config'
+import { isObject } from '../isObject/isObject'
+import { isStringStrict } from '../isString/isString'
 
 /**
  * Function - get archive id from config slug
@@ -18,10 +20,10 @@ const getArchiveId = (contentType: string = '', linkContentType: string = 'defau
   let id = ''
 
   if (config.contentTypes.archive[contentType] !== undefined) {
-    const archiveId: string | FRM.AnyObject | undefined = config.contentTypes.archive[contentType].id
+    const archiveId = config.contentTypes.archive[contentType].id
 
-    if (typeof archiveId === 'object' && archiveId !== undefined) {
-      id = archiveId[linkContentType]
+    if (isObject(archiveId)) {
+      id = isStringStrict(archiveId[linkContentType]) ? archiveId[linkContentType] as string : ''
     }
   }
 

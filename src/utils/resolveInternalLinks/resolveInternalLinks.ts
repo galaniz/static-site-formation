@@ -2,37 +2,52 @@
  * Utils - Resolve Internal Links
  */
 
+/* Imports */
+
+import { isArray } from '../isArray/isArray'
+import { isString } from '../isString/isString'
+import { isObject } from '../isObject/isObject'
+
 /**
  * Function - recursively set internal props from outer data
  *
  * @param {object} data
  * @param {object} currentData
- * @param {string[]} props
- * @param {function} filterValue
+ * @param {string[]} [props]
+ * @param {function} [filterValue]
  * @return {void}
  */
-
-const resolveInternalLinks = (
-  data: FRM.AnyObject = {},
-  currentData: FRM.AnyObject = {},
+const resolveInternalLinks = <T, U>(
+  data: T,
+  currentData: U,
   props: string[] = ['internalLink'],
   filterValue?: Function
 ): void => {
+  if (!isObject(data) || !isObject(currentData) || !isArray(props)) {
+    return
+  }
+
   Object.keys(currentData).forEach((prop) => {
-    const value = currentData[prop]
+    const value = currentData[prop as keyof U]
 
     if (props.includes(prop)) {
-      let v = Array.isArray(value) ? value.map((v) => data[v]) : data[value]
+      let v
+
+      if (isArray(value)) {
+        v = value.map((v) => data[v as keyof T])
+      }
+
+      if (isString(value)) {
+        v = data[value as keyof T]
+      }
 
       if (typeof filterValue === 'function') {
         v = filterValue(prop, v)
       }
 
-      currentData[prop] = v
-    } else {
-      if (value !== null && typeof value === 'object') {
-        resolveInternalLinks(data, value, props, filterValue)
-      }
+      currentData[prop as keyof U] = v
+    } else if (isObject(value)) {
+      resolveInternalLinks(data, value, props, filterValue)
     }
   })
 }

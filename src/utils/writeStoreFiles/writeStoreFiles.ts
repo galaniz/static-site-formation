@@ -9,9 +9,8 @@ import { config } from '../../config/config'
 /**
  * Function - write files from config store object
  *
- * @return {void}
+ * @return {Promise<void>}
  */
-
 const writeStoreFiles = async (): Promise<void> => {
   try {
     const files = config.store.files
@@ -21,7 +20,7 @@ const writeStoreFiles = async (): Promise<void> => {
 
     if (fileKeys.length > 0) {
       for (let i = 0; i < fileKeys.length; i += 1) {
-        const file: FRM.StoreFile = files[fileKeys[i]]
+        const file = files[fileKeys[i]]
         const path = resolve(config.store.dir, file.name)
 
         await writeFile(path, file.data)

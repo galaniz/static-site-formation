@@ -4,25 +4,30 @@
 
 /* Imports */
 
+import type { Config } from '../../config/config'
 import { config, setConfig } from '../../config/config'
-import { getAllContentfulData } from '../../utils/getAllContentfulData/getAllContentfulData'
+import { getAllContentfulData, isArray } from '../../utils'
 import { Render } from '../../render/Render'
 
 /**
- * Function - output preview from contentful
- *
- * @param {object} args
- * @param {object} args.request
- * @param {function} args.next
- * @param {object} args.siteConfig
- * @return {object} Response
+ * @typedef {object} PreviewArgs
+ * @prop {Request} request
+ * @prop {function} next
+ * @prop {Config} siteConfig
  */
 
 interface PreviewArgs {
   request: Request
   next: Function
-  siteConfig: FRM.Config
+  siteConfig: Config
 }
+
+/**
+ * Function - output preview from contentful
+ *
+ * @param {PreviewArgs} args
+ * @return {Promise<Response>} Response
+ */
 
 const Preview = async ({ request, next, siteConfig }: PreviewArgs): Promise<Response> => {
   /* Params */
@@ -59,7 +64,7 @@ const Preview = async ({ request, next, siteConfig }: PreviewArgs): Promise<Resp
 
   let html = ''
 
-  if (!Array.isArray(data)) {
+  if (!isArray(data)) {
     html = data?.output !== undefined ? data.output : ''
   }
 

@@ -4,6 +4,7 @@
 
 /* Imports */
 
+import type { AllData, ServerlessData, PreviewData } from '../../render/Render'
 import { config } from '../../config/config'
 import { getContentfulData } from '../getContentfulData/getContentfulData'
 
@@ -19,13 +20,13 @@ import { getContentfulData } from '../getContentfulData/getContentfulData'
  */
 
 interface AllContentfulDataArgs {
-  serverlessData?: FRM.ServerlessData
-  previewData?: FRM.PreviewData
+  serverlessData?: ServerlessData
+  previewData?: PreviewData
   filterData?: Function
   filterAllData?: Function
 }
 
-const getAllContentfulData = async (args: AllContentfulDataArgs = {}): Promise<FRM.AllData | undefined> => {
+const getAllContentfulData = async (args: AllContentfulDataArgs = {}): Promise<AllData | undefined> => {
   const {
     serverlessData,
     previewData,
@@ -36,7 +37,7 @@ const getAllContentfulData = async (args: AllContentfulDataArgs = {}): Promise<F
   try {
     /* Store all data */
 
-    let allData: FRM.AllData = {
+    let allData: AllData = {
       navigation: [],
       navigationItem: [],
       redirect: [],
@@ -47,7 +48,7 @@ const getAllContentfulData = async (args: AllContentfulDataArgs = {}): Promise<F
 
     /* Get single entry data if serverless or preview data */
 
-    let entry: { items?: any[] } | undefined
+    let entry: { items?: unknown[] } | undefined
 
     if (serverlessData !== undefined || previewData !== undefined) {
       let contentType = ''

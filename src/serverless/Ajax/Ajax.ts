@@ -4,31 +4,69 @@
 
 /* Imports */
 
+import type {
+  EnvCloudflare,
+  AjaxActionReturn,
+  AjaxActionArgs,
+  CustomErrorObject
+} from '../types/types'
+import type { Config } from '../../config/config'
 import { setConfig } from '../../config/config'
-import { setActions } from '../../utils/actions/actions'
-import { applyFilters, setFilters } from '../../utils/filters/filters'
+import {
+  setActions,
+  applyFilters,
+  setFilters,
+  isObject,
+  isStringStrict
+} from '../../utils'
 import { SendForm } from '../SendForm/SendForm'
+
+/**
+ * @typedef {object} AjaxArgs
+ * @prop {Request} request
+ * @prop {EnvCloudflare} env
+ * @prop {Config} siteConfig
+ */
+interface AjaxArgs {
+  request: Request
+  env: EnvCloudflare
+  siteConfig: Config
+}
 
 /**
  * Class - custom exception to include status code
  *
  * @private
  */
-
 class _CustomError extends Error {
+  /**
+   * Store message
+   *
+   * @type {string}
+   */
+  message: string
+
+  /**
+   * Store status code
+   *
+   * @type {number}
+   */
+  httpStatusCode: number
+
   /**
    * Set properties
    *
    * @param {object} args
-   * @param {string} args.message
-   * @param {number} args.code
-   * @return {void}
+   * @param {string} [args.message]
+   * @param {number} [args.code]
    */
+  constructor (args: { message?: string, code?: number }) {
+    if (!isObject(args)) {
+      args = {}
+    }
 
-  public message: string
-  public httpStatusCode: number
+    const { message = '', code = 500 } = args
 
-  constructor ({ message = '', code = 500 }) {
     super(message)
     this.message = message
     this.httpStatusCode = code
@@ -38,18 +76,9 @@ class _CustomError extends Error {
 /**
  * Function - set env variables, normalize request body, check for required props and call actions
  *
- * @param {object} args
- * @param {object} args.request
- * @param {object} args.env
- * @param {object} args.siteConfig
- * @return {object} Response
+ * @param {AjaxArgs} args
+ * @return {Promise<Response>} Response
  */
-
-interface AjaxArgs {
-  request: Request
-  env: FRM.EnvCloudflare
-  siteConfig: FRM.Config
-}
 
 const Ajax = async ({ request, env, siteConfig }: AjaxArgs): Promise<Response> => {
   try {
@@ -59,7 +88,7 @@ const Ajax = async ({ request, env, siteConfig }: AjaxArgs): Promise<Response> =
     setFilters(siteConfig.filters)
     setActions(siteConfig.actions)
 
-    if (typeof env === 'object' && env !== undefined && env !== null) {
+    if (isObject(env)) {
       siteConfig.env.dev = env.ENVIRONMENT === 'dev'
       siteConfig.env.prod = env.ENVIRONMENT === 'production'
       siteConfig.apiKeys.smtp2go = env.SMPT2GO_API_KEY !== undefined ? env.SMPT2GO_API_KEY : ''
@@ -98,7 +127,7 @@ const Ajax = async ({ request, env, siteConfig }: AjaxArgs): Promise<Response> =
 
     /* Id required */
 
-    if (data?.id === undefined || data?.id === '') {
+    if (!isStringStrict(data.id)) {
       throw new Error('No id')
     }
 
@@ -106,13 +135,13 @@ const Ajax = async ({ request, env, siteConfig }: AjaxArgs): Promise<Response> =
 
     const action = data?.action !== undefined ? data.action : ''
 
-    if (action === undefined || action === '') {
+    if (!isStringStrict(action)) {
       throw new Error('No action')
     }
 
     /* Call functions by action */
 
-    let res: FRM.AjaxActionReturn | null = null
+    let res: AjaxActionReturn | null = null
 
     if (action === 'sendForm') {
       res = await SendForm({ ...data, env, request })
@@ -122,7 +151,7 @@ const Ajax = async ({ request, env, siteConfig }: AjaxArgs): Promise<Response> =
       res = await siteConfig.ajaxFunctions[action]({ ...data, env, request })
     }
 
-    const ajaxResFilterArgs: FRM.AjaxActionArgs = {
+    const ajaxResFilterArgs: AjaxActionArgs = {
       action,
       ...data,
       env,
@@ -137,7 +166,7 @@ const Ajax = async ({ request, env, siteConfig }: AjaxArgs): Promise<Response> =
       throw new Error('No result')
     }
 
-    if (res?.error !== undefined && typeof res?.error === 'string') {
+    if (isStringStrict(res.error)) {
       throw new _CustomError(res.error)
     }
 
@@ -165,17 +194,32 @@ const Ajax = async ({ request, env, siteConfig }: AjaxArgs): Promise<Response> =
     }
 
     return new Response(JSON.stringify({ success: message }), options)
-  } catch (error: any) {
+  } catch (error) {
     console.error(siteConfig.console.red, '[SSF] Error with ajax function: ', error)
 
+    let statusCode = 500
+    let message = ''
+
+    if (isObject(error)) {
+      const errorObj = error as CustomErrorObject
+
+      if (typeof errorObj.httpStatusCode === 'number') {
+        statusCode = errorObj.httpStatusCode
+      }
+
+      if (isStringStrict(errorObj.message)) {
+        message = errorObj.message
+      }
+    }
+
     const options = {
-      status: typeof error.httpStatusCode === 'number' ? error.httpStatusCode : 500,
+      status: statusCode,
       headers: {
         'Content-Type': 'application/json'
       }
     }
 
-    return new Response(JSON.stringify({ error: error.message }), options)
+    return new Response(JSON.stringify({ error: message }), options)
   }
 }
 

@@ -4,32 +4,70 @@
 
 /* Imports */
 
+import type { ParentArgs } from '../../global/types/types'
 import { applyFilters } from '../../utils/filters/filters'
+
+/**
+ * @typedef {object} ContainerProps
+ * @prop {object} args
+ * @prop {string} [args.tag]
+ * @prop {string} [args.layout]
+ * @prop {string} [args.maxWidth]
+ * @prop {string} [args.paddingTop]
+ * @prop {string} [args.paddingTopLarge]
+ * @prop {string} [args.paddingBottom]
+ * @prop {string} [args.paddingBottomLarge]
+ * @prop {string} [args.gap]
+ * @prop {string} [args.gapLarge]
+ * @prop {string} [args.justify]
+ * @prop {string} [args.align]
+ * @prop {boolean} [args.richTextStyles]
+ * @prop {string} [args.classes] - Back end option
+ * @prop {string} [args.style] - Back end option
+ * @prop {string} [args.attr] - Back end option
+ * @prop {ParentArgs} [parents]
+ */
+export interface ContainerProps {
+  args: {
+    tag?: string
+    layout?: string
+    maxWidth?: string
+    paddingTop?: string
+    paddingTopLarge?: string
+    paddingBottom?: string
+    paddingBottomLarge?: string
+    gap?: string
+    gapLarge?: string
+    justify?: string
+    align?: string
+    classes?: string
+    style?: string
+    attr?: string
+    richTextStyles?: boolean
+    [key: string]: unknown
+  }
+  parents?: ParentArgs[]
+}
+
+/**
+ * @typedef {object} ContainerReturn
+ * @prop {string} start
+ * @prop {string} end
+ */
+
+interface ContainerReturn {
+  start: string
+  end: string
+}
 
 /**
  * Function - output container wrapper
  *
- * @param {object} props
- * @param {object} props.args
- * @param {string} props.args.tag
- * @param {string} props.args.layout
- * @param {string} props.args.maxWidth
- * @param {string} props.args.paddingTop
- * @param {string} props.args.paddingTopLarge
- * @param {string} props.args.paddingBottom
- * @param {string} props.args.paddingBottomLarge
- * @param {string} props.args.gap
- * @param {string} props.args.gapLarge
- * @param {string} props.args.justify
- * @param {string} props.args.align
- * @param {boolean} props.args.richTextStyles
- * @param {string} props.args.classes - Back end option
- * @param {string} props.args.style - Back end option
- * @param {string} props.args.attr - Back end option
- * @return {object}
+ * @param {ContainerProps} props
+ * @return {Promise<ContainerReturn>}
  */
 
-const Container = async (props: FRM.ContainerProps = { args: {} }): Promise<FRM.StartEndReturn> => {
+const Container = async (props: ContainerProps = { args: {} }): Promise<ContainerReturn> => {
   props = await applyFilters('containerProps', props, { renderType: 'Container' })
 
   const { args = {} } = props

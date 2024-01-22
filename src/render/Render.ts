@@ -4,17 +4,128 @@
 
 /* Imports */
 
+import type { Generic, ParentArgs } from '../global/types/types'
+import type { Navigations, NavigationItem } from '../components/Navigation/Navigation'
+import type { PaginationData } from '../components/Pagination/Pagination'
 import { config } from '../config/config'
-import { setActions, doActions } from '../utils/actions/actions'
-import { setFilters, applyFilters } from '../utils/filters/filters'
-import { getSlug } from '../utils/getSlug/getSlug'
-import { getPermalink } from '../utils/getPermalink/getPermalink'
-import { getProp } from '../utils/getProp/getProp'
+import {
+  setActions,
+  doActions,
+  setFilters,
+  applyFilters,
+  getSlug,
+  getPermalink,
+  getProp,
+  isString,
+  isStringStrict,
+  isArray,
+  isArrayStrict,
+  isObject,
+  isObjectStrict
+} from '../utils'
 import { Container } from '../layouts/Container/Container'
 import { Column } from '../layouts/Column/Column'
 import { Form } from '../objects/Form/Form'
 import { Field } from '../objects/Field/Field'
 import { RichText } from '../text/RichText/RichText'
+
+/**
+ * @type {object}
+ */
+
+export interface LayoutArgs {
+  id: string
+  meta: MetaReturn
+  navigations?: { [key: string]: string }
+  contentType: string
+  content: string
+  slug: string
+  pageContains: string[]
+  pageData: RenderItem
+  serverlessData?: ServerlessData | undefined
+}
+
+export interface RenderItem {
+  id: string
+  title: string
+  slug: string
+  content?: Generic | Generic[]
+  meta?: object
+  basePermalink?: string
+  linkContentType?: string
+  [key: string]: unknown
+}
+
+interface RenderReturn {
+  slug: string
+  output: string
+}
+
+/* Action arguments */
+
+interface RenderItemStartActionArgs {
+  id: string
+  contentType: string
+  pageData: RenderItem
+  pageContains: string[]
+  serverlessData: ServerlessData | undefined
+}
+
+interface RenderItemEndActionArgs {
+  id: string
+  contentType: string
+  slug: string
+  output: string
+  pageData: RenderItem
+  pageContains: string[]
+  serverlessData: ServerlessData | undefined
+}
+
+/* Filter arguments */
+
+interface RenderItemFilterArgs {
+  id: string
+  contentType: string
+  slug: string
+  output: string
+  pageData: RenderItem
+  pageContains: string[]
+  serverlessData: ServerlessData | undefined
+}
+
+interface MetaReturn {
+  title: string
+  paginationTitle?: string
+  description?: string
+  url?: string
+  image?: string | object
+  canonical?: string
+  prev?: string
+  next?: string
+  noIndex?: boolean
+  isIndex?: boolean
+}
+
+export interface AllData {
+  navigation: Navigations[]
+  navigationItem: NavigationItem[]
+  content: {
+    page: Generic[]
+    [key: string]: Generic[]
+  }
+  redirect: Generic[]
+  [key: string]: unknown
+}
+
+export interface ServerlessData {
+  path: string
+  query: Generic
+}
+
+export interface PreviewData {
+  id: string
+  contentType: string
+}
 
 /**
  * Store slug data for json
@@ -44,7 +155,7 @@ const _getMeta = (item: {
       }
     }
   }
-}): FRM.MetaReturn => {
+}): MetaReturn => {
   const meta = {
     title: '',
     description: '',
@@ -72,7 +183,7 @@ const _getMeta = (item: {
   if (item?.metaImage !== undefined) {
     const imageUrl = item.metaImage?.fields?.file?.url
 
-    if (imageUrl !== undefined && typeof imageUrl === 'string') {
+    if (isStringStrict(imageUrl)) {
       meta.image = `https:${imageUrl}`
     }
   }
@@ -84,46 +195,44 @@ const _getMeta = (item: {
  * Function - map out content slots to templates for contentTemplate
  *
  * @private
- * @param {object|object[]} templates
- * @param {object[]} content
- * @return {void}
+ * @param {Generic|Generic[]} templates
+ * @param {Generic[]} content
+ * @return {undefined}
  */
+const _mapContentTemplate = <T, U>(templates: T, content: U): undefined => {
+  if (!isArray(content)) {
+    return
+  }
 
-const _mapContentTemplate = (
-  templates: object | object[] = [],
-  content: object[] = []
-): void => {
-  if (Array.isArray(templates)) {
+  if (isArrayStrict(templates)) {
     templates.forEach((t, i) => {
-      const templateRenderType = getProp(t, 'renderType')
-      const templateChildren = getProp(t, 'content')
+      const templateRenderType = getProp(t as Generic, 'renderType')
+      const templateChildren = getProp(t as Generic, 'content')
 
       if (templateRenderType === 'content' && content.length > 0) {
         templates.unshift()
 
-        templates[i] = content.shift()
+        if (templates[i] !== undefined) {
+          content.shift()
+        }
 
         return
       }
 
-      const children: object | object[] = templateChildren !== undefined ? templateChildren : []
-
-      if (children !== undefined) {
-        _mapContentTemplate(children, content)
+      if (isObject(templateChildren)) {
+        _mapContentTemplate(templateChildren, content)
       }
     })
-  } else {
-    if (typeof templates === 'object' && templates !== null) {
-      Object.entries(templates).forEach(([t, v]) => {
-        const templateChildren = getProp(v, 'content')
+  }
 
-        const children: object | object[] = templateChildren !== undefined ? templateChildren : []
+  if (isObjectStrict(templates)) {
+    Object.entries(templates).forEach(([_t, v]) => {
+      const templateChildren = getProp(v, 'content')
 
-        if (children !== undefined) {
-          _mapContentTemplate(children, content)
-        }
-      })
-    }
+      if (isObject(templateChildren)) {
+        _mapContentTemplate(templateChildren, content)
+      }
+    })
   }
 }
 
@@ -143,21 +252,16 @@ interface _RenderFunctions {
   [key: string]: Function
 }
 
-interface _RenderContentChildren {
-  nodeType?: string
-  content?: any[]
-}
-
 interface _RenderContentArgs {
-  contentData: any[]
-  serverlessData?: FRM.ServerlessData
+  contentData: Generic[]
+  serverlessData?: ServerlessData
   output: {
     html: string
   }
-  parents: FRM.ParentArgs[]
-  pageData: FRM.RenderItem
+  parents: ParentArgs[]
+  pageData: RenderItem
   pageContains: string[]
-  navigations: object
+  navigations: { [key: string]: string }
   renderFunctions: _RenderFunctions
 }
 
@@ -187,12 +291,16 @@ const _renderContent = async ({
 
       if (richTextNode !== undefined) {
         if (c.nodeType === 'embedded-entry-block' || c.nodeType === 'embedded-asset-block') {
-          c = c.data.target
+          const blah = c as { data?: { target?: Generic } }
+
+          if (blah?.data?.target !== undefined) {
+            c = blah.data.target
+          }
         } else {
           const richTextArgs = {
             args: {
-              type: richTextNode,
-              content: c.content
+              type: isString(richTextNode) ? richTextNode : '',
+              content: c.content as object[] // FIXXXX
             },
             parents
           }
@@ -210,37 +318,35 @@ const _renderContent = async ({
 
       const contentChildren = getProp(c, 'content')
 
-      let children: _RenderContentChildren | _RenderContentChildren[] = contentChildren !== undefined ? contentChildren : []
+      let children = isObject(contentChildren) ? contentChildren : []
       let recurse = false
 
-      if (children !== undefined) {
-        if (Array.isArray(children)) {
-          if (children.length > 0) {
-            recurse = true
-          }
-        } else {
-          if (children?.nodeType !== undefined) {
-            if (children?.content !== undefined) {
-              children = children.content
-            }
+      if (isArrayStrict(children)) {
+        recurse = true
+      }
 
-            if (Array.isArray(children) && children.length > 0) {
-              recurse = true
-            }
-          }
+      if (isObjectStrict(children)) {
+        const childrenNested = children as { nodeType?: string, content: Generic[] }
+
+        if (childrenNested.nodeType !== undefined) {
+          children = childrenNested.content
+        }
+
+        if (isArrayStrict(children)) {
+          recurse = true
         }
       }
 
       /* Render props */
 
-      const normalProps: object = getProp(c, '', {})
+      const normalProps = getProp(c, '', {}) as { id?: string, [key: string]: unknown }
       const normalRenderType = getProp(c, 'renderType')
 
-      const props: { id?: string, [key: string]: any } = typeof normalProps === 'object' ? normalProps : {}
-      const renderType: string = typeof normalRenderType === 'string' ? normalRenderType : ''
+      const props = isObjectStrict(normalProps) ? normalProps : {}
+      const renderType: string = isString(normalRenderType) ? normalRenderType : ''
       const id = getProp(c, 'id')
 
-      if (id !== undefined && id !== '') {
+      if (isStringStrict(id)) {
         props.id = id
       }
 
@@ -278,7 +384,7 @@ const _renderContent = async ({
 
         const renderOutput = await renderFunction(renderArgs)
 
-        if (typeof renderOutput === 'string') {
+        if (isString(renderOutput)) {
           renderObj.start = renderOutput
         } else {
           renderObj = renderOutput
@@ -295,7 +401,7 @@ const _renderContent = async ({
 
       /* Filter start and end output */
 
-      const renderContentFilterArgs: FRM.ParentArgs = {
+      const renderContentFilterArgs: ParentArgs = {
         renderType: filterType,
         args: filterArgs
       }
@@ -360,15 +466,15 @@ const _renderContent = async ({
  */
 
 interface _RenderItemArgs {
-  item: FRM.RenderItem
+  item: RenderItem
   contentType: string
-  serverlessData?: FRM.ServerlessData
+  serverlessData?: ServerlessData
   renderFunctions: _RenderFunctions
 }
 
 interface _RenderItemReturn {
   serverlessRender: boolean
-  pageData?: FRM.RenderItem
+  pageData?: RenderItem
   data?: {
     slug: string
     output: string
@@ -387,16 +493,19 @@ const _renderItem = async ({
 
   /* Item id */
 
-  const id: string = getProp(item, 'id')
+  const idProp = getProp(item, 'id', '')
+  const id = isStringStrict(idProp) ? idProp : ''
 
   /* Item props */
 
-  const props: FRM.RenderItem = Object.assign({
+  const propsProp = getProp(item, '', {})
+  const props: RenderItem = Object.assign({
+    id: '',
     title: '',
     slug: '',
     content: [],
     linkContentType: 'default'
-  }, getProp(item, '', {}))
+  }, isObjectStrict(propsProp) ? propsProp : {})
 
   /* Store components contained in page  */
 
@@ -404,7 +513,7 @@ const _renderItem = async ({
 
   /* Start action */
 
-  const renderItemStartArgs: FRM.RenderItemStartActionArgs = {
+  const renderItemStartArgs: RenderItemStartActionArgs = {
     id,
     pageData: props,
     contentType,
@@ -472,7 +581,7 @@ const _renderItem = async ({
 
   /* Navigations */
 
-  let navigations: object = {}
+  let navigations: { [key: string]: string } = {}
 
   if (renderFunctions?.navigations !== undefined) {
     navigations = renderFunctions.navigations({
@@ -484,17 +593,9 @@ const _renderItem = async ({
     })
   }
 
-  /* Content loop */
+  /* Serverless data */
 
-  const contentOutput = { html: '' }
-
-  let contentData = props.content
-
-  if (contentData?.nodeType !== undefined) {
-    contentData = contentData.content
-  }
-
-  let itemServerlessData: FRM.ServerlessData | undefined
+  let itemServerlessData: ServerlessData | undefined
 
   if (serverlessData !== undefined) {
     const serverlessPath = serverlessData.path !== undefined ? serverlessData.path : ''
@@ -508,7 +609,21 @@ const _renderItem = async ({
     }
   }
 
-  if (Array.isArray(contentData) && contentData.length > 0) {
+  /* Content loop */
+
+  const contentOutput = { html: '' }
+
+  let contentData = props.content
+
+  if (isObjectStrict(contentData)) {
+    const contentDataNested = contentData as { nodeType?: string, content: Generic[] }
+
+    if (contentDataNested.nodeType !== undefined) {
+      contentData = contentDataNested.content
+    }
+  }
+
+  if (isArrayStrict(contentData)) {
     await _renderContent({
       contentData,
       serverlessData: itemServerlessData,
@@ -523,10 +638,10 @@ const _renderItem = async ({
 
   /* Pagination variables for meta object */
 
-  if (item.pagination !== undefined) {
+  if (isObjectStrict(item.pagination)) {
     serverlessRender = true
 
-    const pagination = item.pagination
+    const pagination: PaginationData = item.pagination
 
     const {
       currentFilters,
@@ -534,12 +649,14 @@ const _renderItem = async ({
       nextFilters
     } = pagination
 
-    slugArgs.page = pagination.current > 1 ? pagination.current : 0
+    const current = typeof pagination.current === 'number' ? pagination.current : 0
+
+    slugArgs.page = current > 1 ? current : 0
 
     const c = getSlug(slugArgs)
 
     if (typeof c === 'object') {
-      meta.canonical = `${getPermalink(c.slug, pagination.current === 1)}${typeof currentFilters === 'string' ? currentFilters : ''}`
+      meta.canonical = `${getPermalink(c.slug, current === 1)}${isString(currentFilters) ? currentFilters : ''}`
     }
 
     if (pagination.title !== undefined) {
@@ -552,7 +669,7 @@ const _renderItem = async ({
       const p = getSlug(slugArgs)
 
       if (typeof p === 'object') {
-        meta.prev = `${getPermalink(p.slug, pagination.prev === 1)}${typeof prevFilters === 'string' ? prevFilters : ''}`
+        meta.prev = `${getPermalink(p.slug, pagination.prev === 1)}${isString(prevFilters) ? prevFilters : ''}`
       }
     }
 
@@ -563,7 +680,7 @@ const _renderItem = async ({
         const n = getSlug(slugArgs)
 
         if (typeof n === 'object') {
-          meta.next = `${getPermalink(n.slug, false)}${typeof nextFilters === 'string' ? nextFilters : ''}`
+          meta.next = `${getPermalink(n.slug, false)}${isString(nextFilters) ? nextFilters : ''}`
         }
       }
     }
@@ -582,7 +699,7 @@ const _renderItem = async ({
   let layoutOutput = ''
 
   if (renderFunctions?.layout !== undefined) {
-    const layoutArgs: FRM.LayoutArgs = {
+    const layoutArgs: LayoutArgs = {
       id,
       meta,
       navigations,
@@ -597,7 +714,7 @@ const _renderItem = async ({
     layoutOutput = await renderFunctions.layout(layoutArgs)
   }
 
-  const renderItemFilterArgs: FRM.RenderItemFilterArgs = {
+  const renderItemFilterArgs: RenderItemFilterArgs = {
     id,
     contentType,
     slug: formattedSlug,
@@ -611,7 +728,7 @@ const _renderItem = async ({
 
   /* End action */
 
-  const renderItemEndArgs: FRM.RenderItemEndActionArgs = {
+  const renderItemEndArgs: RenderItemEndActionArgs = {
     id,
     contentType,
     slug: formattedSlug,
@@ -646,16 +763,16 @@ const _renderItem = async ({
  */
 
 interface RenderArgs {
-  allData?: FRM.AllData
-  serverlessData?: FRM.ServerlessData
-  previewData?: FRM.PreviewData
+  allData?: AllData
+  serverlessData?: ServerlessData
+  previewData?: PreviewData
 }
 
 const Render = async ({
   allData,
   serverlessData,
   previewData
-}: RenderArgs): Promise<FRM.RenderReturn[] | FRM.RenderReturn> => {
+}: RenderArgs): Promise<RenderReturn[] | RenderReturn> => {
   /* Set filters and actions */
 
   setFilters(config.filters)
@@ -715,21 +832,27 @@ const Render = async ({
 
   /* Store content data */
 
-  const data: FRM.RenderReturn[] = []
+  const data: RenderReturn[] = []
 
   /* Loop through pages first to set parent slugs */
 
   if (serverlessData === undefined) {
     for (let i = 0; i < content.page.length; i += 1) {
       const item = content.page[i]
-      const itemData: { parent: object, archive: string, linkContentType: string } = getProp(item, '', {})
+      const itemProp = getProp(item, '', {})
+      const itemData = Object.assign({
+        parent: undefined,
+        archive: '',
+        linkContentType: 'default'
+      }, isObjectStrict(itemProp) ? itemProp : {})
 
       let { parent, archive = '', linkContentType = 'default' } = itemData
 
       archive = await applyFilters('renderArchiveName', archive)
       linkContentType = await applyFilters('renderLinkContentTypeName', linkContentType)
 
-      const id = getProp(item, 'id')
+      const idProp = getProp(item, 'id', '')
+      const id = isStringStrict(idProp) ? idProp : ''
       const isArchive = archive !== '' && id !== ''
 
       if (isArchive) {
@@ -740,7 +863,11 @@ const Render = async ({
           archiveIds[archive] = {}
         }
 
-        archiveIds[archive][linkContentType] = id
+        const blah = archiveIds[archive] as Generic
+
+        if (isObjectStrict(blah)) {
+          blah[linkContentType] = id
+        }
 
         if (contentTypeArchive !== undefined && typeof contentTypeArchive === 'object') {
           contentTypeArchive[linkContentType] = id
@@ -752,7 +879,7 @@ const Render = async ({
         const parentTitle = getProp(parent, 'title')
         const parentId = getProp(parent, 'id')
 
-        if (parentSlug !== undefined && parentTitle !== undefined && parentId !== undefined) {
+        if (isStringStrict(parentSlug) && isStringStrict(parentTitle) && isStringStrict(parentId)) {
           config.slug.parents[id] = {
             id: parentId,
             slug: parentSlug,
@@ -763,9 +890,10 @@ const Render = async ({
       }
     }
 
-    if (redirect !== undefined && Array.isArray(redirect)) {
+    if (isArrayStrict(redirect)) {
       redirect.forEach((r) => {
-        const { redirect: rr = [] } = getProp(r, '', {})
+        const redirectProp = getProp(r, '', {}) as { redirect: string[] }
+        const { redirect: rr = [] } = redirectProp
 
         if (rr.length > 0) {
           config.redirects.data = config.redirects.data.concat(rr)
@@ -833,7 +961,7 @@ const Render = async ({
 
     for (let i = 0; i < content[contentType].length; i += 1) {
       const item: _RenderItemReturn = await _renderItem({
-        item: content[contentType][i],
+        item: content[contentType][i] as RenderItem,
         contentType,
         serverlessData,
         renderFunctions

@@ -10,9 +10,8 @@ import { config } from '../../config/config'
 /**
  * Function - write files from serverless
  *
- * @return {void}
+ * @return {Promise<void>}
  */
-
 const writeServerlessFiles = async (): Promise<void> => {
   try {
     const formationPackage = `@alanizcreative/static-site-formation/${config.serverless.import}/serverless/`

@@ -2,10 +2,16 @@
  * Utils - Actions
  */
 
+/* Imports */
+
+import { isStringStrict } from '../isString/isString'
+import { isArrayStrict } from '../isArray/isArray'
+import { isObject } from '../isObject/isObject'
+
 /**
  * Store action callbacks by name
  *
- * @type {object}
+ * @type {Object.<string, function>}
  */
 
 let actions: { [key: string]: Function[] } = {}
@@ -19,7 +25,7 @@ let actions: { [key: string]: Function[] } = {}
  */
 
 const addAction = (name: string, action: Function): boolean => {
-  if (name === undefined || name === '' || action === undefined) {
+  if (!isStringStrict(name) || typeof action !== 'function') {
     return false
   }
 
@@ -39,15 +45,14 @@ const addAction = (name: string, action: Function): boolean => {
  * @param {function} action
  * @return {boolean}
  */
-
 const removeAction = (name: string, action: Function): boolean => {
-  if (name === undefined || name === '' || action === undefined) {
+  if (!isStringStrict(name) || typeof action !== 'function') {
     return false
   }
 
   const callbacks = actions[name]
 
-  if (Array.isArray(callbacks)) {
+  if (isArrayStrict(callbacks)) {
     const index = callbacks.indexOf(action)
 
     if (index > -1) {
@@ -64,20 +69,18 @@ const removeAction = (name: string, action: Function): boolean => {
  * Function - run callback functions from actions object
  *
  * @param {string} name
- * @param {*} args
- * @return {void}
+ * @param {*} [args]
+ * @return {Promise<void>}
  */
-
-const doActions = async (name: string, ...args: any): Promise<void> => {
+const doActions = async <T>(name: string, args?: T): Promise<void> => {
   const callbacks = actions[name]
 
-  if (Array.isArray(callbacks)) {
+  if (isArrayStrict(callbacks)) {
     for (let i = 0; i < callbacks.length; i += 1) {
       const callback = callbacks[i]
 
       if (typeof callback === 'function') {
-        // eslint-disable-next-line n/no-callback-literal
-        await callback(...args)
+        await callback(args)
       }
     }
   }
@@ -88,7 +91,6 @@ const doActions = async (name: string, ...args: any): Promise<void> => {
  *
  * @return {void}
  */
-
 const resetActions = (): void => {
   actions = {}
 }
@@ -96,12 +98,11 @@ const resetActions = (): void => {
 /**
  * Function - fill actions object
  *
- * @param {object} args
+ * @param {Object.<string, Function>} args
  * @return {boolean}
  */
-
 const setActions = (args: { [key: string]: Function }): boolean => {
-  if (typeof args !== 'object' || args === undefined || args === null) {
+  if (!isObject(args)) {
     return false
   }
 

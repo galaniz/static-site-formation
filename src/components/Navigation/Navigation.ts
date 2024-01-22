@@ -4,96 +4,307 @@
 
 /* Imports */
 
-import { getSlug } from '../../utils/getSlug/getSlug'
-import { getPermalink } from '../../utils/getPermalink/getPermalink'
-import { getLink } from '../../utils/getLink/getLink'
-import { getProp } from '../../utils/getProp/getProp'
+import type { InternalLink, Generic } from '../../global/types/types'
+import {
+  getSlug,
+  getPermalink,
+  getLink,
+  getProp,
+  isObject,
+  isArrayStrict,
+  isStringStrict,
+  isString,
+  isObjectStrict
+} from '../../utils'
+
+/**
+ * @typedef {object} NavigationProps
+ * @prop {Navigations[]} navigations
+ * @prop {NavigationItem[]} items
+ * @prop {string} [current]
+ */
+export interface NavigationProps {
+  navigations: Navigations[]
+  items: NavigationItem[]
+  current?: string
+}
+
+/**
+ * @typedef Navigations
+ * @type {Generic}
+ * @prop {string} [title]
+ * @prop {string} location
+ * @prop {NavigationItem[]} items
+ */
+export interface Navigations extends Generic {
+  title?: string
+  location: string
+  items: NavigationItem[]
+}
+
+/**
+ * @typedef NavigationItem
+ * @type {Generic}
+ * @prop {string} [id]
+ * @prop {string} [title]
+ * @prop {string} [link]
+ * @prop {InternalLink} [internalLink]
+ * @prop {string} [externalLink]
+ * @prop {NavigationItem[]} [children]
+ * @prop {boolean} [current]
+ * @prop {boolean} [external]
+ * @prop {boolean} [descendentCurrent]
+ */
+export interface NavigationItem extends Generic {
+  id?: string
+  title?: string
+  link?: string
+  internalLink?: InternalLink
+  externalLink?: string
+  children?: NavigationItem[]
+  current?: boolean
+  external?: boolean
+  descendentCurrent?: boolean
+}
+
+/**
+ * @typedef NavigationBreadcrumbItem
+ * @type NavigationItem
+ * @prop {string} slug
+ * @prop {string} contentType
+ */
+export interface NavigationBreadcrumbItem extends NavigationItem {
+  slug: string
+  contentType: string
+}
+
+/**
+ * @typedef {object} NavigationOutputBaseArgs
+ * @prop {string} [listClass]
+ * @prop {string} [listAttr]
+ * @prop {string} [itemClass]
+ * @prop {string} [itemAttr]
+ * @prop {string} [linkClass]
+ * @prop {string} [internalLinkClass]
+ * @prop {string} [linkAttr]
+ */
+interface NavigationOutputBaseArgs {
+  listClass?: string
+  listAttr?: string
+  itemClass?: string
+  itemAttr?: string
+  linkClass?: string
+  internalLinkClass?: string
+  linkAttr?: string
+}
+
+/**
+ * @typedef {object} NavigationOutputListFilterArgs
+ * @prop {NavigationOutputArgs} args
+ * @prop {object} output
+ * @prop {string} output.html
+ * @prop {NavigationItem[]} items
+ * @prop {number} depth
+ */
+interface NavigationOutputListFilterArgs {
+  args: NavigationOutputArgs
+  output: {
+    html: string
+  }
+  items: NavigationItem[]
+  depth: number
+}
+
+/**
+ * @typedef {object} NavigationOutputFilterArgs
+ * @prop {NavigationOutputArgs} args
+ * @prop {NavigationItem} item
+ * @prop {object} output
+ * @prop {string} output.html
+ * @prop {number} index
+ * @prop {NavigationItem[]} items
+ * @prop {number} depth
+ */
+interface NavigationOutputFilterArgs {
+  args: NavigationOutputArgs
+  item: NavigationItem
+  output: {
+    html: string
+  }
+  index: number
+  items: NavigationItem[]
+  depth: number
+}
+
+/**
+ * @typedef {Function} NavigationOutputListFilter
+ * @param {NavigationOutputListFilterArgs} args
+ * @return {void}
+ */
+type NavigationOutputListFilter = (args: NavigationOutputListFilterArgs) => void
+
+/**
+ * @typedef {Function} NavigationFilter
+ * @param {NavigationOutputFilterArgs} args
+ * @return {void}
+ */
+type NavigationFilter = (args: NavigationOutputFilterArgs) => void
+
+/**
+ * @typedef NavigationOutputArgs
+ * @type NavigationOutputBaseArgs
+ * @prop {NavigationOutputListFilter} [filterBeforeList]
+ * @prop {NavigationOutputListFilter} [filterAfterList]
+ * @prop {NavigationFilter} [filterBeforeItem]
+ * @prop {NavigationFilter} [filterAfterItem]
+ * @prop {NavigationFilter} [filterBeforeLink]
+ * @prop {NavigationFilter} [filterAfterLink]
+ * @prop {NavigationFilter} [filterBeforeLinkText]
+ * @prop {NavigationFilter} [filterAfterLinkText]
+ */
+interface NavigationOutputArgs extends NavigationOutputBaseArgs {
+  filterBeforeList?: NavigationOutputListFilter
+  filterAfterList?: NavigationOutputListFilter
+  filterBeforeItem?: NavigationFilter
+  filterAfterItem?: NavigationFilter
+  filterBeforeLink?: NavigationFilter
+  filterAfterLink?: NavigationFilter
+  filterBeforeLinkText?: NavigationFilter
+  filterAfterLinkText?: NavigationFilter
+}
+
+/**
+ * @typedef {object} NavigationBreadcrumbOutputFilterArgs
+ * @prop {object} output
+ * @prop {string} output.html
+ * @prop {boolean} isLastLevel
+ */
+interface NavigationBreadcrumbOutputFilterArgs {
+  output: {
+    html: string
+  }
+  isLastLevel: boolean
+}
+
+/**
+ * @typedef {Function} NavigationBreadcrumbOutputFilter
+ * @param {NavigationBreadcrumbOutputFilterArgs} args
+ * @return {void}
+ */
+type NavigationBreadcrumbOutputFilter = (args: NavigationBreadcrumbOutputFilterArgs) => void
+
+/**
+ * @typedef NavigationBreadcrumbOutputArgs
+ * @type {NavigationOutputBaseArgs}
+ * @prop {string} [currentClass]
+ * @prop {string} [a11yClass]
+ * @prop {NavigationBreadcrumbOutputFilter} [filterBeforeLink]
+ * @prop {NavigationBreadcrumbOutputFilter} [filterAfterLink]
+ */
+interface NavigationBreadcrumbOutputArgs extends NavigationOutputBaseArgs {
+  currentClass?: string
+  a11yClass?: string
+  filterBeforeLink?: NavigationBreadcrumbOutputFilter
+  filterAfterLink?: NavigationBreadcrumbOutputFilter
+}
 
 /**
  * Class - recursively generate navigation output
  */
-
-interface NavigationArgs {
-  navigations: FRM.Navigation[]
-  items: FRM.NavigationItem[]
-  current?: string
-}
-
-interface NavigationBreadcrumbRecurseArgs extends FRM.NavigationArgs {
-  currentClass?: string
-  a11yClass?: string
-}
-
 class Navigation {
+  /**
+   * Store all navigations
+   *
+   * @type {Navigations[]}
+   */
+  navigations: Navigations[] = []
+
+  /**
+   * Store all navigation items
+   *
+   * @type {NavigationItem[]}
+   */
+  items: NavigationItem[] = []
+
+  /**
+   * Current link to compare against
+   *
+   * @type {string}
+   */
+  current: string = ''
+
+  /**
+   * Store initialize success
+   *
+   * @type {boolean}
+   */
+  init: boolean = false
+
+  /**
+   * Store navigation items by id
+   *
+   * @private
+   * @type {Object.<string, NavigationItem>}
+   */
+  #itemsById: {
+    [key: string]: NavigationItem
+  } = {}
+
+  /**
+   * Store navigations by location
+   *
+   * @private
+   * @type {object}
+   */
+  #navigationsByLocation: {
+    [key: string]: {
+      title: string
+      items: NavigationItem[]
+    }
+  } = {}
+
   /**
    * Set properties and initialize
    *
-   * @param {object} args
-   * @param {object[]} args.navigations
-   * @param {object[]} args.items
-   * @param {string} args.current
-   * @return {void}
+   * @param {NavigationProps} props
    */
+  constructor (props: NavigationProps) {
+    this.init = this.#initialize(props)
+  }
 
-  navigations: FRM.Navigation[]
-  items: FRM.NavigationItem[]
-  current: string
-  init: boolean
+  /**
+   * Initialize - check required props and set props
+   *
+   * @private
+   * @param {NavigationProps} props
+   * @return {boolean}
+   */
+  #initialize (props: NavigationProps): boolean {
+    /* Check props is object */
 
-  #itemsById: { [key: string]: FRM.NavigationItem }
-  #navigationsByLocation: { [key: string]: { title: string, items: FRM.NavigationItem[] } }
+    if (!isObject(props)) {
+      return false
+    }
 
-  constructor (args: NavigationArgs) {
+    /* Defaults */
+
     const {
       navigations = [],
       items = [],
       current = ''
-    } = args
+    } = props
+
+    /* Check that required items exist */
+
+    if (!isArrayStrict(navigations) || !isArrayStrict(items)) {
+      return false
+    }
+
+    /* Set variables */
 
     this.navigations = navigations
     this.items = items
     this.current = current
-
-    /**
-     * Store items by od
-     *
-     * @private
-     * @type {object}
-     */
-
-    this.#itemsById = {}
-
-    /**
-     * Store navigations by location
-     *
-     * @private
-     * @type {object}
-     */
-
-    this.#navigationsByLocation = {}
-
-    /**
-     * Initialize
-     *
-     * @type {boolean}
-     */
-
-    this.init = this.#initialize()
-  }
-
-  /**
-   * Initialize - check required props and set internal props
-   *
-   * @private
-   * @return {boolean}
-   */
-
-  #initialize (): boolean {
-    /* Check that required items exist */
-
-    if (this.navigations.length === 0 || this.items.length === 0) {
-      return false
-    }
 
     /* Items by id */
 
@@ -108,13 +319,17 @@ class Navigation {
     /* Navigations by location */
 
     this.navigations.forEach(nav => {
-      const navFields = Object.assign({
-        title: '',
-        location: '',
-        items: []
-      }, getProp(nav, '', {}))
+      const navFields = getProp(nav, '', {}) as Navigations
 
-      const { title, location, items } = navFields
+      if (!isObjectStrict(navFields)) {
+        return
+      }
+
+      const {
+        title = '',
+        location = '',
+        items = []
+      } = navFields
 
       this.#navigationsByLocation[location.toLowerCase().replace(/ /g, '')] = {
         title,
@@ -131,12 +346,11 @@ class Navigation {
    * Normalize navigation item props
    *
    * @private
-   * @param {object} item
-   * @return {object}
+   * @param {NavigationItem} item
+   * @return {NavigationItem}
    */
-
-  #getItemInfo (item: FRM.NavigationItem): FRM.NavigationItem {
-    const fields = getProp(item, '', {})
+  #getItemInfo (item: NavigationItem): NavigationItem {
+    const fields = getProp(item, '', {}) as NavigationItem
 
     const {
       title = '',
@@ -150,16 +364,20 @@ class Navigation {
 
     const link = getLink(internalLink, externalLink)
 
-    if (externalLink !== '') {
+    if (isStringStrict(externalLink)) {
       id = externalLink
       external = true
     }
 
     if (internalLink !== undefined) {
-      id = getProp(internalLink, 'id')
+      const idProp = getProp(internalLink, 'id')
+
+      if (isStringStrict(idProp)) {
+        id = idProp
+      }
     }
 
-    const props: FRM.NavigationItem = {
+    const props: NavigationItem = {
       id,
       title,
       link,
@@ -173,7 +391,7 @@ class Navigation {
     let descendentCurrent = false
 
     if (children !== undefined) {
-      const c: FRM.NavigationItem[] = []
+      const c: NavigationItem[] = []
 
       descendentCurrent = this.#recurseItemChildren(children, c)
 
@@ -197,12 +415,14 @@ class Navigation {
    * Loop through items to check and set children
    *
    * @private
-   * @param {object[]} children
-   * @param {object[]} store
+   * @param {NavigationItem[]} children
+   * @param {NavigationItem[]} store
    * @return {boolean}
    */
-
-  #recurseItemChildren (children: FRM.NavigationItem[] = [], store: object[] = []): boolean {
+  #recurseItemChildren (
+    children: NavigationItem[] = [],
+    store: NavigationItem[] = []
+  ): boolean {
     let childCurrent = false
 
     children.forEach(child => {
@@ -224,17 +444,16 @@ class Navigation {
    * Return navigation items by id
    *
    * @private
-   * @param {object[]} items
-   * @return {object[]}
+   * @param {NavigationItem[]} items
+   * @return {NavigationItem[]}
    */
-
-  #getItems (items: FRM.NavigationItem[] = []): FRM.NavigationItem[] {
+  #getItems (items: NavigationItem[] = []): NavigationItem[] {
     if (items.length === 0) {
       return []
     }
 
     return items.map(item => {
-      const fields = getProp(item, '', {})
+      const fields = getProp(item, '', {}) as NavigationItem
 
       const {
         title = '',
@@ -244,15 +463,15 @@ class Navigation {
 
       let id = title
 
-      if (externalLink !== '' && externalLink !== undefined) {
+      if (isStringStrict(externalLink)) {
         id = externalLink
       }
 
-      if (internalLink !== undefined && typeof internalLink === 'object') {
-        const internalId = getProp(internalLink, 'id')
+      if (isObject(internalLink)) {
+        const idProp = getProp(internalLink, 'id')
 
-        if (internalId !== undefined) {
-          id = internalId
+        if (isStringStrict(idProp)) {
+          id = idProp
         }
       }
 
@@ -264,18 +483,18 @@ class Navigation {
    * Loop through items to create html
    *
    * @private
-   * @param {object[]} items
+   * @param {NavigationItem[]} items
    * @param {object} output
-   * @param {object} args
+   * @param {string} output.html
+   * @param {NavigationOutputArgs} args
    * @param {number} depth
    * @param {number} maxDepth
    * @return {void}
    */
-
   #recurseOutput = (
-    items: FRM.NavigationItem[] = [],
+    items: NavigationItem[] = [],
     output: { html: string },
-    args: FRM.NavigationArgs,
+    args: NavigationOutputArgs,
     depth: number = -1,
     maxDepth?: number
   ): void => {
@@ -285,7 +504,7 @@ class Navigation {
       return
     }
 
-    const listFilterArgs: FRM.NavigationListFilterArgs = { args, output, items, depth }
+    const listFilterArgs = { args, output, items, depth }
 
     if (typeof args.filterBeforeList === 'function') {
       args.filterBeforeList(listFilterArgs)
@@ -308,7 +527,7 @@ class Navigation {
 
       /* Filters args */
 
-      const filterArgs: FRM.NavigationFilterArgs = { args, item, output, index, items, depth }
+      const filterArgs = { args, item, output, index, items, depth }
 
       /* Item start */
 
@@ -415,14 +634,13 @@ class Navigation {
    * Return navigation html output
    *
    * @param {string} location
-   * @param {object} args
+   * @param {NavigationOutputArgs} args
    * @param {number} maxDepth
    * @return {string} HTML - ul
    */
-
   getOutput (
     location: string = '',
-    args: FRM.NavigationArgs,
+    args: NavigationOutputArgs,
     maxDepth?: number
   ): string {
     if (this.#navigationsByLocation?.[location] === undefined) {
@@ -462,13 +680,16 @@ class Navigation {
   /**
    * Return breadcrumbs html output
    *
-   * @param {object[]} items
+   * @param {NavigationBreadcrumbItem[]} items
    * @param {string} current
-   * @param {object} args
+   * @param {NavigationBreadcrumbOutputArgs} args
    * @return {string} HTML - ol
    */
-
-  getBreadcrumbs (items: FRM.NavigationBreadcrumbItem[] = [], current: string = '', args: NavigationBreadcrumbRecurseArgs): string {
+  getBreadcrumbs (
+    items: NavigationBreadcrumbItem[] = [],
+    current: string = '',
+    args: NavigationBreadcrumbOutputArgs
+  ): string {
     /* Items required */
 
     if (items.length === 0) {
@@ -503,12 +724,25 @@ class Navigation {
     const lastItemIndex = items.length - 1
 
     const itemsArray = items.map((item, index) => {
+      const { title } = item
+
+      /* Title required */
+
+      if (!isStringStrict(title)) {
+        return ''
+      }
+
+      /* Output store */
+
       const output = { html: '' }
+
+      /* Check if last */
+
       const isLastLevel = lastItemIndex === index
 
       /* Filter args */
 
-      const filterArgs: FRM.NavigationBreadcrumbFilterArgs = { output, isLastLevel }
+      const filterArgs = { output, isLastLevel }
 
       /* Item */
 
@@ -538,12 +772,12 @@ class Navigation {
         id: item.id,
         slug: item.slug,
         contentType: item.contentType,
-        linkContentType: item?.linkContentType
+        linkContentType: isStringStrict(item.linkContentType) ? item.linkContentType : undefined
       })
 
-      const permalink = typeof slug === 'string' ? getPermalink(slug) : ''
+      const permalink = isString(slug) ? getPermalink(slug) : ''
 
-      output.html += `<a${linkClasses} href="${permalink}"${linkAttrs}>${item.title}</a>`
+      output.html += `<a${linkClasses} href="${permalink}"${linkAttrs}>${title}</a>`
 
       if (typeof args.filterAfterLink === 'function') {
         args.filterAfterLink(filterArgs)

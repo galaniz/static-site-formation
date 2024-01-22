@@ -4,28 +4,36 @@
 
 /* Imports */
 
+import type { Generic } from '../../global/types/types'
 import resolveResponse from 'contentful-resolve-response'
-import { applyFilters } from '../../utils/filters/filters'
+import { applyFilters, isObject, isStringStrict } from '../../utils'
 import { config } from '../../config/config'
+
+/**
+ * @typedef {Object.<string, (string|number|boolean)>} ContentfulDataParams
+ */
+interface ContentfulDataParams {
+  [key: string]: string | number | boolean
+}
+
+/**
+ * @typedef ContentfulDataItems
+ * @type {Generic}
+ * @prop {*[]} [items]
+ * @prop {*[]} [errors]
+ */
+interface ContentfulDataItems extends Generic {
+  items?: Generic[]
+  errors?: Generic[]
+}
 
 /**
  * Function - fetch data from contentful cms or cache
  *
  * @param {string} key
- * @param {object} params
- * @return {object}
+ * @param {ContentfulDataItems} params
+ * @return {Promise<ContentfulDataItems>}
  */
-
-interface ContentfulDataParams {
-  [key: string]: string | number | boolean
-}
-
-interface ContentfulDataItems {
-  items?: any[]
-  errors?: any[]
-  [key: string]: any
-}
-
 const getContentfulData = async (
   key: string = '',
   params: ContentfulDataParams = {}
@@ -33,30 +41,30 @@ const getContentfulData = async (
   try {
     /* Key required for cache */
 
-    if (key === '') {
+    if (!isStringStrict(key)) {
       throw new Error('No key')
     }
 
     /* Check cache */
 
     if (config.env.cache) {
-      let cacheData: FRM.AnyObject = {}
+      let cacheData: Generic = {}
 
-      const cacheDataFilterArgs: FRM.CacheDataFilterArgs = {
+      const cacheDataFilterArgs = {
         key,
         type: 'get'
       }
 
       cacheData = await applyFilters('cacheData', cacheData, cacheDataFilterArgs)
 
-      if (Object.keys(cacheData).length > 0) {
+      if (isObject(cacheData)) {
         return structuredClone(cacheData)
       }
     }
 
     /* Credentials */
 
-    const credentials: FRM.Cms = config.cms
+    const credentials = config.cms
 
     const {
       space,
@@ -74,7 +82,7 @@ const getContentfulData = async (
       host = deliveryHost
     }
 
-    if (space === '' || accessToken === '' || host === '') {
+    if (!isStringStrict(space) || !isStringStrict(accessToken) || !isStringStrict(host)) {
       throw new Error('No credentials')
     }
 
@@ -91,7 +99,7 @@ const getContentfulData = async (
     const resp = await fetch(url)
     const data: ContentfulDataItems = await resp.json()
 
-    if (data?.items !== undefined) {
+    if (data.items !== undefined) {
       data.items = resolveResponse(data)
     } else {
       throw new Error('No items')
@@ -100,7 +108,7 @@ const getContentfulData = async (
     /* Store in cache */
 
     if (config.env.cache) {
-      const cacheDataFilterArgs: FRM.CacheDataFilterArgs = {
+      const cacheDataFilterArgs = {
         key,
         type: 'set',
         data

@@ -5,13 +5,92 @@
 /* Imports */
 
 import { config } from '../../config/config'
+import { isString, isStringStrict } from '../isString/isString'
 
 /**
- * Function - consistent data object regardless of source
- *
+ * @typedef {object} ImageData
+ * @prop {string} [base]
+ * @prop {string} [alt]
+ * @prop {number} [width]
+ * @prop {number} [height]
+ * @prop {string} [format]
+ * @prop {string} [description]
+ * @prop {object} [file]
+ * @prop {string} file.url
+ * @prop {string} file.contentType
+ * @prop {object} file.details
+ * @prop {object} file.details.image
+ * @prop {number} file.details.image.width
+ * @prop {number} file.details.image.height
+ */
+
+export interface ImageData {
+  base?: string
+  alt?: string
+  width?: number
+  height?: number
+  format?: string
+  description?: string
+  file?: {
+    url: string
+    contentType: string
+    details: {
+      image: {
+        width: number
+        height: number
+      }
+    }
+  }
+}
+
+/**
+ * @typedef {object} ImageArgs
+ * @prop {ImageData} [data]
+ * @prop {string} [classes]
+ * @prop {string} [attr]
+ * @prop {string|number} [width]
+ * @prop {string|number} [height]
+ * @prop {boolean} [returnAspectRatio]
+ * @prop {boolean} [lazy]
+ * @prop {boolean} [source]
+ * @prop {number} [quality]
+ * @prop {number} [maxWidth]
+ * @prop {number} [viewportWidth]
+ */
+
+export interface ImageArgs {
+  data?: ImageData | undefined
+  classes?: string
+  attr?: string
+  width?: string | number
+  height?: string | number
+  returnAspectRatio?: boolean
+  lazy?: boolean
+  source?: boolean
+  quality?: number
+  maxWidth?: number
+  viewportWidth?: number
+}
+
+/**
+ * @typedef {object} ImageReturn
+ * @prop {string} output
+ * @prop {number} aspectRatio
+ */
+
+export interface ImageReturn {
+  output: string
+  aspectRatio: number
+}
+
+/**
  * @private
- * @param {object} data
- * @return {object|undefined}
+ * @typedef {object} _ImageNormalData
+ * @prop {string} url
+ * @prop {string} alt
+ * @prop {number} naturalWidth
+ * @prop {number} naturalHeight
+ * @prop {string} format
  */
 
 interface _ImageNormalData {
@@ -22,7 +101,15 @@ interface _ImageNormalData {
   format: string
 }
 
-const _normalizeImageData = (data: FRM.ImageData): _ImageNormalData | undefined => {
+/**
+ * Function - consistent data object regardless of source
+ *
+ * @private
+ * @param {ImageData} data
+ * @return {_ImageNormalData|undefined}
+ */
+
+const _normalizeImageData = (data: ImageData): _ImageNormalData | undefined => {
   if (config.source === 'static') {
     const {
       base = '',
@@ -32,7 +119,7 @@ const _normalizeImageData = (data: FRM.ImageData): _ImageNormalData | undefined 
       format = 'jpg'
     } = data
 
-    if (base === '' || width === 0 || height === 0) {
+    if (!isStringStrict(base) || width === 0 || height === 0) {
       return
     }
 
@@ -58,7 +145,7 @@ const _normalizeImageData = (data: FRM.ImageData): _ImageNormalData | undefined 
 
     /* Url and details required */
 
-    if (url === '' || details === undefined) {
+    if (!isStringStrict(url) || details === undefined) {
       return
     }
 
@@ -75,22 +162,11 @@ const _normalizeImageData = (data: FRM.ImageData): _ImageNormalData | undefined 
 /**
  * Function - get responsive image output
  *
- * @param {object} args
- * @param {object} args.data
- * @param {string} args.classes
- * @param {string} args.attr
- * @param {string|number} args.width
- * @param {string|number} args.height
- * @param {boolean} args.returnAspectRatio
- * @param {boolean} args.lazy
- * @param {boolean} args.source
- * @param {number} args.quality
- * @param {number} args.maxWidth
- * @param {number} args.viewportWidth
- * @return {string|object}
+ * @param {ImageArgs} args
+ * @return {ImageReturn|string}
  */
 
-const getImage = (args: FRM.ImageArgs = {}): string | { output: string, aspectRatio: number } => {
+const getImage = (args: ImageArgs = {}): ImageReturn | string => {
   const {
     data,
     classes = '',
@@ -135,12 +211,12 @@ const getImage = (args: FRM.ImageArgs = {}): string | { output: string, aspectRa
 
   if (typeof width === 'number') {
     w = width
-    h = typeof height === 'string' ? w * aspectRatio : height
+    h = isString(height) ? w * aspectRatio : height
   }
 
   if (typeof height === 'number') {
     h = height
-    w = typeof width === 'string' ? h * aspectRatioReverse : width
+    w = isString(width) ? h * aspectRatioReverse : width
   }
 
   if (w > maxWidth) {

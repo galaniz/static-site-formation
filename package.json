@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "Helpers for static sites built with Contentful or from the file system",
   "main": "./lib/index.js",
-  "types": "index.d.ts",
   "engines": {
     "node": ">=17"
   },

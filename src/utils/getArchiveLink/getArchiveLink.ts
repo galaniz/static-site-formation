@@ -8,6 +8,7 @@ import { config } from '../../config/config'
 import { getArchiveId } from '../getArchiveId/getArchiveId'
 import { getPermalink } from '../getPermalink/getPermalink'
 import { getSlug } from '../getSlug/getSlug'
+import { isString } from '../isString/isString'
 
 /**
  * Function - get archive link by content type
@@ -38,7 +39,7 @@ const getArchiveLink = (contentType: string = '', linkContentType: string = ''):
         contentType: 'page'
       })
 
-      if (typeof s === 'string') {
+      if (isString(s)) {
         archiveLink = getPermalink(s)
       }
     }

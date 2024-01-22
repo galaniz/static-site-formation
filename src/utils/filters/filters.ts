@@ -2,12 +2,17 @@
  * Utils - Filters
  */
 
+/* Imports */
+
+import { isArrayStrict } from '../isArray/isArray'
+import { isStringStrict } from '../isString/isString'
+import { isObject } from '../isObject/isObject'
+
 /**
  * Store filter callbacks by name
  *
- * @type {object}
+ * @type {Object.<string, function>}
  */
-
 let filters: { [key: string]: Function[] } = {}
 
 /**
@@ -17,9 +22,8 @@ let filters: { [key: string]: Function[] } = {}
  * @param {function} filter
  * @return {boolean}
  */
-
 const addFilter = (name: string, filter: Function): boolean => {
-  if (name === undefined || name === '' || filter === undefined) {
+  if (!isStringStrict(name) || typeof filter !== 'function') {
     return false
   }
 
@@ -39,15 +43,14 @@ const addFilter = (name: string, filter: Function): boolean => {
  * @param {function} filter
  * @return {boolean}
  */
-
 const removeFilter = (name: string, filter: Function): boolean => {
-  if (name === undefined || name === '' || filter === undefined) {
+  if (!isStringStrict(name) || typeof filter !== 'function') {
     return false
   }
 
   const callbacks = filters[name]
 
-  if (Array.isArray(callbacks)) {
+  if (isArrayStrict(callbacks)) {
     const index = callbacks.indexOf(filter)
 
     if (index > -1) {
@@ -65,19 +68,18 @@ const removeFilter = (name: string, filter: Function): boolean => {
  *
  * @param {string} name
  * @param {*} value
- * @param {*} args
- * @return {*}
+ * @param {*} [args]
+ * @return {Promise<*>}
  */
-
-const applyFilters = async (name: string, value: any, ...args: any): Promise<any> => {
+const applyFilters = async <T, U>(name: string, value: T, args?: U): Promise<T> => {
   const callbacks = filters[name]
 
-  if (Array.isArray(callbacks)) {
+  if (isArrayStrict(callbacks)) {
     for (let i = 0; i < callbacks.length; i += 1) {
       const callback = callbacks[i]
 
       if (typeof callback === 'function') {
-        value = await callback(value, ...args)
+        value = await callback(value, args)
       }
     }
   }
@@ -90,7 +92,6 @@ const applyFilters = async (name: string, value: any, ...args: any): Promise<any
  *
  * @return {void}
  */
-
 const resetFilters = (): void => {
   filters = {}
 }
@@ -98,12 +99,11 @@ const resetFilters = (): void => {
 /**
  * Function - fill filters object
  *
- * @param {object} args
+ * @param {Object.<string, Function>} args
  * @return {boolean}
  */
-
 const setFilters = (args: { [key: string]: Function }): boolean => {
-  if (typeof args !== 'object' || args === undefined || args === null) {
+  if (!isObject(args)) {
     return false
   }
 

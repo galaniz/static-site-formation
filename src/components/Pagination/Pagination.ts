@@ -3,35 +3,18 @@
  */
 
 /**
- * Function - output pagination navigation
- *
- * @param {object} props
- * @param {number} props.total
- * @param {number} props.display
- * @param {number} props.current
- * @param {string} props.filters
- * @param {string} props.basePermaLink
- * @param {string} props.ellipsis
- * @param {string} props.prev
- * @param {string} props.next
- * @param {object} props.args
- * @param {string} props.args.listClass
- * @param {string} props.args.listAttr
- * @param {string} props.args.itemClass
- * @param {string} props.args.itemAttr
- * @param {boolean} props.args.itemMaxWidth - Set list item max width
- * @param {string} props.args.linkClass
- * @param {string} props.args.linkAttr
- * @param {string} props.args.currentClass
- * @param {string} props.args.a11yClass
- * @param {string} props.args.prevSpanClass
- * @param {string} props.args.prevLinkClass
- * @param {string} props.args.nextSpanClass
- * @param {string} props.args.nextLinkClass
- * @return {string} HTML - ol
+ * @typedef {object} PaginationProps
+ * @prop {number} [total]
+ * @prop {number} [display]
+ * @prop {number} [current]
+ * @prop {string} [filters]
+ * @prop {string} [basePermaLink]
+ * @prop {string} [ellipsis]
+ * @prop {string} [prev]
+ * @prop {string} [next]
+ * @prop {PaginationArgs} [args]
  */
-
-interface PaginationProps {
+export interface PaginationProps {
   total?: number
   display?: number
   current?: number
@@ -43,7 +26,23 @@ interface PaginationProps {
   args?: PaginationArgs
 }
 
-interface PaginationArgs {
+/**
+ * @typedef {object} PaginationArgs
+ * @prop {string} [listClass]
+ * @prop {string} [listAttr]
+ * @prop {string} [itemClass]
+ * @prop {string} [itemAttr]
+ * @prop {boolean} [itemMaxWidth] - Set list item max width
+ * @prop {string} [linkClass]
+ * @prop {string} [linkAttr]
+ * @prop {string} [currentClass]
+ * @prop {string} [a11yClass]
+ * @prop {string} [prevSpanClass]
+ * @prop {string} [prevLinkClass]
+ * @prop {string} [nextSpanClass]
+ * @prop {string} [nextLinkClass]
+ */
+export interface PaginationArgs {
   listClass?: string
   listAttr?: string
   itemClass?: string
@@ -59,6 +58,16 @@ interface PaginationArgs {
   nextLinkClass?: string
 }
 
+/**
+ * @typedef {object} PaginationData
+ * @prop {number} [current]
+ * @prop {string} [title]
+ * @prop {number} [next]
+ * @prop {number} [prev]
+ * @prop {string} [nextFilters]
+ * @prop {string} [prevFilters]
+ * @prop {string} [currentFilters]
+ */
 interface PaginationData {
   current?: number
   title?: string
@@ -69,11 +78,22 @@ interface PaginationData {
   currentFilters?: string
 }
 
+/**
+ * @typedef {object} PaginationReturn
+ * @prop {string} output
+ * @prop {PaginationData} data
+ */
 interface PaginationReturn {
   output: string
   data: PaginationData
 }
 
+/**
+ * Function - output pagination navigation
+ *
+ * @param {PaginationProps} props
+ * @return {string} HTML - ol
+ */
 const Pagination = (props: PaginationProps = {}): PaginationReturn => {
   const {
     total = 1,

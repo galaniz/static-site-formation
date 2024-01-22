@@ -2,27 +2,31 @@
  * Utils - Undefine Props
  */
 
+/* Imports */
+
+import type { Generic } from '../../global/types/types'
+import { isObject } from '../isObject/isObject'
+import { isArray } from '../isArray/isArray'
+
 /**
  * Function - set property in object or array of objects to undefined
  *
- * @param {object|object[]} obj
+ * @param {Generic|Generic[]} obj
  * @param {string[]} props
- * @return {object|object[]}
+ * @return {Generic|Generic[]}
  */
-
-const undefineProps = (obj: FRM.AnyObject | FRM.AnyObject[], props: string[] = []): FRM.AnyObject | FRM.AnyObject[] => {
-  if (typeof obj !== 'object' || obj === null || obj === undefined) {
+const undefineProps = (obj: Generic | Generic[], props: string[] = []): Generic | Generic[] => {
+  if (!isObject(obj)) {
     return obj
   }
 
-  const isArr = Array.isArray(obj)
-
+  const isArr = isArray(obj)
   let objArr = isArr ? obj : [obj]
 
   objArr = structuredClone(objArr)
 
-  objArr.forEach((o: FRM.AnyObject) => {
-    if (typeof o !== 'object' || o === null || o === undefined) {
+  objArr.forEach((o) => {
+    if (!isObject(o)) {
       return
     }
 

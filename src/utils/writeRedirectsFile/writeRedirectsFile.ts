@@ -9,9 +9,8 @@ import { config } from '../../config/config'
 /**
  * Function - write redirects file from config redirects array
  *
- * @return {void}
+ * @return {Promise<void>}
  */
-
 const writeRedirectsFile = async (): Promise<void> => {
   try {
     const redirects = config.redirects.data

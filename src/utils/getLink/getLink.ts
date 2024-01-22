@@ -4,37 +4,43 @@
 
 /* Imports */
 
+import type { InternalLink } from '../../global/types/types'
 import { getPermalink } from '../getPermalink/getPermalink'
 import { getSlug } from '../getSlug/getSlug'
 import { getProp } from '../getProp/getProp'
+import { isObject } from '../isObject/isObject'
+import { isString, isStringStrict } from '../isString/isString'
 
 /**
  * Function - get permalink from external or internal source
  *
- * @param {object} internalLink
- * @param {string} externalLink
+ * @param {InternalLink} [internalLink]
+ * @param {string} [externalLink]
  * @return {string}
  */
 
-const getLink = (internalLink: FRM.InternalLink | undefined, externalLink: string = ''): string => {
-  if (internalLink !== undefined) {
-    const slugArgs = {
-      id: getProp(internalLink, 'id'),
-      contentType: getProp(internalLink, 'contentType'),
-      linkContentType: getProp(internalLink, 'linkContentType'),
-      slug: getProp(internalLink, 'slug')
-    }
+const getLink = (internalLink?: InternalLink, externalLink?: string): string => {
+  if (isObject(internalLink)) {
+    const id = getProp(internalLink, 'id')
+    const contentType = getProp(internalLink, 'contentType')
+    const linkContentType = getProp(internalLink, 'linkContentType')
+    const slug = getProp(internalLink, 'slug')
 
-    const slug = getSlug(slugArgs)
+    const res = getSlug({
+      id: isStringStrict(id) ? id : '',
+      contentType: isStringStrict(contentType) ? contentType : '',
+      linkContentType: isStringStrict(linkContentType) ? linkContentType : undefined,
+      slug: isString(slug) ? slug : ''
+    })
 
-    if (typeof slug === 'string') {
-      return getPermalink(slug)
+    if (isString(res)) {
+      return getPermalink(res)
     }
 
     return ''
   }
 
-  return externalLink
+  return isStringStrict(externalLink) ? externalLink : ''
 }
 
 /* Exports */

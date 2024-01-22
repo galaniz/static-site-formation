@@ -4,49 +4,105 @@
 
 /* Imports */
 
+import type { Generic } from '../../global/types/types'
 import { config } from '../../config/config'
+import { isObjectStrict } from '../isObject/isObject'
+import { isStringStrict } from '../isString/isString'
+
+/**
+ * @typedef Prop
+ * @type {Generic}
+ * @prop {object} [sys]
+ * @prop {string} [sys.id]
+ * @prop {string} [sys.type]
+ * @prop {object} [sys.contentType]
+ * @prop {object} [sys.contentType.sys]
+ * @prop {string} [sys.contentType.sys.id]
+ * @prop {Object.<string, *>} [fields]
+ */
+interface Prop extends Generic {
+  sys?: {
+    id?: string
+    type?: string
+    contentType?: {
+      sys?: {
+        id?: string
+      }
+    }
+  }
+  fields?: Generic
+}
 
 /**
  * Function - get prop from object with cms normalization
  *
- * @param {object} object
+ * @param {Object.<string, *>} object
  * @param {string} prop
- * @param {*} undefinedFallback
- * @return {*}
+ * @param {*} [fallback]
+ * @return {*|string|undefined}
  */
+const getProp = <T extends Prop>(
+  object: T,
+  prop: string = '',
+  fallback?: unknown
+): T | string | undefined | unknown => {
+  /* Check if object */
 
-const getProp = (object: { [key: string]: any } = {}, prop: string = '', undefinedFallback?: any): any => {
+  if (!isObjectStrict(object)) {
+    return fallback
+  }
+
+  /* Contentful */
+
   if (config.cms.name === 'contentful') {
+    const sys = isObjectStrict(object.sys) ? object.sys : {}
+
+    /* Id */
+
     if (prop === 'id') {
-      return object?.sys?.id !== undefined ? object.sys.id : ''
+      return isStringStrict(sys.id) ? sys.id : ''
     }
 
-    if (prop === 'renderType' || prop === 'contentType') {
-      let type: string = object?.sys?.contentType?.sys?.id
+    /* Type */
 
-      if (type === undefined) {
-        type = object?.sys?.type
+    if (prop === 'renderType' || prop === 'contentType') {
+      let type = ''
+
+      if (isStringStrict(sys?.contentType?.sys?.id)) {
+        type = sys?.contentType?.sys?.id
+      }
+
+      if (isStringStrict(sys.type) && type === '') {
+        type = sys.type
       }
 
       if (prop === 'renderType' && config.renderTypes?.[type] !== undefined) {
         type = config.renderTypes[type]
       }
 
-      return typeof type === 'string' ? type : ''
+      return type
     }
 
-    if (prop === '') {
-      return object.fields !== undefined ? object.fields : undefinedFallback
+    /* Fields */
+
+    if (isStringStrict(prop)) {
+      return object.fields !== undefined ? object.fields : fallback
     }
 
-    return object?.fields?.[prop] !== undefined ? object.fields[prop] : undefinedFallback
+    /* Fallback */
+
+    return fallback
   }
 
-  if (prop !== '') {
-    return object[prop] !== undefined ? object[prop] : undefinedFallback
+  /* Static */
+
+  if (isStringStrict(prop)) {
+    return object[prop] !== undefined ? object[prop] : fallback
   }
 
-  return object
+  /* Fallback */
+
+  return fallback
 }
 
 /* Exports */

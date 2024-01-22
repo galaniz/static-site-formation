@@ -4,9 +4,30 @@
 
 /* Imports */
 
+import type { AjaxActionArgs, AjaxActionReturn } from '../types/types'
 import { config } from '../../config/config'
-import { escape } from '../../utils/escape/escape'
-import { getPermalink } from '../../utils/getPermalink/getPermalink'
+import {
+  escape,
+  isString,
+  isStringStrict,
+  getPermalink,
+  isArray,
+  isObject
+} from '../../utils'
+
+/**
+ * @typedef {Object.<string, string[]>} SendFormLegendData
+ */
+interface SendFormLegendData {
+  [key: string]: string[]
+}
+
+/**
+ * @typedef {Object.<string, (SendFormOutputData|string[])>} SendFormOutputData
+ */
+interface SendFormOutputData {
+  [key: string]: string[] | SendFormOutputData
+}
 
 /**
  * Function - recurse through data to output plain and html email body
@@ -14,15 +35,32 @@ import { getPermalink } from '../../utils/getPermalink/getPermalink'
  * @private
  * @param {object} data
  * @param {object} output
+ * @param {string} output.html
+ * @param {string} output.plain
  * @param {number} depth
  * @return {void}
  */
+const _recurseEmailHtml = <T extends SendFormOutputData>(
+  data: T,
+  output: {
+    html: string
+    plain: string
+  },
+  depth: number = 1
+): void => {
+  if (!isObject(data)) {
+    return
+  }
 
-const _recurseEmailHtml = (data: FRM.AnyObject, output: { html: string, plain: string }, depth: number = 1): void => {
-  const isArray = Array.isArray(data)
+  const isArr = isArray(data)
 
-  Object.keys(data).forEach((label: string) => {
-    const value: string = data[label]
+  Object.keys(data).forEach((label) => {
+    let value
+
+    if (isString(label)) {
+      value = data[label]
+    }
+
     const h = depth + 1
 
     if (depth === 1) {
@@ -32,7 +70,7 @@ const _recurseEmailHtml = (data: FRM.AnyObject, output: { html: string, plain: s
       `
     }
 
-    if (label !== '' && !isArray) {
+    if (label !== '' && !isArr) {
       output.html += `
         <h${h} style='font-family: sans-serif; color: #222; margin: 16px 0; line-height: 1.3em'>
           ${label}
@@ -42,9 +80,11 @@ const _recurseEmailHtml = (data: FRM.AnyObject, output: { html: string, plain: s
       output.plain += `${label}\n`
     }
 
-    if (typeof value === 'object') {
-      _recurseEmailHtml(value, output, depth + 1)
-    } else {
+    if (isObject(value)) {
+      _recurseEmailHtml(value as SendFormOutputData, output, depth + 1)
+    }
+
+    if (isString(value)) {
       output.html += `
         <p style='font-family: sans-serif; color: #222; margin: 16px 0; line-height: 1.5em;'>
           ${value}
@@ -68,26 +108,13 @@ const _recurseEmailHtml = (data: FRM.AnyObject, output: { html: string, plain: s
 /**
  * Function - generate email from form fields and send with Smtp2go
  *
- * @param {object} args
- * @param {string} args.id
- * @param {object[]} args.inputs
- * @return {object} Response
+ * @param {AjaxActionArgs} args
+ * @return {Promise<AjaxActionReturn>}
  */
-
-interface SendFormBody {
-  api_key: string
-  to: string[]
-  sender: string
-  subject: string
-  text_body: string
-  html_body: string
-  custom_headers?: any[]
-}
-
-const SendForm = async ({ id, inputs }: FRM.AjaxActionArgs): Promise<FRM.AjaxActionReturn> => {
+const SendForm = async ({ id, inputs }: AjaxActionArgs): Promise<AjaxActionReturn> => {
   /* Id required */
 
-  if (id === undefined || id === '') {
+  if (!isStringStrict(id)) {
     return {
       error: {
         message: 'No id'
@@ -98,9 +125,9 @@ const SendForm = async ({ id, inputs }: FRM.AjaxActionArgs): Promise<FRM.AjaxAct
   /* Meta information - to email and subject */
 
   const formMetaJson = require(`${config.store.dir}${config.store.files.formMeta.name}`) // eslint-disable-line @typescript-eslint/no-var-requires
-  const meta = formMetaJson[id]
+  const meta = formMetaJson[id] as { toEmail?: string, senderEmail?: string, subject?: string }
 
-  if (meta === undefined) {
+  if (!isObject(meta)) {
     return {
       error: {
         message: 'No meta information'
@@ -110,9 +137,9 @@ const SendForm = async ({ id, inputs }: FRM.AjaxActionArgs): Promise<FRM.AjaxAct
 
   /* To email */
 
-  const toEmail: string = meta?.toEmail
+  const toEmail = meta.toEmail
 
-  if (toEmail === undefined || toEmail === '') {
+  if (!isStringStrict(toEmail)) {
     return {
       error: {
         message: 'No to email'
@@ -124,9 +151,9 @@ const SendForm = async ({ id, inputs }: FRM.AjaxActionArgs): Promise<FRM.AjaxAct
 
   /* Sender email */
 
-  const senderEmail = meta?.senderEmail
+  const senderEmail = meta.senderEmail
 
-  if (senderEmail === undefined || senderEmail === '') {
+  if (!isStringStrict(senderEmail)) {
     return {
       error: {
         message: 'No sender email'
@@ -136,7 +163,7 @@ const SendForm = async ({ id, inputs }: FRM.AjaxActionArgs): Promise<FRM.AjaxAct
 
   /* Subject */
 
-  let subject = meta?.subject !== undefined ? meta.subject : ''
+  let subject = isStringStrict(meta.subject) ? meta.subject : ''
 
   /* Reply to email */
 
@@ -146,7 +173,7 @@ const SendForm = async ({ id, inputs }: FRM.AjaxActionArgs): Promise<FRM.AjaxAct
 
   const header = `${config.title} contact form submission`
   const footer = `This email was sent from a contact form on ${config.title} (${getPermalink()})`
-  const outputData: FRM.AnyObject = {}
+  const outputData: SendFormOutputData = {}
   const output = {
     html: '',
     plain: ''
@@ -173,18 +200,18 @@ const SendForm = async ({ id, inputs }: FRM.AjaxActionArgs): Promise<FRM.AjaxAct
 
     let inputValueStr = ''
 
-    if (Array.isArray(inputValue)) {
+    if (isArray(inputValue)) {
       inputValueStr = inputValue.map(v => escape(v.trim() + '')).join('<br>')
     }
 
-    if (typeof inputValue === 'string') {
+    if (isString(inputValue)) {
       inputValueStr = escape(inputValue.trim() + '')
     }
 
     /* Subject */
 
     if (name === 'subject' && inputValueStr !== '') {
-      subject = `${typeof subject === 'string' && subject !== '' ? `${subject} - ` : ''}${inputValueStr}`
+      subject = `${isStringStrict(subject) ? `${subject} - ` : ''}${inputValueStr}`
       return
     }
 
@@ -197,34 +224,37 @@ const SendForm = async ({ id, inputs }: FRM.AjaxActionArgs): Promise<FRM.AjaxAct
 
     /* Legend */
 
-    let legend = ''
+    const hasLegend = isStringStrict(input.legend)
+    const legend = isStringStrict(input.legend) ? input.legend : ''
 
-    if (input?.legend !== undefined) {
-      legend = input.legend
-
-      if (outputData?.[legend] === undefined) {
-        outputData[legend] = {}
-      }
+    if (hasLegend && outputData[legend] === undefined) {
+      outputData[legend] = {}
     }
 
     /* Label */
 
-    if (outputData?.[inputLabel] === undefined) {
-      if (legend !== '') {
-        outputData[legend][inputLabel] = []
-      } else {
-        outputData[inputLabel] = []
-      }
+    if (hasLegend && outputData[legend] !== undefined) {
+      const legendData = outputData[legend] as SendFormLegendData
+
+      legendData[inputLabel] = []
+    }
+
+    if (!hasLegend && outputData[inputLabel] === undefined) {
+      outputData[inputLabel] = []
     }
 
     /* Output value */
 
     const outputValue = inputValueStr === '' ? '--' : inputValueStr
+    const legendData = outputData[legend] as SendFormLegendData
+    const inputData = outputData[inputLabel]
 
-    if (legend !== '') {
-      outputData[legend][inputLabel].push(outputValue)
-    } else {
-      outputData[inputLabel].push(outputValue)
+    if (hasLegend && isArray(legendData[inputLabel])) {
+      legendData[inputLabel].push(outputValue)
+    }
+
+    if (!hasLegend && isArray(inputData)) {
+      inputData.push(outputValue)
     }
   })
 
@@ -276,7 +306,15 @@ const SendForm = async ({ id, inputs }: FRM.AjaxActionArgs): Promise<FRM.AjaxAct
 
   /* Smtp2go request */
 
-  const body: SendFormBody = {
+  const body: {
+    api_key: string
+    to: string[]
+    sender: string
+    subject: string
+    text_body: string
+    html_body: string
+    custom_headers?: unknown[]
+  } = {
     api_key: config.apiKeys.smtp2go,
     to: toEmails,
     sender: senderEmail,

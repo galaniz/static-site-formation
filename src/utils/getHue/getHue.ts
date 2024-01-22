@@ -5,6 +5,7 @@
 /* Imports */
 
 import { getRgba } from '../getRgba/getRgba'
+import { isString } from '../isString/isString'
 
 /**
  * Function - get hue from hex color string
@@ -19,7 +20,7 @@ import { getRgba } from '../getRgba/getRgba'
 const getHue = (hex: string = '', alpha: number = 1): number => {
   let [r, g, b] = getRgba(hex, alpha, true)
 
-  if (typeof r === 'string' || typeof g === 'string' || typeof b === 'string') {
+  if (isString(r) || isString(g) || isString(b)) {
     return 0
   }
 

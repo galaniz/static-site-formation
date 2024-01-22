@@ -5,6 +5,7 @@
 /* Imports */
 
 import { config } from '../../config/config'
+import { isArray } from '../isArray/isArray'
 
 /**
  * Function - singular and plural labels by content type
@@ -26,7 +27,7 @@ const getArchiveLabels = (
   let type = contentType
 
   if (isTerm) {
-    linkContentType = Array.isArray(linkContentType) ? linkContentType : [linkContentType]
+    linkContentType = isArray(linkContentType) ? linkContentType : [linkContentType]
     type = linkContentType.length > 0 ? linkContentType[0] : ''
   }
 

@@ -9,11 +9,12 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import { extname, resolve, basename, dirname } from 'node:path'
 import { config } from '../../config/config'
 import { getAllFilePaths } from '../getAllFilePaths/getAllFilePaths'
+import { isStringStrict } from '../isString/isString'
 
 /**
  * Function - get and save image data and output multiple sizes
  *
- * @return {void}
+ * @return {Promise<void>}
  */
 
 interface ProcessImagesSharp {
@@ -40,7 +41,7 @@ const processImages = async (): Promise<void> => {
     const outputDir = config.static.image.outputDir
     const dataFile = config.static.image.dataFile
 
-    if (inputDir === '' || outputDir === '') {
+    if (!isStringStrict(inputDir) || !isStringStrict(outputDir)) {
       throw new Error('No input or output directories')
     }
 

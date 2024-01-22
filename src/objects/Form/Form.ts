@@ -5,31 +5,84 @@
 /* Imports */
 
 import { v4 as uuid } from 'uuid'
-import { applyFilters } from '../../utils/filters/filters'
+import { applyFilters, isStringStrict } from '../../utils'
 import { config } from '../../config/config'
+
+/**
+ * @typedef {object} FormProps
+ * @prop {object} args
+ * @prop {string} [args.id]
+ * @prop {string} [args.action]
+ * @prop {string} [args.subject]
+ * @prop {string} [args.toEmail]
+ * @prop {string} [args.senderEmail]
+ * @prop {string} [args.submitLabel]
+ * @prop {string} [args.successTitle]
+ * @prop {string} [args.successText]
+ * @prop {string} [args.successResult]
+ * @prop {string} [args.errorTitle]
+ * @prop {string} [args.errorText]
+ * @prop {string} [args.errorSummary]
+ * @prop {string} [args.errorResult]
+ * @prop {string} [args.formClasses]
+ * @prop {string} [args.formAttr]
+ * @prop {string} [args.fieldsClasses]
+ * @prop {string} [args.fieldsAttr]
+ * @prop {string} [args.submitFieldClasses]
+ * @prop {string} [args.submitClasses]
+ * @prop {string} [args.submitAttr]
+ * @prop {string} [args.submitLoader]
+ * @prop {string} [args.honeypotFieldClasses]
+ * @prop {string} [args.honeypotLabelClasses]
+ * @prop {string} [args.honeypotClasses]
+ */
+export interface FormProps {
+  args: {
+    id?: string
+    action?: string
+    subject?: string
+    toEmail?: string
+    senderEmail?: string
+    submitLabel?: string
+    successTitle?: string
+    successText?: string
+    successResult?: string
+    errorTitle?: string
+    errorText?: string
+    errorSummary?: string
+    errorResult?: string
+    formClasses?: string
+    formAttr?: string
+    fieldsClasses?: string
+    fieldsAttr?: string
+    submitFieldClasses?: string
+    submitClasses?: string
+    submitAttr?: string
+    submitLoader?: string
+    honeypotFieldClasses?: string
+    honeypotLabelClasses?: string
+    honeypotClasses?: string
+    [key: string]: unknown
+  }
+}
+
+/**
+ * @typedef {object} FormReturn
+ * @prop {string} start
+ * @prop {string} end
+ */
+interface FormReturn {
+  start: string
+  end: string
+}
 
 /**
  * Function - output form wrapper
  *
- * @param {object} props
- * @param {object} props.args
- * @param {string} props.args.id
- * @param {string} props.args.action
- * @param {string} props.args.subject
- * @param {string} props.args.toEmail
- * @param {string} props.args.senderEmail
- * @param {string} props.args.submitLabel
- * @param {string} props.args.successTitle
- * @param {string} props.args.successText
- * @param {string} props.args.errorTitle
- * @param {string} props.args.errorText
- * @param {boolean} props.args.wrap
- * @param {string} props.args.rowBreakpoint
- * @param {string} props.args.alignBreakpoint
- * @return {object}
+ * @param {FormProps} props
+ * @return {Promise<FormReturn>}
  */
-
-const Form = async (props: FRM.FormProps = { args: {} }): Promise<FRM.StartEndReturn> => {
+const Form = async (props: FormProps = { args: {} }): Promise<FormReturn> => {
   props = await applyFilters('formProps', props, { renderType: 'Form' })
 
   const { args = {} } = props
@@ -63,7 +116,7 @@ const Form = async (props: FRM.FormProps = { args: {} }): Promise<FRM.StartEndRe
 
   /* Id required */
 
-  if (id === '') {
+  if (!isStringStrict(id)) {
     return {
       start: '',
       end: ''

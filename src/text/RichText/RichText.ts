@@ -4,8 +4,65 @@
 
 /* Imports */
 
-import { getLink } from '../../utils/getLink/getLink'
-import { applyFilters } from '../../utils/filters/filters'
+import type { InternalLink, ParentArgs } from '../../global/types/types'
+import { getLink, isObject, applyFilters, isString, isStringStrict, isObjectStrict } from '../../utils/'
+
+/* Public types */
+
+interface RichTextProps {
+  args: {
+    type?: string
+    tag?: string
+    content?: string | object[]
+    classes?: string
+    textStyle?: string
+    headingStyle?: string
+    caption?: string
+    align?: string
+    link?: string
+    internalLink?: InternalLink
+    style?: string
+    attr?: string
+    [key: string]: unknown
+  }
+  parents?: ParentArgs[]
+}
+
+interface RichTextContentItem {
+  tag?: string | string[]
+  link?: string
+  internalLink?: InternalLink
+  content?: string | RichTextContentItem[]
+  nodeType?: string
+  value?: string
+  marks?: Array<{ type: string }>
+  data?: {
+    uri?: string
+    target?: {
+      fields?: {
+        file?: {
+          url?: string
+        }
+      }
+      [key: string]: unknown
+    }
+  }
+}
+
+interface RichTextNormalizeContentFilterArgs {
+  type: string | string[]
+  args: RichTextContentItem
+}
+
+interface RichTextContentFilterArgs {
+  args: RichTextContentItem
+  props: RichTextProps
+}
+
+interface RichTextContentOutputFilterArgs {
+  args: RichTextContentItem
+  props: RichTextProps
+}
 
 /**
  * Function - get html tag from type
@@ -112,11 +169,11 @@ const _getTag = (type: string = 'text'): string => {
 interface _RichTextContentReturn {
   tag: string | string[]
   link?: string
-  internalLink?: FRM.InternalLink
+  internalLink?: InternalLink
   content: string | _RichTextContentReturn[]
 }
 
-const _normalizeContent = async (content: FRM.RichTextContentItem[]): Promise<_RichTextContentReturn[] | []> => {
+const _normalizeContent = async (content: RichTextContentItem[]): Promise<_RichTextContentReturn[] | []> => {
   if (!Array.isArray(content)) {
     return []
   }
@@ -124,7 +181,7 @@ const _normalizeContent = async (content: FRM.RichTextContentItem[]): Promise<_R
   const normalContent = []
 
   for (let i = 0; i < content.length; i += 1) {
-    const c: FRM.RichTextContentItem = content[i]
+    const c: RichTextContentItem = content[i]
 
     const {
       nodeType = '',
@@ -154,7 +211,7 @@ const _normalizeContent = async (content: FRM.RichTextContentItem[]): Promise<_R
 
     let contentValue: string | _RichTextContentReturn[] = ''
 
-    if (typeof value === 'string' && value !== '') {
+    if (isStringStrict(value)) {
       contentValue = value
 
       if (marks !== undefined && Array.isArray(marks)) {
@@ -169,7 +226,7 @@ const _normalizeContent = async (content: FRM.RichTextContentItem[]): Promise<_R
       }
     }
 
-    if (typeof con === 'string' && con !== '') {
+    if (isStringStrict(con)) {
       contentValue = con
     }
 
@@ -177,7 +234,7 @@ const _normalizeContent = async (content: FRM.RichTextContentItem[]): Promise<_R
       contentValue = await _normalizeContent(con)
     }
 
-    const richTextNormalizeContentFilterArgs: FRM.RichTextNormalizeContentFilterArgs = {
+    const richTextNormalizeContentFilterArgs: RichTextNormalizeContentFilterArgs = {
       type: filterType,
       args: c
     }
@@ -186,17 +243,21 @@ const _normalizeContent = async (content: FRM.RichTextContentItem[]): Promise<_R
 
     /* Link */
 
-    if (data !== undefined && typeof data === 'object') {
-      link = data?.uri !== undefined ? data.uri : ''
+    if (isObjectStrict(data)) {
+      link = isStringStrict(data.uri) ? data.uri : ''
 
-      if (nodeType === 'entry-hyperlink' && data?.target !== undefined) {
-        internalLink = data.target
-      }
+      if (isObjectStrict(data.target)) {
+        const target = data.target
 
-      if (nodeType === 'asset-hyperlink' && data?.target?.fields?.file?.url !== undefined) {
-        const url: string = data.target.fields.file.url
+        if (nodeType === 'entry-hyperlink') {
+          internalLink = target as InternalLink
+        }
 
-        link = `https:${url}`
+        const url = target?.fields?.file?.url
+
+        if (nodeType === 'asset-hyperlink' && isStringStrict(url)) {
+          link = `https:${url}`
+        }
       }
     }
 
@@ -208,7 +269,7 @@ const _normalizeContent = async (content: FRM.RichTextContentItem[]): Promise<_R
       obj.link = link
     }
 
-    if (internalLink !== undefined && typeof internalLink === 'object') {
+    if (isObject(internalLink)) {
       obj.internalLink = internalLink
     }
 
@@ -224,17 +285,17 @@ const _normalizeContent = async (content: FRM.RichTextContentItem[]): Promise<_R
  * @private
  * @param {object} args
  * @param {array|string} args.content
- * @return {string}
+ * @return {Promise<string>}
  */
 
 interface _RichTextContentProps {
   content: Array<{
     tag?: string
     link?: string
-    internalLink?: FRM.InternalLink
+    internalLink?: InternalLink
     content?: string | object[]
   }>
-  props: FRM.RichTextProps
+  props: RichTextProps
   _output?: string
 }
 
@@ -280,15 +341,15 @@ const _getContent = async ({
 
     let outputStr = ''
 
-    if (typeof cc === 'string') {
-      const richTextContentFilterArgs: FRM.RichTextContentFilterArgs = {
+    if (isString(cc)) {
+      const richTextContentFilterArgs: RichTextContentFilterArgs = {
         args: c,
         props
       }
 
       const ccc = await applyFilters('richTextContent', cc, richTextContentFilterArgs)
 
-      if (typeof ccc === 'string') {
+      if (isString(ccc)) {
         cc = ccc
       }
 
@@ -299,7 +360,7 @@ const _getContent = async ({
       outputStr = `<${tag}${(attrs.length > 0) ? ` ${attrs.join(' ')}` : ''}>${outputStr}</${tag}>`
     }
 
-    const richTextContentOutput: FRM.RichTextContentOutputFilterArgs = {
+    const richTextContentOutput: RichTextContentOutputFilterArgs = {
       args: c,
       props
     }
@@ -328,10 +389,10 @@ const _getContent = async ({
  * @param {object} props.args.internalLink
  * @param {string} props.args.style
  * @param {object[]} props.parents
- * @return {string}
+ * @return {Promise<string>}
  */
 
-const RichText = async (props: FRM.RichTextProps = { args: {}, parents: [] }): Promise<string> => {
+const RichText = async (props: RichTextProps = { args: {}, parents: [] }): Promise<string> => {
   props = await applyFilters('richTextProps', props, { renderType: 'RichText' })
 
   const { args = {} } = props
@@ -408,7 +469,7 @@ const RichText = async (props: FRM.RichTextProps = { args: {}, parents: [] }): P
 
   const attrs: string[] = [`data-rich="${tag}"`]
 
-  if (heading && typeof content === 'string') {
+  if (heading && isString(content)) {
     attrs.push(`id="${content.replace(/[\s,:;"'“”‘’]/g, '-').toLowerCase()}"`)
   }
 
@@ -442,7 +503,7 @@ const RichText = async (props: FRM.RichTextProps = { args: {}, parents: [] }): P
     output = `<${tag}${(attrs.length > 0) ? ` ${attrs.join(' ')}` : ''}>${output}</${tag}>`
   }
 
-  const richTextOutputFilterArgs: FRM.RichTextProps = props
+  const richTextOutputFilterArgs: RichTextProps = props
 
   output = await applyFilters('richTextOutput', output, richTextOutputFilterArgs)
 

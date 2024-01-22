@@ -4,24 +4,31 @@
 
 /* Imports */
 
+import type { Generic } from '../../global/types/types'
+import type { AllData } from '../../render/Render'
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { config } from '../../config/config'
 import { getFileData } from '../getFileData/getFileData'
 import { undefineProps } from '../undefineProps/undefineProps'
 import { resolveInternalLinks } from '../resolveInternalLinks/resolveInternalLinks'
+import { isObjectStrict } from '../isObject/isObject'
+import { isStringStrict } from '../isString/isString'
+import { isArray, isArrayStrict } from '../isArray/isArray'
 
 /**
- * Function - get data from file system
- *
- * @param {object} args
- * @param {object} args.resolveProps
- * @param {object} args.excludeProps
- * @param {function} args.filterData
- * @param {function} args.filterAllData
- * @return {object|undefined}
+ * @typedef {object} AllFileDataArgs
+ * @prop {object} [resolveProps]
+ * @prop {string[]} resolveProps.image
+ * @prop {string[]} resolveProps.data
+ * @prop {object} [excludeProps]
+ * @prop {string[]} excludeProps.data
+ * @prop {object} excludeProps.archive
+ * @prop {string[]} excludeProps.archive.posts
+ * @prop {string[]} excludeProps.archive.terms
+ * @prop {function} [filterData]
+ * @prop {function} [filterAllData]
  */
-
 interface AllFileDataArgs {
   resolveProps?: {
     image: string[]
@@ -38,7 +45,17 @@ interface AllFileDataArgs {
   filterAllData?: Function
 }
 
-const getAllFileData = async (args: AllFileDataArgs = {}): Promise<FRM.AllData | undefined> => {
+/**
+ * Function - get data from file system
+ *
+ * @param {AllFileDataArgs} args
+ * @return {Promise<AllData | undefined>}
+ */
+const getAllFileData = async (args: AllFileDataArgs): Promise<AllData | undefined> => {
+  if (!isObjectStrict(args)) {
+    return
+  }
+
   const {
     resolveProps = {
       image: ['image'],
@@ -58,11 +75,11 @@ const getAllFileData = async (args: AllFileDataArgs = {}): Promise<FRM.AllData |
   try {
     /* Get data */
 
-    let data: FRM.AnyObject = await getFileData('all_file_data', { all: true })
+    let data = await getFileData('all_file_data', { all: true })
 
     /* Store all data */
 
-    let allData: FRM.AllData = {
+    let allData: AllData = {
       navigation: [],
       navigationItem: [],
       redirect: [],
@@ -99,18 +116,21 @@ const getAllFileData = async (args: AllFileDataArgs = {}): Promise<FRM.AllData |
       /* Id */
 
       Object.keys(data).forEach((d) => {
-        const dd = data[d]
-        const { contentType } = dd
+        const dataItem = data[d] as { contentType?: string, id?: string }
 
-        if (contentType !== undefined && d !== undefined) {
-          dd.id = d
+        if (isObjectStrict(dataItem)) {
+          const { contentType } = dataItem
+
+          if (contentType !== undefined) {
+            dataItem.id = d
+          }
         }
       })
 
       /* Internal props */
 
       resolveProps.data.forEach((d) => {
-        resolveInternalLinks(data, data, [d], (prop: string, value: any) => {
+        resolveInternalLinks(data, data, [d], (prop: string, value: Generic) => {
           if (resolveProps.data.includes(prop)) {
             const newValue = undefineProps(value, excludeProps.data)
 
@@ -135,27 +155,46 @@ const getAllFileData = async (args: AllFileDataArgs = {}): Promise<FRM.AllData |
       /* Set content */
 
       Object.keys(data).forEach((d) => {
-        const dd = data[d]
-        const { contentType } = dd
+        const dataItem = data[d] as { contentType?: string }
 
-        if (allData[contentType] !== undefined) {
-          allData[contentType].push(dd)
+        let contentType
+
+        if (isObjectStrict(dataItem)) {
+          const { contentType: dataItemContentType } = dataItem
+
+          contentType = dataItemContentType
         }
 
-        if (allData.content[contentType] !== undefined) {
-          allData.content[contentType].push(dd)
+        if (!isStringStrict(contentType)) {
+          return
+        }
+
+        const partial = allData[contentType]
+
+        if (isArray(partial)) {
+          partial.push(dataItem)
+        }
+
+        const whole = allData.content[contentType]
+
+        if (isArray(whole)) {
+          whole.push(dataItem)
         }
 
         /* Archive */
 
         if (config.contentTypes.archive[contentType] !== undefined) {
-          const ddCopy = undefineProps(dd, excludeProps.archive.posts)
+          const dataItemCopy = undefineProps(dataItem, excludeProps.archive.posts)
 
           if (config.archive.posts[contentType] === undefined) {
             config.archive.posts[contentType] = []
           }
 
-          config.archive.posts[contentType].push(ddCopy)
+          const archivePosts = config.archive.posts[contentType]
+
+          if (isArray(archivePosts)) {
+            archivePosts.push(dataItemCopy)
+          }
         }
       })
 
@@ -164,30 +203,40 @@ const getAllFileData = async (args: AllFileDataArgs = {}): Promise<FRM.AllData |
       Object.keys(config.contentTypes.taxonomy).forEach((tax) => {
         const { contentTypes, props } = config.contentTypes.taxonomy[tax]
 
-        if (config.archive.terms?.[tax] === undefined) {
+        if (config.archive.terms[tax] === undefined) {
           config.archive.terms[tax] = {}
         }
 
-        contentTypes.forEach((c, i) => {
-          const contentData = allData.content[c]
+        const archiveTax = config.archive.terms[tax] as Generic
 
-          if (contentData !== undefined) {
-            if (config.archive.terms[tax]?.[c] === undefined) {
-              config.archive.terms[tax][c] = {}
+        contentTypes.forEach((ct, i) => {
+          const contentData = allData.content[ct] as Generic[]
+
+          if (isArrayStrict(contentData)) {
+            if (archiveTax[ct] === undefined) {
+              archiveTax[ct] = {}
             }
 
-            contentData.forEach((d) => {
-              const prop = props[i]
-              const terms = d[prop]
-              const dCopy = undefineProps(d, excludeProps.archive.terms)
+            const archiveTaxContentType = archiveTax[ct] as Generic
 
-              if (terms !== undefined) {
-                terms.forEach((term: any) => {
-                  if (config.archive.terms[tax][c]?.[term.id] === undefined) {
-                    config.archive.terms[tax][c][term.id] = []
+            contentData.forEach((cd) => {
+              const prop = props[i]
+              const terms = cd[prop] as Array<{ id: string }>
+              const dataCopy = undefineProps(cd, excludeProps.archive.terms)
+
+              if (isArrayStrict(terms)) {
+                terms.forEach((term) => {
+                  const { id: termId } = term
+
+                  if (archiveTaxContentType[termId] === undefined) {
+                    archiveTaxContentType[termId] = []
                   }
 
-                  config.archive.terms[tax][c][term.id].push(dCopy)
+                  const archiveTaxContentTypeTerm = archiveTaxContentType[termId]
+
+                  if (isArray(archiveTaxContentTypeTerm)) {
+                    archiveTaxContentTypeTerm.push(dataCopy)
+                  }
                 })
               }
             })
