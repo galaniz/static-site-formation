@@ -5,7 +5,7 @@
 /* Imports */
 
 import { config } from '../../config/config'
-import { isObject } from '../isObject/isObject'
+import { isObjectStrict } from '../isObject/isObject'
 import { isStringStrict } from '../isString/isString'
 
 /**
@@ -15,15 +15,16 @@ import { isStringStrict } from '../isString/isString'
  * @param {string} linkContentType
  * @return {string}
  */
-
 const getArchiveId = (contentType: string = '', linkContentType: string = 'default'): string => {
   let id = ''
 
   if (config.contentTypes.archive[contentType] !== undefined) {
     const archiveId = config.contentTypes.archive[contentType].id
 
-    if (isObject(archiveId)) {
-      id = isStringStrict(archiveId[linkContentType]) ? archiveId[linkContentType] as string : ''
+    if (isObjectStrict(archiveId)) {
+      const contentTypeArchiveId = archiveId[linkContentType]
+
+      id = isStringStrict(contentTypeArchiveId) ? contentTypeArchiveId : ''
     }
   }
 

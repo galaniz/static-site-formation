@@ -4,77 +4,10 @@
 
 /* Imports */
 
+import type { FormProps, FormReturn, FormMeta, FormMessages } from './FormTypes'
 import { v4 as uuid } from 'uuid'
 import { applyFilters, isStringStrict } from '../../utils'
 import { config } from '../../config/config'
-
-/**
- * @typedef {object} FormProps
- * @prop {object} args
- * @prop {string} [args.id]
- * @prop {string} [args.action]
- * @prop {string} [args.subject]
- * @prop {string} [args.toEmail]
- * @prop {string} [args.senderEmail]
- * @prop {string} [args.submitLabel]
- * @prop {string} [args.successTitle]
- * @prop {string} [args.successText]
- * @prop {string} [args.successResult]
- * @prop {string} [args.errorTitle]
- * @prop {string} [args.errorText]
- * @prop {string} [args.errorSummary]
- * @prop {string} [args.errorResult]
- * @prop {string} [args.formClasses]
- * @prop {string} [args.formAttr]
- * @prop {string} [args.fieldsClasses]
- * @prop {string} [args.fieldsAttr]
- * @prop {string} [args.submitFieldClasses]
- * @prop {string} [args.submitClasses]
- * @prop {string} [args.submitAttr]
- * @prop {string} [args.submitLoader]
- * @prop {string} [args.honeypotFieldClasses]
- * @prop {string} [args.honeypotLabelClasses]
- * @prop {string} [args.honeypotClasses]
- */
-export interface FormProps {
-  args: {
-    id?: string
-    action?: string
-    subject?: string
-    toEmail?: string
-    senderEmail?: string
-    submitLabel?: string
-    successTitle?: string
-    successText?: string
-    successResult?: string
-    errorTitle?: string
-    errorText?: string
-    errorSummary?: string
-    errorResult?: string
-    formClasses?: string
-    formAttr?: string
-    fieldsClasses?: string
-    fieldsAttr?: string
-    submitFieldClasses?: string
-    submitClasses?: string
-    submitAttr?: string
-    submitLoader?: string
-    honeypotFieldClasses?: string
-    honeypotLabelClasses?: string
-    honeypotClasses?: string
-    [key: string]: unknown
-  }
-}
-
-/**
- * @typedef {object} FormReturn
- * @prop {string} start
- * @prop {string} end
- */
-interface FormReturn {
-  start: string
-  end: string
-}
 
 /**
  * Function - output form wrapper
@@ -125,43 +58,43 @@ const Form = async (props: FormProps = { args: {} }): Promise<FormReturn> => {
 
   /* Add to form meta data */
 
-  if (subject !== '' || toEmail !== '' || senderEmail !== '') {
-    const meta: { subject?: string, toEmail?: string, senderEmail?: string } = {}
+  const meta: FormMeta = {}
 
-    if (subject !== '') {
-      meta.subject = subject
-    }
+  if (isStringStrict(subject)) {
+    meta.subject = subject
+  }
 
-    if (toEmail !== '') {
-      meta.toEmail = toEmail
-    }
+  if (isStringStrict(toEmail)) {
+    meta.toEmail = toEmail
+  }
 
-    if (senderEmail !== '') {
-      meta.senderEmail = senderEmail
-    }
+  if (isStringStrict(senderEmail)) {
+    meta.senderEmail = senderEmail
+  }
 
+  if (Object.keys(meta).length > 0) {
     config.formMeta[id] = meta
   }
 
   /* Add to script data */
 
-  if (config.scriptMeta[`form-${id}`] === undefined && (successTitle !== '' || errorTitle !== '')) {
-    const messages: { successMessage?: object, errorMessage?: object } = {}
+  const messages: FormMessages = {}
 
-    if (successTitle !== '') {
-      messages.successMessage = {
-        primary: successTitle,
-        secondary: successText
-      }
+  if (isStringStrict(successTitle)) {
+    messages.successMessage = {
+      primary: successTitle,
+      secondary: successText
     }
+  }
 
-    if (errorTitle !== '') {
-      messages.errorMessage = {
-        primary: errorTitle,
-        secondary: errorText
-      }
+  if (isStringStrict(errorTitle)) {
+    messages.errorMessage = {
+      primary: errorTitle,
+      secondary: errorText
     }
+  }
 
+  if (Object.keys(messages).length > 0 && config.scriptMeta[`form-${id}`] === undefined) {
     config.scriptMeta[`form-${id}`] = messages
   }
 

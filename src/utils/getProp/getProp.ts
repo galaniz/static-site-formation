@@ -4,34 +4,10 @@
 
 /* Imports */
 
-import type { Generic } from '../../global/types/types'
+import type { Prop } from './getPropTypes'
 import { config } from '../../config/config'
 import { isObjectStrict } from '../isObject/isObject'
 import { isStringStrict } from '../isString/isString'
-
-/**
- * @typedef Prop
- * @type {Generic}
- * @prop {object} [sys]
- * @prop {string} [sys.id]
- * @prop {string} [sys.type]
- * @prop {object} [sys.contentType]
- * @prop {object} [sys.contentType.sys]
- * @prop {string} [sys.contentType.sys.id]
- * @prop {Object.<string, *>} [fields]
- */
-interface Prop extends Generic {
-  sys?: {
-    id?: string
-    type?: string
-    contentType?: {
-      sys?: {
-        id?: string
-      }
-    }
-  }
-  fields?: Generic
-}
 
 /**
  * Function - get prop from object with cms normalization
@@ -76,7 +52,7 @@ const getProp = <T extends Prop>(
         type = sys.type
       }
 
-      if (prop === 'renderType' && config.renderTypes?.[type] !== undefined) {
+      if (prop === 'renderType' && config.renderTypes[type] !== undefined) {
         type = config.renderTypes[type]
       }
 

@@ -8,7 +8,6 @@
  * @private
  * @type {object}
  */
-
 const _alphaCodes: { [key: string]: number } = {
   FF: 1,
   FC: 0.99,
@@ -121,7 +120,6 @@ const _alphaCodes: { [key: string]: number } = {
  * @param {boolean} returnArray
  * @return {array|string}
  */
-
 const getRgba = (
   hex: string = '',
   alpha: number = 1,

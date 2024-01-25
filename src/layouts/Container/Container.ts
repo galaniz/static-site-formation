@@ -4,61 +4,8 @@
 
 /* Imports */
 
-import type { ParentArgs } from '../../global/types/types'
+import type { ContainerProps, ContainerReturn } from './ContainerTypes'
 import { applyFilters } from '../../utils/filters/filters'
-
-/**
- * @typedef {object} ContainerProps
- * @prop {object} args
- * @prop {string} [args.tag]
- * @prop {string} [args.layout]
- * @prop {string} [args.maxWidth]
- * @prop {string} [args.paddingTop]
- * @prop {string} [args.paddingTopLarge]
- * @prop {string} [args.paddingBottom]
- * @prop {string} [args.paddingBottomLarge]
- * @prop {string} [args.gap]
- * @prop {string} [args.gapLarge]
- * @prop {string} [args.justify]
- * @prop {string} [args.align]
- * @prop {boolean} [args.richTextStyles]
- * @prop {string} [args.classes] - Back end option
- * @prop {string} [args.style] - Back end option
- * @prop {string} [args.attr] - Back end option
- * @prop {ParentArgs} [parents]
- */
-export interface ContainerProps {
-  args: {
-    tag?: string
-    layout?: string
-    maxWidth?: string
-    paddingTop?: string
-    paddingTopLarge?: string
-    paddingBottom?: string
-    paddingBottomLarge?: string
-    gap?: string
-    gapLarge?: string
-    justify?: string
-    align?: string
-    classes?: string
-    style?: string
-    attr?: string
-    richTextStyles?: boolean
-    [key: string]: unknown
-  }
-  parents?: ParentArgs[]
-}
-
-/**
- * @typedef {object} ContainerReturn
- * @prop {string} start
- * @prop {string} end
- */
-
-interface ContainerReturn {
-  start: string
-  end: string
-}
 
 /**
  * Function - output container wrapper
@@ -66,7 +13,6 @@ interface ContainerReturn {
  * @param {ContainerProps} props
  * @return {Promise<ContainerReturn>}
  */
-
 const Container = async (props: ContainerProps = { args: {} }): Promise<ContainerReturn> => {
   props = await applyFilters('containerProps', props, { renderType: 'Container' })
 

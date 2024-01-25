@@ -8,7 +8,6 @@
  * @param {string} path
  * @return {string}
  */
-
 const getPathDepth = (path: string = ''): string => {
   let pathDepth = path.split('/')
 

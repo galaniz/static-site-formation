@@ -4,29 +4,21 @@
 
 /* Imports */
 
-import type { AllData, ServerlessData, PreviewData } from '../../render/Render'
+import type { AllContentfulDataArgs } from './getAllContentfulDataTypes'
+import type { Generic } from '../../global/globalTypes'
+import type { RenderAllData } from '../../render/RenderTypes'
 import { config } from '../../config/config'
 import { getContentfulData } from '../getContentfulData/getContentfulData'
+import { isObjectStrict } from '../isObject/isObject'
+import { isStringStrict } from '../isString/isString'
 
 /**
  * Function - fetch data from all content types or single entry if serverless
  *
- * @param {object} args
- * @param {object} args.serverlessData
- * @param {object} args.previewData
- * @param {function} args.filterData
- * @param {function} args.filterAllData
- * @return {object|undefined}
+ * @param {AllContentfulDataArgs} args
+ * @return {Promise<RenderAllData|undefined>}
  */
-
-interface AllContentfulDataArgs {
-  serverlessData?: ServerlessData
-  previewData?: PreviewData
-  filterData?: Function
-  filterAllData?: Function
-}
-
-const getAllContentfulData = async (args: AllContentfulDataArgs = {}): Promise<AllData | undefined> => {
+const getAllContentfulData = async (args: AllContentfulDataArgs = {}): Promise<RenderAllData | undefined> => {
   const {
     serverlessData,
     previewData,
@@ -37,7 +29,7 @@ const getAllContentfulData = async (args: AllContentfulDataArgs = {}): Promise<A
   try {
     /* Store all data */
 
-    let allData: AllData = {
+    let allData: RenderAllData = {
       navigation: [],
       navigationItem: [],
       redirect: [],
@@ -48,7 +40,7 @@ const getAllContentfulData = async (args: AllContentfulDataArgs = {}): Promise<A
 
     /* Get single entry data if serverless or preview data */
 
-    let entry: { items?: unknown[] } | undefined
+    let entry: { items?: Generic[] } | undefined
 
     if (serverlessData !== undefined || previewData !== undefined) {
       let contentType = ''
@@ -59,11 +51,13 @@ const getAllContentfulData = async (args: AllContentfulDataArgs = {}): Promise<A
         const slugsJson = require(`${config.store.dir}${config.store.files.slugs.name}`)
         const path = serverlessData.path
 
-        if (slugsJson?.[path] !== undefined) {
+        if (isObjectStrict(slugsJson)) {
           const item = slugsJson[path]
 
-          id = item.id
-          contentType = item.contentType
+          if (isObjectStrict(item)) {
+            id = isStringStrict(item.id) ? item.id : ''
+            contentType = isStringStrict(item.contentType) ? item.contentType : ''
+          }
         }
       }
 
@@ -81,7 +75,7 @@ const getAllContentfulData = async (args: AllContentfulDataArgs = {}): Promise<A
 
         entry = await getContentfulData(key, params)
 
-        if (entry?.items !== undefined) {
+        if (entry.items !== undefined) {
           allData.content[contentType] = entry.items
         }
       }
@@ -108,7 +102,7 @@ const getAllContentfulData = async (args: AllContentfulDataArgs = {}): Promise<A
           data = filterData(data, serverlessData, previewData)
         }
 
-        if (data?.items !== undefined) {
+        if (data.items !== undefined) {
           allData[contentType] = data.items
         }
       }
@@ -136,7 +130,7 @@ const getAllContentfulData = async (args: AllContentfulDataArgs = {}): Promise<A
           data = filterData(data, serverlessData, previewData)
         }
 
-        if (data?.items !== undefined) {
+        if (data.items !== undefined) {
           allData.content[contentType] = data.items
         }
       }

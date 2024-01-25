@@ -13,7 +13,6 @@ import { join } from 'node:path'
  * @param {string} dir
  * @yield {string[]}
  */
-
 const getAllFilePaths = async function * (dir: string): AsyncIterable<string> {
   const files = await readdir(dir, { withFileTypes: true })
 

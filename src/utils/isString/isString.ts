@@ -3,7 +3,7 @@
  */
 
 /**
- * Function - check if value is string type
+ * Function - check if value is string
  *
  * @param {*} value
  * @return {boolean}

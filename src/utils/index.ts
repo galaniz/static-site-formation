@@ -2,22 +2,10 @@
  * Utils
  */
 
-export {
-  addAction,
-  removeAction,
-  doActions,
-  resetActions,
-  setActions
-} from './actions/actions'
+export { addAction, removeAction, doActions, resetActions, setActions } from './actions/actions'
 export { addScriptStyle } from './addScriptStyle/addScriptStyle'
 export { escape } from './escape/escape'
-export {
-  addFilter,
-  removeFilter,
-  applyFilters,
-  resetFilters,
-  setFilters
-} from './filters/filters'
+export { addFilter, removeFilter, applyFilters, resetFilters, setFilters } from './filters/filters'
 export { getAllContentfulData } from './getAllContentfulData/getAllContentfulData'
 export { getAllFileData } from './getAllFileData/getAllFileData'
 export { getAllFilePaths } from './getAllFilePaths/getAllFilePaths'
@@ -39,6 +27,9 @@ export { getYear } from './getYear/getYear'
 export { isArray, isArrayStrict } from './isArray/isArray'
 export { isObject, isObjectStrict } from './isObject/isObject'
 export { isString, isStringStrict } from './isString/isString'
+export { isObjectArray } from './isObjectArray/isObjectArray'
+export { isNumber } from './isNumber/isNumber'
+export { isStringArray } from './isStringArray/isStringArray'
 export { processImages } from './processImages/processImages'
 export { resolveInternalLinks } from './resolveInternalLinks/resolveInternalLinks'
 export { undefineProps } from './undefineProps/undefineProps'

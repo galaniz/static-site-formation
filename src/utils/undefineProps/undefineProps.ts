@@ -4,7 +4,7 @@
 
 /* Imports */
 
-import type { Generic } from '../../global/types/types'
+import type { Generic } from '../../global/globalTypes'
 import { isObject } from '../isObject/isObject'
 import { isArray } from '../isArray/isArray'
 

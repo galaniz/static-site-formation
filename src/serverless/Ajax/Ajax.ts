@@ -4,34 +4,18 @@
 
 /* Imports */
 
-import type {
-  EnvCloudflare,
-  AjaxActionReturn,
-  AjaxActionArgs,
-  CustomErrorObject
-} from '../types/types'
-import type { Config } from '../../config/config'
+import type { AjaxArgs, AjaxCustomErrorArgs, AjaxResOptions } from './AjaxTypes'
+import type { AjaxActionReturn, AjaxActionArgs } from '../serverlessTypes'
 import { setConfig } from '../../config/config'
 import {
   setActions,
   applyFilters,
   setFilters,
-  isObject,
-  isStringStrict
+  isObjectStrict,
+  isStringStrict,
+  isNumber
 } from '../../utils'
 import { SendForm } from '../SendForm/SendForm'
-
-/**
- * @typedef {object} AjaxArgs
- * @prop {Request} request
- * @prop {EnvCloudflare} env
- * @prop {Config} siteConfig
- */
-interface AjaxArgs {
-  request: Request
-  env: EnvCloudflare
-  siteConfig: Config
-}
 
 /**
  * Class - custom exception to include status code
@@ -56,12 +40,10 @@ class _CustomError extends Error {
   /**
    * Set properties
    *
-   * @param {object} args
-   * @param {string} [args.message]
-   * @param {number} [args.code]
+   * @param {AjaxCustomErrorArgs} args
    */
-  constructor (args: { message?: string, code?: number }) {
-    if (!isObject(args)) {
+  constructor (args: AjaxCustomErrorArgs) {
+    if (!isObjectStrict(args)) {
       args = {}
     }
 
@@ -79,7 +61,6 @@ class _CustomError extends Error {
  * @param {AjaxArgs} args
  * @return {Promise<Response>} Response
  */
-
 const Ajax = async ({ request, env, siteConfig }: AjaxArgs): Promise<Response> => {
   try {
     /* config */
@@ -88,7 +69,7 @@ const Ajax = async ({ request, env, siteConfig }: AjaxArgs): Promise<Response> =
     setFilters(siteConfig.filters)
     setActions(siteConfig.actions)
 
-    if (isObject(env)) {
+    if (isObjectStrict(env)) {
       siteConfig.env.dev = env.ENVIRONMENT === 'dev'
       siteConfig.env.prod = env.ENVIRONMENT === 'production'
       siteConfig.apiKeys.smtp2go = env.SMPT2GO_API_KEY !== undefined ? env.SMPT2GO_API_KEY : ''
@@ -100,7 +81,7 @@ const Ajax = async ({ request, env, siteConfig }: AjaxArgs): Promise<Response> =
 
     /* Inputs required */
 
-    if (data?.inputs === undefined) {
+    if (data.inputs === undefined) {
       throw new Error('No inputs')
     }
 
@@ -108,7 +89,7 @@ const Ajax = async ({ request, env, siteConfig }: AjaxArgs): Promise<Response> =
 
     const honeypotName = `${siteConfig.namespace}_asi`
 
-    if (data.inputs?.[honeypotName] !== undefined) {
+    if (data.inputs[honeypotName] !== undefined) {
       const honeypotValue = data.inputs[honeypotName].value
 
       if (honeypotValue !== '' && honeypotValue !== undefined) {
@@ -133,7 +114,7 @@ const Ajax = async ({ request, env, siteConfig }: AjaxArgs): Promise<Response> =
 
     /* Action required */
 
-    const action = data?.action !== undefined ? data.action : ''
+    const action = data.action !== undefined ? data.action : ''
 
     if (!isStringStrict(action)) {
       throw new Error('No action')
@@ -147,7 +128,7 @@ const Ajax = async ({ request, env, siteConfig }: AjaxArgs): Promise<Response> =
       res = await SendForm({ ...data, env, request })
     }
 
-    if (siteConfig.ajaxFunctions?.[action] !== undefined) {
+    if (siteConfig.ajaxFunctions[action] !== undefined) {
       res = await siteConfig.ajaxFunctions[action]({ ...data, env, request })
     }
 
@@ -172,7 +153,7 @@ const Ajax = async ({ request, env, siteConfig }: AjaxArgs): Promise<Response> =
 
     /* Result success */
 
-    const options: { status: number, headers?: { [key: string]: string } } = {
+    const options: AjaxResOptions = {
       status: 200,
       headers: {
         'Content-Type': 'application/json'
@@ -200,15 +181,13 @@ const Ajax = async ({ request, env, siteConfig }: AjaxArgs): Promise<Response> =
     let statusCode = 500
     let message = ''
 
-    if (isObject(error)) {
-      const errorObj = error as CustomErrorObject
-
-      if (typeof errorObj.httpStatusCode === 'number') {
-        statusCode = errorObj.httpStatusCode
+    if (isObjectStrict(error)) {
+      if (isNumber(error.httpStatusCode)) {
+        statusCode = error.httpStatusCode
       }
 
-      if (isStringStrict(errorObj.message)) {
-        message = errorObj.message
+      if (isStringStrict(error.message)) {
+        message = error.message
       }
     }
 

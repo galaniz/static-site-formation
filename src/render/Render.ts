@@ -4,10 +4,23 @@
 
 /* Imports */
 
-import type { Generic, ParentArgs } from '../global/types/types'
-import type { Navigations, NavigationItem } from '../components/Navigation/Navigation'
-import type { PaginationData } from '../components/Pagination/Pagination'
-import { config } from '../config/config'
+import type {
+  RenderSlugs,
+  RenderMetaArgs,
+  RenderMetaReturn,
+  RenderContentArgs,
+  RenderRichTextData,
+  RenderServerlessData,
+  RenderItemArgs,
+  RenderItemReturn,
+  RenderItemStartActionArgs,
+  RenderItemActionArgs,
+  RenderLayoutArgs,
+  RenderArgs,
+  RenderReturn
+} from './RenderTypes'
+import type { Generic, ParentArgs, SlugParent } from '../global/globalTypes'
+import type { PaginationData } from '../components/Pagination/PaginationTypes'
 import {
   setActions,
   doActions,
@@ -18,11 +31,14 @@ import {
   getProp,
   isString,
   isStringStrict,
+  isStringArray,
   isArray,
   isArrayStrict,
   isObject,
-  isObjectStrict
+  isObjectStrict,
+  isObjectArray
 } from '../utils'
+import { config } from '../config/config'
 import { Container } from '../layouts/Container/Container'
 import { Column } from '../layouts/Column/Column'
 import { Form } from '../objects/Form/Form'
@@ -30,132 +46,21 @@ import { Field } from '../objects/Field/Field'
 import { RichText } from '../text/RichText/RichText'
 
 /**
- * @type {object}
- */
-
-export interface LayoutArgs {
-  id: string
-  meta: MetaReturn
-  navigations?: { [key: string]: string }
-  contentType: string
-  content: string
-  slug: string
-  pageContains: string[]
-  pageData: RenderItem
-  serverlessData?: ServerlessData | undefined
-}
-
-export interface RenderItem {
-  id: string
-  title: string
-  slug: string
-  content?: Generic | Generic[]
-  meta?: object
-  basePermalink?: string
-  linkContentType?: string
-  [key: string]: unknown
-}
-
-interface RenderReturn {
-  slug: string
-  output: string
-}
-
-/* Action arguments */
-
-interface RenderItemStartActionArgs {
-  id: string
-  contentType: string
-  pageData: RenderItem
-  pageContains: string[]
-  serverlessData: ServerlessData | undefined
-}
-
-interface RenderItemEndActionArgs {
-  id: string
-  contentType: string
-  slug: string
-  output: string
-  pageData: RenderItem
-  pageContains: string[]
-  serverlessData: ServerlessData | undefined
-}
-
-/* Filter arguments */
-
-interface RenderItemFilterArgs {
-  id: string
-  contentType: string
-  slug: string
-  output: string
-  pageData: RenderItem
-  pageContains: string[]
-  serverlessData: ServerlessData | undefined
-}
-
-interface MetaReturn {
-  title: string
-  paginationTitle?: string
-  description?: string
-  url?: string
-  image?: string | object
-  canonical?: string
-  prev?: string
-  next?: string
-  noIndex?: boolean
-  isIndex?: boolean
-}
-
-export interface AllData {
-  navigation: Navigations[]
-  navigationItem: NavigationItem[]
-  content: {
-    page: Generic[]
-    [key: string]: Generic[]
-  }
-  redirect: Generic[]
-  [key: string]: unknown
-}
-
-export interface ServerlessData {
-  path: string
-  query: Generic
-}
-
-export interface PreviewData {
-  id: string
-  contentType: string
-}
-
-/**
  * Store slug data for json
  *
  * @private
- * @type {object}
+ * @type {RenderSlugs}
  */
-
-const _slugs: { [key: string]: { contentType: string, id: string } } = {}
+const _slugs: RenderSlugs = {}
 
 /**
  * Function - normalize meta properties into one object
  *
  * @private
- * @param {object} item
- * @return {object}
+ * @param {RenderMetaArgs} args
+ * @return {RenderMetaReturn}
  */
-
-const _getMeta = (item: {
-  meta?: object
-  metaTitle?: string
-  metaDescription?: string
-  metaImage?: {
-    fields?: {
-      file?: {
-        url?: string
-      }
-    }
-  }
-}): MetaReturn => {
+const _getMeta = (args: RenderMetaArgs): RenderMetaReturn => {
   const meta = {
     title: '',
     description: '',
@@ -168,20 +73,24 @@ const _getMeta = (item: {
     isIndex: false
   }
 
-  if (item?.meta !== undefined) {
-    return Object.assign(meta, item.meta)
+  if (!isObjectStrict(args)) {
+    return meta
   }
 
-  if (item?.metaTitle !== undefined) {
-    meta.title = item.metaTitle
+  if (isObjectStrict(args.meta)) {
+    return Object.assign(meta, args.meta)
   }
 
-  if (item?.metaDescription !== undefined) {
-    meta.description = item.metaDescription
+  if (isStringStrict(args.metaTitle)) {
+    meta.title = args.metaTitle
   }
 
-  if (item?.metaImage !== undefined) {
-    const imageUrl = item.metaImage?.fields?.file?.url
+  if (isStringStrict(args.metaDescription)) {
+    meta.description = args.metaDescription
+  }
+
+  if (isObjectStrict(args.metaImage)) {
+    const imageUrl = args.metaImage?.fields?.file?.url
 
     if (isStringStrict(imageUrl)) {
       meta.image = `https:${imageUrl}`
@@ -206,8 +115,12 @@ const _mapContentTemplate = <T, U>(templates: T, content: U): undefined => {
 
   if (isArrayStrict(templates)) {
     templates.forEach((t, i) => {
-      const templateRenderType = getProp(t as Generic, 'renderType')
-      const templateChildren = getProp(t as Generic, 'content')
+      if (!isObjectStrict(t)) {
+        return
+      }
+
+      const templateRenderType = getProp(t, 'renderType')
+      const templateChildren = getProp(t, 'content')
 
       if (templateRenderType === 'content' && content.length > 0) {
         templates.unshift()
@@ -226,8 +139,14 @@ const _mapContentTemplate = <T, U>(templates: T, content: U): undefined => {
   }
 
   if (isObjectStrict(templates)) {
-    Object.entries(templates).forEach(([_t, v]) => {
-      const templateChildren = getProp(v, 'content')
+    Object.keys(templates).forEach((t) => {
+      const template = templates[t]
+
+      if (!isObjectStrict(template)) {
+        return
+      }
+
+      const templateChildren = getProp(template, 'content')
 
       if (isObject(templateChildren)) {
         _mapContentTemplate(templateChildren, content)
@@ -240,217 +159,220 @@ const _mapContentTemplate = <T, U>(templates: T, content: U): undefined => {
  * Function - recurse and output nested content
  *
  * @private
- * @param {object} args
- * @param {object[]} args.contentData
- * @param {object} args.output
- * @param {object[]} args.parents
- * @param {object} args.renderFunctions
+ * @param {RenderContentArgs} args
  * @return {void}
  */
-
-interface _RenderFunctions {
-  [key: string]: Function
-}
-
-interface _RenderContentArgs {
-  contentData: Generic[]
-  serverlessData?: ServerlessData
-  output: {
-    html: string
+const _renderContent = async (args: RenderContentArgs): Promise<void> => {
+  if (!isObject(args)) {
+    return
   }
-  parents: ParentArgs[]
-  pageData: RenderItem
-  pageContains: string[]
-  navigations: { [key: string]: string }
-  renderFunctions: _RenderFunctions
-}
 
-const _renderContent = async ({
-  contentData = [],
-  serverlessData,
-  output,
-  parents = [],
-  pageData,
-  pageContains = [],
-  navigations = {},
-  renderFunctions = {}
-}: _RenderContentArgs): Promise<void> => {
-  if (Array.isArray(contentData) && (contentData.length > 0)) {
-    for (let i = 0; i < contentData.length; i += 1) {
-      let c = contentData[i]
+  const {
+    contentData = [],
+    serverlessData,
+    output,
+    pageData,
+    pageContains = [],
+    navigations = {},
+    renderFunctions = {}
+  } = args
 
-      /* Store html string and filter info */
+  let {
+    parents = []
+  } = args
 
-      let filterType = ''
-      let filterArgs = {}
-      let richTextOutput = ''
+  /* Content must be array */
 
-      /* Check for embedded entries and rich text */
+  if (!isArrayStrict(contentData)) {
+    return
+  }
 
-      const richTextNode = c?.nodeType
+  /* Loop */
 
-      if (richTextNode !== undefined) {
-        if (c.nodeType === 'embedded-entry-block' || c.nodeType === 'embedded-asset-block') {
-          const blah = c as { data?: { target?: Generic } }
+  for (let i = 0; i < contentData.length; i += 1) {
+    let c = contentData[i]
 
-          if (blah?.data?.target !== undefined) {
-            c = blah.data.target
-          }
-        } else {
-          const richTextArgs = {
-            args: {
-              type: isString(richTextNode) ? richTextNode : '',
-              content: c.content as object[] // FIXXXX
-            },
-            parents
-          }
+    if (!isObjectStrict(c)) {
+      continue
+    }
 
-          richTextOutput = await RichText(richTextArgs)
-          filterType = 'richText'
-          filterArgs = {
-            type: richTextNode,
-            content: c.content
-          }
+    /* Store html string and filter info */
+
+    let filterType = ''
+    let filterArgs = {}
+    let richTextOutput = ''
+
+    /* Check for embedded entries and rich text */
+
+    const richTextNodeType = c.nodeType
+
+    if (isStringStrict(richTextNodeType)) {
+      if (richTextNodeType === 'embedded-entry-block' || richTextNodeType === 'embedded-asset-block') {
+        const richTextNode: RenderRichTextData = c
+
+        if (isObjectStrict(richTextNode?.data?.target)) {
+          c = richTextNode.data.target
+        }
+      } else {
+        let richTextContent: string | Generic[] | undefined
+
+        if (isStringStrict(c.content)) {
+          richTextContent = c.content
+        }
+
+        if (isObjectArray(c.content)) {
+          richTextContent = c.content
+        }
+
+        const richTextArgs = {
+          args: {
+            type: richTextNodeType,
+            content: richTextContent
+          },
+          parents
+        }
+
+        richTextOutput = await RichText(richTextArgs)
+        filterType = 'richText'
+        filterArgs = {
+          type: richTextNodeType,
+          content: richTextContent
         }
       }
+    }
 
-      /* Check for nested content */
+    /* Check for nested content */
 
-      const contentChildren = getProp(c, 'content')
+    const contentChildren = getProp(c, 'content')
 
-      let children = isObject(contentChildren) ? contentChildren : []
-      let recurse = false
+    let children: Generic[] | undefined
+    let recurse = false
 
-      if (isArrayStrict(children)) {
+    if (isObjectArray(contentChildren)) {
+      children = contentChildren
+    }
+
+    if (isObjectStrict(contentChildren)) {
+      const nestedChildren = contentChildren.content
+
+      if (contentChildren.nodeType !== undefined && isObjectArray(nestedChildren)) {
+        children = nestedChildren
         recurse = true
       }
+    }
 
-      if (isObjectStrict(children)) {
-        const childrenNested = children as { nodeType?: string, content: Generic[] }
+    /* Render props */
 
-        if (childrenNested.nodeType !== undefined) {
-          children = childrenNested.content
-        }
+    const normalProps = getProp(c, '', {})
+    const normalRenderType = getProp(c, 'renderType')
+    const props = isObjectStrict(normalProps) ? normalProps : {}
+    const renderType = isString(normalRenderType) ? normalRenderType : ''
+    const id = getProp(c, 'id')
 
-        if (isArrayStrict(children)) {
-          recurse = true
-        }
+    if (isStringStrict(id)) {
+      props.id = id
+    }
+
+    /* Map out content to template */
+
+    if (renderType === 'contentTemplate') {
+      const templates = isArray(props.templates) ? props.templates : []
+
+      _mapContentTemplate(templates, props.content)
+
+      if (isObjectArray(templates)) {
+        children = templates
+        recurse = true
+      }
+    }
+
+    /* Render output */
+
+    let renderObj = {
+      start: '',
+      end: ''
+    }
+
+    const renderFunction = renderFunctions[renderType]
+
+    if (typeof renderFunction === 'function') {
+      const renderArgs = {
+        args: props,
+        parents,
+        pageData,
+        pageContains,
+        navigations,
+        serverlessData
       }
 
-      /* Render props */
+      const renderOutput = await renderFunction(renderArgs)
 
-      const normalProps = getProp(c, '', {}) as { id?: string, [key: string]: unknown }
-      const normalRenderType = getProp(c, 'renderType')
-
-      const props = isObjectStrict(normalProps) ? normalProps : {}
-      const renderType: string = isString(normalRenderType) ? normalRenderType : ''
-      const id = getProp(c, 'id')
-
-      if (isStringStrict(id)) {
-        props.id = id
-      }
-
-      /* Map out content to template */
-
-      if (renderType === 'contentTemplate') {
-        const templates = Array.isArray(props.templates) ? props.templates : []
-
-        _mapContentTemplate(templates, props.content)
-
-        if (Array.isArray(templates) && templates.length > 0) {
-          children = templates
-          recurse = true
-        }
-      }
-
-      /* Render output */
-
-      let renderObj = {
-        start: '',
-        end: ''
-      }
-
-      const renderFunction = renderFunctions[renderType]
-
-      if (typeof renderFunction === 'function') {
-        const renderArgs = {
-          args: props,
-          parents,
-          pageData,
-          pageContains,
-          navigations,
-          serverlessData
-        }
-
-        const renderOutput = await renderFunction(renderArgs)
-
-        if (isString(renderOutput)) {
-          renderObj.start = renderOutput
-        } else {
-          renderObj = renderOutput
-        }
-
-        pageContains.push(renderType)
-
-        filterType = renderType
-        filterArgs = props
-      }
-
-      let start = renderObj.start
-      let end = renderObj.end
-
-      /* Filter start and end output */
-
-      const renderContentFilterArgs: ParentArgs = {
-        renderType: filterType,
-        args: filterArgs
-      }
-
-      if (start !== '' && end === '') {
-        start = await applyFilters('renderContent', start, renderContentFilterArgs)
+      if (isString(renderOutput)) {
+        renderObj.start = renderOutput
       } else {
-        start = await applyFilters('renderContentStart', start, renderContentFilterArgs)
-        end = await applyFilters('renderContentEnd', end, renderContentFilterArgs)
+        renderObj = renderOutput
       }
 
-      if (richTextOutput !== '') {
-        richTextOutput = await applyFilters('renderContent', richTextOutput, renderContentFilterArgs)
-      }
+      pageContains.push(renderType)
 
-      /* Add to output object */
+      filterType = renderType
+      filterArgs = props
+    }
 
-      output.html += richTextOutput
-      output.html += start
+    let start = renderObj.start
+    let end = renderObj.end
 
-      /* Recurse through children */
+    /* Filter start and end output */
 
-      if (Array.isArray(children) && children.length > 0 && recurse) {
-        const parentsCopy = [...parents]
+    const renderContentFilterArgs: ParentArgs = {
+      renderType: filterType,
+      args: filterArgs
+    }
 
-        parentsCopy.unshift({
-          renderType,
-          args: props
-        })
+    if (start !== '' && end === '') {
+      start = await applyFilters('renderContent', start, renderContentFilterArgs)
+    } else {
+      start = await applyFilters('renderContentStart', start, renderContentFilterArgs)
+      end = await applyFilters('renderContentEnd', end, renderContentFilterArgs)
+    }
 
-        await _renderContent({
-          contentData: children,
-          serverlessData,
-          output,
-          parents: parentsCopy,
-          pageData,
-          pageContains,
-          navigations,
-          renderFunctions
-        })
-      }
+    if (richTextOutput !== '') {
+      richTextOutput = await applyFilters('renderContent', richTextOutput, renderContentFilterArgs)
+    }
 
-      output.html += end
+    /* Add to output object */
 
-      /* Clear parents */
+    output.html += richTextOutput
+    output.html += start
 
-      if (renderType !== '' && renderType !== 'content' && end !== '') {
-        parents = []
-      }
+    /* Recurse through children */
+
+    if (isArrayStrict(children) && recurse) {
+      const parentsCopy = [...parents]
+
+      parentsCopy.unshift({
+        renderType,
+        args: props
+      })
+
+      await _renderContent({
+        contentData: children,
+        serverlessData,
+        output,
+        parents: parentsCopy,
+        pageData,
+        pageContains,
+        navigations,
+        renderFunctions
+      })
+    }
+
+    output.html += end
+
+    /* Clear parents */
+
+    if (renderType !== '' && renderType !== 'content' && end !== '') {
+      parents = []
     }
   }
 }
@@ -459,34 +381,27 @@ const _renderContent = async ({
  * Function - output single post or page
  *
  * @private
- * @param {object} args
- * @param {object} args.item
- * @param {string} args.contentType
- * @return {object}
+ * @param {RenderItemArgs} args
+ * @return {RenderItemReturn}
  */
-
-interface _RenderItemArgs {
-  item: RenderItem
-  contentType: string
-  serverlessData?: ServerlessData
-  renderFunctions: _RenderFunctions
-}
-
-interface _RenderItemReturn {
-  serverlessRender: boolean
-  pageData?: RenderItem
-  data?: {
-    slug: string
-    output: string
+const _renderItem = async (args: RenderItemArgs): Promise<RenderItemReturn> => {
+  if (!isObjectStrict(args)) {
+    return {}
   }
-}
 
-const _renderItem = async ({
-  item,
-  contentType = 'page',
-  serverlessData,
-  renderFunctions
-}: _RenderItemArgs): Promise<_RenderItemReturn> => {
+  const {
+    item,
+    contentType = 'page',
+    serverlessData,
+    renderFunctions
+  } = args
+
+  /* Item must be object */
+
+  if (!isObjectStrict(item)) {
+    return {}
+  }
+
   /* Serverless render check */
 
   let serverlessRender = false
@@ -499,7 +414,7 @@ const _renderItem = async ({
   /* Item props */
 
   const propsProp = getProp(item, '', {})
-  const props: RenderItem = Object.assign({
+  const props = Object.assign({
     id: '',
     title: '',
     slug: '',
@@ -533,7 +448,7 @@ const _renderItem = async ({
   const title = props.title
   const meta = _getMeta(props)
 
-  if (meta.title === '') {
+  if (!isStringStrict(meta.title)) {
     meta.title = title
   }
 
@@ -552,13 +467,13 @@ const _renderItem = async ({
 
   let slug = ''
   let permalink = ''
-  let parents: object[] = []
+  let parents: SlugParent[] = []
 
-  if (typeof s === 'object') {
+  if (!isString(s)) {
     slug = s.slug
     parents = s.parents
-    permalink = getPermalink(s.slug)
-    item.basePermalink = getPermalink(s.slug)
+    permalink = getPermalink(slug)
+    item.basePermalink = getPermalink(slug)
   }
 
   meta.url = permalink
@@ -583,7 +498,7 @@ const _renderItem = async ({
 
   let navigations: { [key: string]: string } = {}
 
-  if (renderFunctions?.navigations !== undefined) {
+  if (renderFunctions.navigations !== undefined) {
     navigations = renderFunctions.navigations({
       navigations: config.navigation,
       items: config.navigationItem,
@@ -595,12 +510,12 @@ const _renderItem = async ({
 
   /* Serverless data */
 
-  let itemServerlessData: ServerlessData | undefined
+  let itemServerlessData: RenderServerlessData | undefined
 
-  if (serverlessData !== undefined) {
+  if (isObjectStrict(serverlessData)) {
     const serverlessPath = serverlessData.path !== undefined ? serverlessData.path : ''
 
-    if (serverlessPath === formattedSlug && serverlessData?.query !== undefined) {
+    if (serverlessPath === formattedSlug && serverlessData.query !== undefined) {
       itemServerlessData = serverlessData
     } else { // Avoid re-rendering non dynamic pages
       return {
@@ -613,14 +528,10 @@ const _renderItem = async ({
 
   const contentOutput = { html: '' }
 
-  let contentData = props.content
+  let contentData: Generic | Generic[] = props.content
 
   if (isObjectStrict(contentData)) {
-    const contentDataNested = contentData as { nodeType?: string, content: Generic[] }
-
-    if (contentDataNested.nodeType !== undefined) {
-      contentData = contentDataNested.content
-    }
+    contentData = isObjectArray(contentData.content) ? contentData.content : contentData
   }
 
   if (isArrayStrict(contentData)) {
@@ -644,12 +555,11 @@ const _renderItem = async ({
     const pagination: PaginationData = item.pagination
 
     const {
+      current = 0,
       currentFilters,
       prevFilters,
       nextFilters
     } = pagination
-
-    const current = typeof pagination.current === 'number' ? pagination.current : 0
 
     slugArgs.page = current > 1 ? current : 0
 
@@ -692,14 +602,14 @@ const _renderItem = async ({
 
   pageData.id = id
   pageData.parents = parents
-  pageData.content = undefined
+  pageData.content = []
 
   /* Output */
 
   let layoutOutput = ''
 
-  if (renderFunctions?.layout !== undefined) {
-    const layoutArgs: LayoutArgs = {
+  if (renderFunctions.layout !== undefined) {
+    const layoutArgs: RenderLayoutArgs = {
       id,
       meta,
       navigations,
@@ -714,7 +624,7 @@ const _renderItem = async ({
     layoutOutput = await renderFunctions.layout(layoutArgs)
   }
 
-  const renderItemFilterArgs: RenderItemFilterArgs = {
+  const renderItemFilterArgs: RenderItemActionArgs = {
     id,
     contentType,
     slug: formattedSlug,
@@ -728,7 +638,7 @@ const _renderItem = async ({
 
   /* End action */
 
-  const renderItemEndArgs: RenderItemEndActionArgs = {
+  const renderItemEndArgs: RenderItemActionArgs = {
     id,
     contentType,
     slug: formattedSlug,
@@ -755,19 +665,9 @@ const _renderItem = async ({
 /**
  * Function - loop through all content types to output pages and posts
  *
- * @param {object} args
- * @param {object[]} args.allData
- * @param {object} args.serverlessData
- * @param {object} args.previewData
- * @return {array|object}
+ * @param {RenderArgs} args
+ * @return {Promise<RenderReturn[]|RenderReturn>}
  */
-
-interface RenderArgs {
-  allData?: AllData
-  serverlessData?: ServerlessData
-  previewData?: PreviewData
-}
-
 const Render = async ({
   allData,
   serverlessData,
@@ -846,14 +746,18 @@ const Render = async ({
         linkContentType: 'default'
       }, isObjectStrict(itemProp) ? itemProp : {})
 
-      let { parent, archive = '', linkContentType = 'default' } = itemData
+      let {
+        parent,
+        archive = '',
+        linkContentType = 'default'
+      } = itemData
 
       archive = await applyFilters('renderArchiveName', archive)
       linkContentType = await applyFilters('renderLinkContentTypeName', linkContentType)
 
       const idProp = getProp(item, 'id', '')
       const id = isStringStrict(idProp) ? idProp : ''
-      const isArchive = archive !== '' && id !== ''
+      const isArchive = isStringStrict(archive) && id !== ''
 
       if (isArchive) {
         const archiveIds = config.archive.ids
@@ -863,18 +767,14 @@ const Render = async ({
           archiveIds[archive] = {}
         }
 
-        const blah = archiveIds[archive] as Generic
+        archiveIds[archive][linkContentType] = id
 
-        if (isObjectStrict(blah)) {
-          blah[linkContentType] = id
-        }
-
-        if (contentTypeArchive !== undefined && typeof contentTypeArchive === 'object') {
+        if (isObjectStrict(contentTypeArchive)) {
           contentTypeArchive[linkContentType] = id
         }
       }
 
-      if (parent !== undefined && id !== '') {
+      if (isObjectStrict(parent) && id !== '') {
         const parentSlug = getProp(parent, 'slug')
         const parentTitle = getProp(parent, 'title')
         const parentId = getProp(parent, 'id')
@@ -892,12 +792,19 @@ const Render = async ({
 
     if (isArrayStrict(redirect)) {
       redirect.forEach((r) => {
-        const redirectProp = getProp(r, '', {}) as { redirect: string[] }
+        const redirectProp = getProp(r, '', {})
+
+        if (!isObjectStrict(redirectProp)) {
+          return
+        }
+
         const { redirect: rr = [] } = redirectProp
 
-        if (rr.length > 0) {
-          config.redirects.data = config.redirects.data.concat(rr)
+        if (!isStringArray(rr)) {
+          return
         }
+
+        config.redirects.data = config.redirects.data.concat(rr)
       })
     }
   } else {
@@ -922,7 +829,7 @@ const Render = async ({
       config.archive.ids = archiveIdsJson
 
       Object.keys(archiveIdsJson).forEach((a) => {
-        if (config.contentTypes.archive?.[a] != null) {
+        if (config.contentTypes.archive[a] != null) {
           config.contentTypes.archive[a].id = archiveIdsJson[a]
         }
       })
@@ -960,8 +867,8 @@ const Render = async ({
     const contentType = contentTypes[c]
 
     for (let i = 0; i < content[contentType].length; i += 1) {
-      const item: _RenderItemReturn = await _renderItem({
-        item: content[contentType][i] as RenderItem,
+      const item: RenderItemReturn = await _renderItem({
+        item: content[contentType][i],
         contentType,
         serverlessData,
         renderFunctions

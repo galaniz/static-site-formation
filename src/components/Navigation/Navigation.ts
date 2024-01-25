@@ -4,209 +4,24 @@
 
 /* Imports */
 
-import type { InternalLink, Generic } from '../../global/types/types'
+import type {
+  NavigationProps,
+  Navigation as Navigations,
+  NavigationItem,
+  NavigationBreadcrumbItem,
+  NavigationOutputArgs,
+  NavigationBreadcrumbOutputArgs
+} from './NavigationTypes'
 import {
   getSlug,
   getPermalink,
   getLink,
   getProp,
-  isObject,
   isArrayStrict,
   isStringStrict,
   isString,
   isObjectStrict
 } from '../../utils'
-
-/**
- * @typedef {object} NavigationProps
- * @prop {Navigations[]} navigations
- * @prop {NavigationItem[]} items
- * @prop {string} [current]
- */
-export interface NavigationProps {
-  navigations: Navigations[]
-  items: NavigationItem[]
-  current?: string
-}
-
-/**
- * @typedef Navigations
- * @type {Generic}
- * @prop {string} [title]
- * @prop {string} location
- * @prop {NavigationItem[]} items
- */
-export interface Navigations extends Generic {
-  title?: string
-  location: string
-  items: NavigationItem[]
-}
-
-/**
- * @typedef NavigationItem
- * @type {Generic}
- * @prop {string} [id]
- * @prop {string} [title]
- * @prop {string} [link]
- * @prop {InternalLink} [internalLink]
- * @prop {string} [externalLink]
- * @prop {NavigationItem[]} [children]
- * @prop {boolean} [current]
- * @prop {boolean} [external]
- * @prop {boolean} [descendentCurrent]
- */
-export interface NavigationItem extends Generic {
-  id?: string
-  title?: string
-  link?: string
-  internalLink?: InternalLink
-  externalLink?: string
-  children?: NavigationItem[]
-  current?: boolean
-  external?: boolean
-  descendentCurrent?: boolean
-}
-
-/**
- * @typedef NavigationBreadcrumbItem
- * @type NavigationItem
- * @prop {string} slug
- * @prop {string} contentType
- */
-export interface NavigationBreadcrumbItem extends NavigationItem {
-  slug: string
-  contentType: string
-}
-
-/**
- * @typedef {object} NavigationOutputBaseArgs
- * @prop {string} [listClass]
- * @prop {string} [listAttr]
- * @prop {string} [itemClass]
- * @prop {string} [itemAttr]
- * @prop {string} [linkClass]
- * @prop {string} [internalLinkClass]
- * @prop {string} [linkAttr]
- */
-interface NavigationOutputBaseArgs {
-  listClass?: string
-  listAttr?: string
-  itemClass?: string
-  itemAttr?: string
-  linkClass?: string
-  internalLinkClass?: string
-  linkAttr?: string
-}
-
-/**
- * @typedef {object} NavigationOutputListFilterArgs
- * @prop {NavigationOutputArgs} args
- * @prop {object} output
- * @prop {string} output.html
- * @prop {NavigationItem[]} items
- * @prop {number} depth
- */
-interface NavigationOutputListFilterArgs {
-  args: NavigationOutputArgs
-  output: {
-    html: string
-  }
-  items: NavigationItem[]
-  depth: number
-}
-
-/**
- * @typedef {object} NavigationOutputFilterArgs
- * @prop {NavigationOutputArgs} args
- * @prop {NavigationItem} item
- * @prop {object} output
- * @prop {string} output.html
- * @prop {number} index
- * @prop {NavigationItem[]} items
- * @prop {number} depth
- */
-interface NavigationOutputFilterArgs {
-  args: NavigationOutputArgs
-  item: NavigationItem
-  output: {
-    html: string
-  }
-  index: number
-  items: NavigationItem[]
-  depth: number
-}
-
-/**
- * @typedef {Function} NavigationOutputListFilter
- * @param {NavigationOutputListFilterArgs} args
- * @return {void}
- */
-type NavigationOutputListFilter = (args: NavigationOutputListFilterArgs) => void
-
-/**
- * @typedef {Function} NavigationFilter
- * @param {NavigationOutputFilterArgs} args
- * @return {void}
- */
-type NavigationFilter = (args: NavigationOutputFilterArgs) => void
-
-/**
- * @typedef NavigationOutputArgs
- * @type NavigationOutputBaseArgs
- * @prop {NavigationOutputListFilter} [filterBeforeList]
- * @prop {NavigationOutputListFilter} [filterAfterList]
- * @prop {NavigationFilter} [filterBeforeItem]
- * @prop {NavigationFilter} [filterAfterItem]
- * @prop {NavigationFilter} [filterBeforeLink]
- * @prop {NavigationFilter} [filterAfterLink]
- * @prop {NavigationFilter} [filterBeforeLinkText]
- * @prop {NavigationFilter} [filterAfterLinkText]
- */
-interface NavigationOutputArgs extends NavigationOutputBaseArgs {
-  filterBeforeList?: NavigationOutputListFilter
-  filterAfterList?: NavigationOutputListFilter
-  filterBeforeItem?: NavigationFilter
-  filterAfterItem?: NavigationFilter
-  filterBeforeLink?: NavigationFilter
-  filterAfterLink?: NavigationFilter
-  filterBeforeLinkText?: NavigationFilter
-  filterAfterLinkText?: NavigationFilter
-}
-
-/**
- * @typedef {object} NavigationBreadcrumbOutputFilterArgs
- * @prop {object} output
- * @prop {string} output.html
- * @prop {boolean} isLastLevel
- */
-interface NavigationBreadcrumbOutputFilterArgs {
-  output: {
-    html: string
-  }
-  isLastLevel: boolean
-}
-
-/**
- * @typedef {Function} NavigationBreadcrumbOutputFilter
- * @param {NavigationBreadcrumbOutputFilterArgs} args
- * @return {void}
- */
-type NavigationBreadcrumbOutputFilter = (args: NavigationBreadcrumbOutputFilterArgs) => void
-
-/**
- * @typedef NavigationBreadcrumbOutputArgs
- * @type {NavigationOutputBaseArgs}
- * @prop {string} [currentClass]
- * @prop {string} [a11yClass]
- * @prop {NavigationBreadcrumbOutputFilter} [filterBeforeLink]
- * @prop {NavigationBreadcrumbOutputFilter} [filterAfterLink]
- */
-interface NavigationBreadcrumbOutputArgs extends NavigationOutputBaseArgs {
-  currentClass?: string
-  a11yClass?: string
-  filterBeforeLink?: NavigationBreadcrumbOutputFilter
-  filterAfterLink?: NavigationBreadcrumbOutputFilter
-}
 
 /**
  * Class - recursively generate navigation output
@@ -259,7 +74,7 @@ class Navigation {
   #navigationsByLocation: {
     [key: string]: {
       title: string
-      items: NavigationItem[]
+      items: NavigationItem[] | unknown[]
     }
   } = {}
 
@@ -282,7 +97,7 @@ class Navigation {
   #initialize (props: NavigationProps): boolean {
     /* Check props is object */
 
-    if (!isObject(props)) {
+    if (!isObjectStrict(props)) {
       return false
     }
 
@@ -309,9 +124,13 @@ class Navigation {
     /* Items by id */
 
     this.items.forEach(item => {
+      if (!isObjectStrict(item)) {
+        return
+      }
+
       const info = this.#getItemInfo(item)
 
-      if (info.id !== undefined) {
+      if (isStringStrict(info.id)) {
         this.#itemsById[info.id] = info
       }
     })
@@ -319,21 +138,20 @@ class Navigation {
     /* Navigations by location */
 
     this.navigations.forEach(nav => {
-      const navFields = getProp(nav, '', {}) as Navigations
-
-      if (!isObjectStrict(navFields)) {
-        return
-      }
+      const fieldsProp = getProp(nav, '', {})
+      const fields = isObjectStrict(fieldsProp) ? fieldsProp : {}
 
       const {
         title = '',
         location = '',
         items = []
-      } = navFields
+      } = fields
 
-      this.#navigationsByLocation[location.toLowerCase().replace(/ /g, '')] = {
-        title,
-        items
+      if (isStringStrict(title) && isStringStrict(location) && isArrayStrict(items)) {
+        this.#navigationsByLocation[location.toLowerCase().replace(/ /g, '')] = {
+          title,
+          items
+        }
       }
     })
 
@@ -350,7 +168,8 @@ class Navigation {
    * @return {NavigationItem}
    */
   #getItemInfo (item: NavigationItem): NavigationItem {
-    const fields = getProp(item, '', {}) as NavigationItem
+    const fieldsProp = getProp(item, '', {})
+    const fields = isObjectStrict(fieldsProp) ? fieldsProp : {}
 
     const {
       title = '',
@@ -359,38 +178,52 @@ class Navigation {
       children
     } = fields
 
-    let id = title
-    let external = false
+    let id = ''
+    let titleStr = ''
 
-    const link = getLink(internalLink, externalLink)
+    if (isStringStrict(title)) {
+      id = title
+      titleStr = title
+    }
+
+    let external = false
+    let externalLinkStr = ''
 
     if (isStringStrict(externalLink)) {
       id = externalLink
+      externalLinkStr = externalLink
       external = true
     }
 
-    if (internalLink !== undefined) {
-      const idProp = getProp(internalLink, 'id')
+    let internal = false
+    let internalLinkObj
+
+    if (isObjectStrict(internalLink)) {
+      internalLinkObj = internalLink
+      internal = true
+
+      const idProp = getProp(internalLinkObj, 'id', '')
 
       if (isStringStrict(idProp)) {
         id = idProp
       }
     }
 
+    const link = getLink(internalLinkObj, externalLinkStr)
     const props: NavigationItem = {
       id,
-      title,
+      title: titleStr,
       link,
       external
     }
 
-    if (link !== undefined && internalLink !== undefined) {
+    if (isStringStrict(link) && internal) {
       props.current = props.link === this.current
     }
 
     let descendentCurrent = false
 
-    if (children !== undefined) {
+    if (isArrayStrict(children)) {
       const c: NavigationItem[] = []
 
       descendentCurrent = this.#recurseItemChildren(children, c)
@@ -420,12 +253,16 @@ class Navigation {
    * @return {boolean}
    */
   #recurseItemChildren (
-    children: NavigationItem[] = [],
+    children: NavigationItem[] | unknown[] = [],
     store: NavigationItem[] = []
   ): boolean {
     let childCurrent = false
 
     children.forEach(child => {
+      if (!isObjectStrict(child)) {
+        return
+      }
+
       const info = this.#getItemInfo(child)
 
       const { current = false } = info
@@ -447,13 +284,23 @@ class Navigation {
    * @param {NavigationItem[]} items
    * @return {NavigationItem[]}
    */
-  #getItems (items: NavigationItem[] = []): NavigationItem[] {
+  #getItems (items: NavigationItem[] | unknown[] = []): NavigationItem[] {
     if (items.length === 0) {
       return []
     }
 
-    return items.map(item => {
-      const fields = getProp(item, '', {}) as NavigationItem
+    const resItems: NavigationItem[] = []
+
+    items.forEach(item => {
+      if (!isObjectStrict(item)) {
+        return
+      }
+
+      const fields = getProp(item, '', {})
+
+      if (!isObjectStrict(fields)) {
+        return
+      }
 
       const {
         title = '',
@@ -461,22 +308,32 @@ class Navigation {
         externalLink
       } = fields
 
-      let id = title
+      let id = ''
+
+      if (isStringStrict(title)) {
+        id = title
+      }
 
       if (isStringStrict(externalLink)) {
         id = externalLink
       }
 
-      if (isObject(internalLink)) {
-        const idProp = getProp(internalLink, 'id')
+      if (isObjectStrict(internalLink)) {
+        const idProp = getProp(internalLink, 'id', '')
 
         if (isStringStrict(idProp)) {
           id = idProp
         }
       }
 
-      return this.#itemsById[id]
+      const storedItem = this.#itemsById[id]
+
+      if (storedItem !== undefined) {
+        resItems.push(storedItem)
+      }
     })
+
+    return resItems
   }
 
   /**
@@ -643,7 +500,7 @@ class Navigation {
     args: NavigationOutputArgs,
     maxDepth?: number
   ): string {
-    if (this.#navigationsByLocation?.[location] === undefined) {
+    if (this.#navigationsByLocation[location] === undefined) {
       return ''
     }
 
@@ -668,9 +525,7 @@ class Navigation {
       filterAfterLinkText: () => {}
     }, args)
 
-    const output = {
-      html: ''
-    }
+    const output = { html: '' }
 
     this.#recurseOutput(normalizedItems, output, args, -1, maxDepth)
 

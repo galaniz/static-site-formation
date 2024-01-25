@@ -6,14 +6,13 @@
 
 import { isStringStrict } from '../isString/isString'
 import { isArrayStrict } from '../isArray/isArray'
-import { isObject } from '../isObject/isObject'
+import { isObjectStrict } from '../isObject/isObject'
 
 /**
  * Store action callbacks by name
  *
  * @type {Object.<string, function>}
  */
-
 let actions: { [key: string]: Function[] } = {}
 
 /**
@@ -23,13 +22,12 @@ let actions: { [key: string]: Function[] } = {}
  * @param {function} action
  * @return {boolean}
  */
-
 const addAction = (name: string, action: Function): boolean => {
   if (!isStringStrict(name) || typeof action !== 'function') {
     return false
   }
 
-  if (actions?.[name] === undefined) {
+  if (actions[name] === undefined) {
     actions[name] = []
   }
 
@@ -102,7 +100,7 @@ const resetActions = (): void => {
  * @return {boolean}
  */
 const setActions = (args: { [key: string]: Function }): boolean => {
-  if (!isObject(args)) {
+  if (!isObjectStrict(args)) {
     return false
   }
 

@@ -4,6 +4,7 @@
 
 /* Imports */
 
+import type { ArchiveLinkReturn } from './getArchiveLinkTypes'
 import { config } from '../../config/config'
 import { getArchiveId } from '../getArchiveId/getArchiveId'
 import { getPermalink } from '../getPermalink/getPermalink'
@@ -14,14 +15,9 @@ import { isString } from '../isString/isString'
  * Function - get archive link by content type
  *
  * @param {string} contentType
- * @return {object}
+ * @param {string} linkContentType
+ * @return {ArchiveLinkReturn}
  */
-
-interface ArchiveLinkReturn {
-  title: string
-  link: string
-}
-
 const getArchiveLink = (contentType: string = '', linkContentType: string = ''): ArchiveLinkReturn => {
   let archiveLink = ''
   let archiveTitle = ''

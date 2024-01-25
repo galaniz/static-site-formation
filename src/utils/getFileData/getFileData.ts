@@ -4,21 +4,12 @@
 
 /* Imports */
 
-import type { Generic } from '../../global/types/types'
+import type { FileDataParams } from './getFileDataTypes'
+import type { Generic } from '../../global/globalTypes'
 import { readdir, readFile } from 'node:fs/promises'
 import { extname, basename, resolve } from 'node:path'
 import { applyFilters, isObject, isStringStrict } from '../../utils'
 import { config } from '../../config/config'
-
-/**
- * @typedef {object} FileDataParams
- * @prop {boolean} [all]
- * @prop {string} [id]
- */
-interface FileDataParams {
-  all?: boolean
-  id?: string
-}
 
 /**
  * Function - get data from file or cache

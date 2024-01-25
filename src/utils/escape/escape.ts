@@ -10,7 +10,6 @@
  * @param {*} input
  * @return {void}
  */
-
 const _assertString = (input: any): void => {
   const isString = typeof input === 'string' || input instanceof String
 
@@ -34,7 +33,6 @@ const _assertString = (input: any): void => {
  * @param {string} str
  * @return {string}
  */
-
 const escape = (str: string): string => {
   _assertString(str)
 

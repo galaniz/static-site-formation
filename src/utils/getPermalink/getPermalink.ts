@@ -13,7 +13,6 @@ import { config } from '../../config/config'
  * @param {boolean} trailingSlash
  * @return {string}
  */
-
 const getPermalink = (slug: string = '', trailingSlash: boolean = true): string => {
   let url = '/'
 

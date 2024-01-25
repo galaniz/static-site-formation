@@ -4,27 +4,16 @@
 
 /* Imports */
 
+import type { ScriptStyleArgs } from './addScriptStyleTypes'
 import { config } from '../../config/config'
 
 /**
  * Function - set scripts and styles paths in config
  *
- * @param {object} args
- * @param {string} args.dir
- * @param {string} args.script
- * @param {string} args.style
- * @param {number} args.priority
+ * @param {ScriptStyleArgs} args
  * @return {void}
  */
-
-interface AddScriptStyle {
-  dir: string
-  script?: string
-  style?: string
-  priority?: number
-}
-
-const addScriptStyle = ({ dir = '', script = '', style = '', priority = 10 }: AddScriptStyle): void => {
+const addScriptStyle = ({ dir = '', script = '', style = '', priority = 10 }: ScriptStyleArgs): void => {
   if (dir === '') {
     return
   }

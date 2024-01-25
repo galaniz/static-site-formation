@@ -16,7 +16,6 @@ import { isString } from '../isString/isString'
  * @param {float} alpha
  * @return {number}
  */
-
 const getHue = (hex: string = '', alpha: number = 1): number => {
   let [r, g, b] = getRgba(hex, alpha, true)
 

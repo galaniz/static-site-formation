@@ -9,7 +9,6 @@
  * @param {boolean} words
  * @return {string}
  */
-
 const getDuration = (seconds: number = 0, words: boolean = false): string => {
   const hours = Math.floor(seconds / 3600)
   const min = Math.floor((seconds - (hours * 3600)) / 60)

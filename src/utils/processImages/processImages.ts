@@ -4,6 +4,7 @@
 
 /* Imports */
 
+import type { ProcessImagesStore, ProcessImagesSharp } from './processImagesTypes'
 import sharp from 'sharp'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { extname, resolve, basename, dirname } from 'node:path'
@@ -16,23 +17,6 @@ import { isStringStrict } from '../isString/isString'
  *
  * @return {Promise<void>}
  */
-
-interface ProcessImagesSharp {
-  size: number
-  ext: string
-  path: string
-  newPath: string
-}
-
-interface ProcessImagesStore {
-  [key: string]: {
-    base: string
-    width: number
-    height: number
-    format: string
-  }
-}
-
 const processImages = async (): Promise<void> => {
   const store: ProcessImagesStore = {}
 

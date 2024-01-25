@@ -4,23 +4,22 @@
 
 /* Imports */
 
-import type { InternalLink } from '../../global/types/types'
+import type { Generic, InternalLink } from '../../global/globalTypes'
 import { getPermalink } from '../getPermalink/getPermalink'
 import { getSlug } from '../getSlug/getSlug'
 import { getProp } from '../getProp/getProp'
-import { isObject } from '../isObject/isObject'
+import { isObjectStrict } from '../isObject/isObject'
 import { isString, isStringStrict } from '../isString/isString'
 
 /**
  * Function - get permalink from external or internal source
  *
- * @param {InternalLink} [internalLink]
+ * @param {InternalLink|Generic} [internalLink]
  * @param {string} [externalLink]
  * @return {string}
  */
-
-const getLink = (internalLink?: InternalLink, externalLink?: string): string => {
-  if (isObject(internalLink)) {
+const getLink = (internalLink?: InternalLink | Generic, externalLink?: string): string => {
+  if (isObjectStrict(internalLink)) {
     const id = getProp(internalLink, 'id')
     const contentType = getProp(internalLink, 'contentType')
     const linkContentType = getProp(internalLink, 'linkContentType')

@@ -13,6 +13,17 @@ export interface SlugBase {
 }
 
 /**
+ * @typedef SlugParent
+ * @type {SlugBase}
+ * @prop {string} [contentType]
+ * @prop {string} [id]
+ */
+export interface SlugParent extends SlugBase {
+  contentType?: string
+  id?: string
+}
+
+/**
  * @typedef {object} InternalLinkBase
  * @prop {string} id
  * @prop {string} contentType
@@ -40,11 +51,11 @@ export interface InternalLink extends InternalLinkBase {
 /**
  * @typedef {object} ParentArgs
  * @prop {string} renderType
- * @prop {object} args
+ * @prop {Generic} args
  */
 export interface ParentArgs {
   renderType: string
-  args: object
+  args: Generic
 }
 
 /**

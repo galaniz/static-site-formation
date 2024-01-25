@@ -16,7 +16,6 @@ import { isArray } from '../isArray/isArray'
  * @param {boolean} isTerm
  * @return {object}
  */
-
 const getArchiveLabels = (
   contentType: string = '',
   linkContentType: string | string[],

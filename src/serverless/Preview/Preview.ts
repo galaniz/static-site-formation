@@ -4,23 +4,10 @@
 
 /* Imports */
 
-import type { Config } from '../../config/config'
+import type { PreviewArgs } from './PreviewTypes'
 import { config, setConfig } from '../../config/config'
-import { getAllContentfulData, isArray } from '../../utils'
+import { getAllContentfulData, isArray, isStringStrict } from '../../utils'
 import { Render } from '../../render/Render'
-
-/**
- * @typedef {object} PreviewArgs
- * @prop {Request} request
- * @prop {function} next
- * @prop {Config} siteConfig
- */
-
-interface PreviewArgs {
-  request: Request
-  next: Function
-  siteConfig: Config
-}
 
 /**
  * Function - output preview from contentful
@@ -28,7 +15,6 @@ interface PreviewArgs {
  * @param {PreviewArgs} args
  * @return {Promise<Response>} Response
  */
-
 const Preview = async ({ request, next, siteConfig }: PreviewArgs): Promise<Response> => {
   /* Params */
 
@@ -38,7 +24,7 @@ const Preview = async ({ request, next, siteConfig }: PreviewArgs): Promise<Resp
 
   /* Preview id and content type required */
 
-  if (id === null || typeof id !== 'string' || contentType === null || typeof contentType !== 'string') {
+  if (!isStringStrict(id) || !isStringStrict(contentType)) {
     return next()
   }
 
@@ -65,7 +51,7 @@ const Preview = async ({ request, next, siteConfig }: PreviewArgs): Promise<Resp
   let html = ''
 
   if (!isArray(data)) {
-    html = data?.output !== undefined ? data.output : ''
+    html = data.output !== undefined ? data.output : ''
   }
 
   return new Response(html, {

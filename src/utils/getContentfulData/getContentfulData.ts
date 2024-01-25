@@ -4,28 +4,11 @@
 
 /* Imports */
 
-import type { Generic } from '../../global/types/types'
+import type { ContentfulDataParams, ContentfulDataItems } from './getContentfulDataTypes'
+import type { Generic } from '../../global/globalTypes'
 import resolveResponse from 'contentful-resolve-response'
 import { applyFilters, isObject, isStringStrict } from '../../utils'
 import { config } from '../../config/config'
-
-/**
- * @typedef {Object.<string, (string|number|boolean)>} ContentfulDataParams
- */
-interface ContentfulDataParams {
-  [key: string]: string | number | boolean
-}
-
-/**
- * @typedef ContentfulDataItems
- * @type {Generic}
- * @prop {*[]} [items]
- * @prop {*[]} [errors]
- */
-interface ContentfulDataItems extends Generic {
-  items?: Generic[]
-  errors?: Generic[]
-}
 
 /**
  * Function - fetch data from contentful cms or cache

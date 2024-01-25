@@ -4,7 +4,8 @@
 
 /* Imports */
 
-import type { SlugBase } from '../../global/types/types'
+import type { SlugArgs, SlugReturn } from './getSlugTypes'
+import type { SlugBase, SlugParent } from '../../global/globalTypes'
 import { config } from '../../config/config'
 import { getArchiveId } from '../getArchiveId/getArchiveId'
 
@@ -13,12 +14,11 @@ import { getArchiveId } from '../getArchiveId/getArchiveId'
  *
  * @private
  * @param {string} id
- * @param {array} p
+ * @param {SlugParent[]} p
  * @return {void}
  */
-
-const _getParentSlug = (id: string = '', p: object[] = []): void => {
-  if (config.slug.parents?.[id] !== undefined && id !== '') {
+const _getParentSlug = (id: string = '', p: SlugParent[] = []): void => {
+  if (config.slug.parents[id] !== undefined && id !== '') {
     p.unshift(config.slug.parents[id])
 
     _getParentSlug(config.slug.parents[id].id, p)
@@ -28,30 +28,10 @@ const _getParentSlug = (id: string = '', p: object[] = []): void => {
 /**
  * Function - get slug with base from slug base and parents
  *
- * @param {object} args
- * @param {string} args.id
- * @param {string} args.slug
- * @param {number} args.page
- * @param {string} args.contentType
- * @param {boolean} args.returnParents
- * @return {string|object}
+ * @param {SlugArgs} args
+ * @return {string|SlugReturn}
  */
-
-export interface SlugArgs {
-  id?: string
-  slug: string
-  page?: number
-  contentType: string
-  linkContentType?: string
-  returnParents?: boolean
-}
-
-export interface SlugParent extends SlugBase {
-  contentType?: string
-  id?: string
-}
-
-const getSlug = (args: SlugArgs): string | { slug: string, parents: object[] } => {
+const getSlug = (args: SlugArgs): string | SlugReturn => {
   const {
     id = '',
     slug = '',
@@ -97,7 +77,7 @@ const getSlug = (args: SlugArgs): string | { slug: string, parents: object[] } =
   /* Parents and slug return */
 
   if (returnParents) {
-    if (slugBase?.slug !== undefined && archiveId !== '') {
+    if (slugBase.slug !== undefined && archiveId !== '') {
       pp.unshift({
         ...slugBase,
         contentType: 'page',

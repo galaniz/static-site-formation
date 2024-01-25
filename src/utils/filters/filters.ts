@@ -6,7 +6,7 @@
 
 import { isArrayStrict } from '../isArray/isArray'
 import { isStringStrict } from '../isString/isString'
-import { isObject } from '../isObject/isObject'
+import { isObjectStrict } from '../isObject/isObject'
 
 /**
  * Store filter callbacks by name
@@ -27,7 +27,7 @@ const addFilter = (name: string, filter: Function): boolean => {
     return false
   }
 
-  if (filters?.[name] === undefined) {
+  if (filters[name] === undefined) {
     filters[name] = []
   }
 
@@ -103,7 +103,7 @@ const resetFilters = (): void => {
  * @return {boolean}
  */
 const setFilters = (args: { [key: string]: Function }): boolean => {
-  if (!isObject(args)) {
+  if (!isObjectStrict(args)) {
     return false
   }
 

@@ -2,7 +2,7 @@
   "name": "static-site-formation",
   "version": "1.0.0",
   "description": "Helpers for static sites built with Contentful or from the file system",
-  "main": "./lib/index.js",
+  "main": "./esm/index.js",
   "engines": {
     "node": ">=17"
   },

@@ -7,7 +7,6 @@
  *
  * @return {number}
  */
-
 const getYear = (): number => {
   const date = new Date()
 

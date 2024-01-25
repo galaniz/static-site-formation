@@ -4,7 +4,7 @@
 
 /* Imports */
 
-import { Generic } from '../../global/types/types'
+import type { Generic } from '../global/globalTypes'
 
 /**
  * @typedef EnvCloudflare

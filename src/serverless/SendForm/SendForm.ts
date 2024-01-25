@@ -4,30 +4,19 @@
 
 /* Imports */
 
-import type { AjaxActionArgs, AjaxActionReturn } from '../types/types'
+import type { SendFormRequestBody, SendFormRequestRes } from './SendFormTypes'
+import type { Generic } from '../../global/globalTypes'
+import type { AjaxActionArgs, AjaxActionReturn } from '../serverlessTypes'
 import { config } from '../../config/config'
 import {
   escape,
+  isArray,
   isString,
   isStringStrict,
-  getPermalink,
-  isArray,
-  isObject
+  isObject,
+  isObjectStrict,
+  getPermalink
 } from '../../utils'
-
-/**
- * @typedef {Object.<string, string[]>} SendFormLegendData
- */
-interface SendFormLegendData {
-  [key: string]: string[]
-}
-
-/**
- * @typedef {Object.<string, (SendFormOutputData|string[])>} SendFormOutputData
- */
-interface SendFormOutputData {
-  [key: string]: string[] | SendFormOutputData
-}
 
 /**
  * Function - recurse through data to output plain and html email body
@@ -40,7 +29,7 @@ interface SendFormOutputData {
  * @param {number} depth
  * @return {void}
  */
-const _recurseEmailHtml = <T extends SendFormOutputData>(
+const _recurseEmailHtml = <T>(
   data: T,
   output: {
     html: string
@@ -55,12 +44,7 @@ const _recurseEmailHtml = <T extends SendFormOutputData>(
   const isArr = isArray(data)
 
   Object.keys(data).forEach((label) => {
-    let value
-
-    if (isString(label)) {
-      value = data[label]
-    }
-
+    const value = data[label as keyof T]
     const h = depth + 1
 
     if (depth === 1) {
@@ -81,7 +65,7 @@ const _recurseEmailHtml = <T extends SendFormOutputData>(
     }
 
     if (isObject(value)) {
-      _recurseEmailHtml(value as SendFormOutputData, output, depth + 1)
+      _recurseEmailHtml(value, output, depth + 1)
     }
 
     if (isString(value)) {
@@ -125,9 +109,18 @@ const SendForm = async ({ id, inputs }: AjaxActionArgs): Promise<AjaxActionRetur
   /* Meta information - to email and subject */
 
   const formMetaJson = require(`${config.store.dir}${config.store.files.formMeta.name}`) // eslint-disable-line @typescript-eslint/no-var-requires
-  const meta = formMetaJson[id] as { toEmail?: string, senderEmail?: string, subject?: string }
 
-  if (!isObject(meta)) {
+  if (!isObjectStrict(formMetaJson)) {
+    return {
+      error: {
+        message: 'No meta information'
+      }
+    }
+  }
+
+  const meta = formMetaJson[id]
+
+  if (!isObjectStrict(meta)) {
     return {
       error: {
         message: 'No meta information'
@@ -173,18 +166,15 @@ const SendForm = async ({ id, inputs }: AjaxActionArgs): Promise<AjaxActionRetur
 
   const header = `${config.title} contact form submission`
   const footer = `This email was sent from a contact form on ${config.title} (${getPermalink()})`
-  const outputData: SendFormOutputData = {}
-  const output = {
-    html: '',
-    plain: ''
-  }
+  const outputData: Generic = {}
+  const output = { html: '', plain: '' }
 
   Object.keys(inputs).forEach((name) => {
     const input = inputs[name]
 
     /* Skip if exclude true */
 
-    const exclude = input?.exclude !== undefined ? input.exclude : false
+    const exclude = input.exclude !== undefined ? input.exclude : false
 
     if (exclude) {
       return
@@ -222,39 +212,52 @@ const SendForm = async ({ id, inputs }: AjaxActionArgs): Promise<AjaxActionRetur
       inputValueStr = `<a href='mailto:${inputValueStr}'>${inputValueStr}</a>`
     }
 
+    /* Output value */
+
+    const outputValue = inputValueStr === '' ? '--' : inputValueStr
+
     /* Legend */
 
-    const hasLegend = isStringStrict(input.legend)
-    const legend = isStringStrict(input.legend) ? input.legend : ''
+    let hasLegend = false
+    let legend = ''
 
-    if (hasLegend && outputData[legend] === undefined) {
-      outputData[legend] = {}
+    if (isStringStrict(input.legend)) {
+      hasLegend = true
+      legend = input.legend
+    }
+
+    if (hasLegend) {
+      if (outputData[legend] === undefined) {
+        outputData[legend] = {}
+      }
+
+      const legendData = outputData[legend]
+
+      if (isObjectStrict(legendData)) {
+        if (legendData[inputLabel] === undefined) {
+          legendData[inputLabel] = []
+        }
+
+        const inputData = legendData[inputLabel]
+
+        if (isArray(inputData)) {
+          inputData.push(outputValue)
+        }
+      }
     }
 
     /* Label */
 
-    if (hasLegend && outputData[legend] !== undefined) {
-      const legendData = outputData[legend] as SendFormLegendData
+    if (!hasLegend) {
+      if (outputData[inputLabel] === undefined) {
+        outputData[inputLabel] = []
+      }
 
-      legendData[inputLabel] = []
-    }
+      const inputData = outputData[inputLabel]
 
-    if (!hasLegend && outputData[inputLabel] === undefined) {
-      outputData[inputLabel] = []
-    }
-
-    /* Output value */
-
-    const outputValue = inputValueStr === '' ? '--' : inputValueStr
-    const legendData = outputData[legend] as SendFormLegendData
-    const inputData = outputData[inputLabel]
-
-    if (hasLegend && isArray(legendData[inputLabel])) {
-      legendData[inputLabel].push(outputValue)
-    }
-
-    if (!hasLegend && isArray(inputData)) {
-      inputData.push(outputValue)
+      if (isArray(inputData)) {
+        inputData.push(outputValue)
+      }
     }
   })
 
@@ -306,15 +309,7 @@ const SendForm = async ({ id, inputs }: AjaxActionArgs): Promise<AjaxActionRetur
 
   /* Smtp2go request */
 
-  const body: {
-    api_key: string
-    to: string[]
-    sender: string
-    subject: string
-    text_body: string
-    html_body: string
-    custom_headers?: unknown[]
-  } = {
+  const body: SendFormRequestBody = {
     api_key: config.apiKeys.smtp2go,
     to: toEmails,
     sender: senderEmail,
@@ -343,7 +338,7 @@ const SendForm = async ({ id, inputs }: AjaxActionArgs): Promise<AjaxActionRetur
     }
   )
 
-  const resJson: { data: { succeeded: number } } = await res.json()
+  const resJson: SendFormRequestRes = await res.json()
 
   /* Success */
 
