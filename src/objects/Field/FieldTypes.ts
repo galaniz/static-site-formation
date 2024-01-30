@@ -86,3 +86,12 @@ export interface FieldCheckboxRadioArgs {
   type?: string
   labelClass?: string
 }
+
+/**
+ * @typedef {function} FieldPropsFilter
+ * @prop {FieldProps} props
+ * @prop {object} args
+ * @prop {string} args.renderType
+ * @return {Promise<FieldProps>}
+ */
+export type FieldPropsFilter = (props: FieldProps, args: { renderType: string }) => Promise<FieldProps>

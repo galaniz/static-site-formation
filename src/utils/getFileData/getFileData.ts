@@ -4,8 +4,7 @@
 
 /* Imports */
 
-import type { FileDataParams } from './getFileDataTypes'
-import type { Generic } from '../../global/globalTypes'
+import type { FileDataParams, FileDataReturn } from './getFileDataTypes'
 import { readdir, readFile } from 'node:fs/promises'
 import { extname, basename, resolve } from 'node:path'
 import { applyFilters, isObject, isStringStrict } from '../../utils'
@@ -16,12 +15,12 @@ import { config } from '../../config/config'
  *
  * @param {string} key
  * @param {FileDataParams} params
- * @return {Promise<Generic>}
+ * @return {Promise<FileDataReturn>}
  */
 const getFileData = async (
   key: string = '',
   params: FileDataParams = {}
-): Promise<Generic> => {
+): Promise<FileDataReturn> => {
   try {
     /* Key required for cache */
 
@@ -32,7 +31,7 @@ const getFileData = async (
     /* Check cache */
 
     if (config.env.cache) {
-      let cacheData: Generic = {}
+      let cacheData: FileDataReturn = {}
 
       const cacheDataFilterArgs = {
         key,
@@ -41,7 +40,7 @@ const getFileData = async (
 
       cacheData = await applyFilters('cacheData', cacheData, cacheDataFilterArgs)
 
-      if (isObject(cacheData)) {
+      if (isObject(cacheData) && Object.keys(cacheData).length > 0) {
         return structuredClone(cacheData)
       }
     }
@@ -52,7 +51,7 @@ const getFileData = async (
 
     /* Single file */
 
-    const data: Generic = {}
+    const data: FileDataReturn = {}
 
     if (isStringStrict(id) && !all) {
       const file = await readFile(resolve(config.static.dir, `${id}.json`), { encoding: 'utf8' })

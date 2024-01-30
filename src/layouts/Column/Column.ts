@@ -5,7 +5,7 @@
 /* Imports */
 
 import type { ColumnProps, ColumnReturn } from './ColumnTypes'
-import { applyFilters, isStringStrict } from '../../utils'
+import { applyFilters, isStringStrict, isObjectStrict } from '../../utils'
 
 /**
  * Function - output column wrapper
@@ -14,9 +14,28 @@ import { applyFilters, isStringStrict } from '../../utils'
  * @return {Promise<ColumnReturn>}
  */
 const Column = async (props: ColumnProps = { args: {} }): Promise<ColumnReturn> => {
+  /* Fallback output */
+
+  const fallback = {
+    start: '',
+    end: ''
+  }
+
+  /* Props must be object */
+
+  if (!isObjectStrict(props)) {
+    return fallback
+  }
+
   props = await applyFilters('columnProps', props, { renderType: 'Column' })
 
-  const { args = {} } = props
+  /* Filtered props must be object */
+
+  if (!isObjectStrict(props)) {
+    return fallback
+  }
+
+  const { args } = props
 
   const {
     tag = 'div',
@@ -24,49 +43,49 @@ const Column = async (props: ColumnProps = { args: {} }): Promise<ColumnReturn> 
     widthSmall = '',
     widthMedium = '',
     widthLarge = '',
-    widthCustom,
+    widthCustom = null,
     justify = '',
     align = '',
     classes = '',
     style = '',
     attr = ''
-  } = args
+  } = isObjectStrict(args) ? args : {}
 
   /* Classes */
 
   const classesArray: string[] = []
 
-  if (classes !== '') {
+  if (isStringStrict(classes)) {
     classesArray.push(classes)
   }
 
   /* Width */
 
-  if (width !== '') {
+  if (isStringStrict(width)) {
     classesArray.push(width)
   }
 
-  if (widthSmall !== '' && widthSmall !== width) {
+  if (isStringStrict(widthSmall) && widthSmall !== width) {
     classesArray.push(widthSmall)
   }
 
-  if (widthMedium !== '' && widthMedium !== widthSmall) {
+  if (isStringStrict(widthMedium) && widthMedium !== widthSmall) {
     classesArray.push(widthMedium)
   }
 
-  if (widthLarge !== '' && widthLarge !== widthMedium) {
+  if (isStringStrict(widthLarge) && widthLarge !== widthMedium) {
     classesArray.push(widthLarge)
   }
 
   /* Justify */
 
-  if (justify !== '') {
+  if (isStringStrict(justify)) {
     classesArray.push(justify)
   }
 
   /* Align */
 
-  if (align !== '') {
+  if (isStringStrict(align)) {
     classesArray.push(align)
   }
 
@@ -74,20 +93,20 @@ const Column = async (props: ColumnProps = { args: {} }): Promise<ColumnReturn> 
 
   const stylesArray: string[] = []
 
-  if (style !== '') {
+  if (isStringStrict(style)) {
     stylesArray.push(style)
   }
 
-  if (widthCustom !== undefined) {
+  if (isObjectStrict(widthCustom)) {
     if (isStringStrict(widthCustom.class)) {
       classesArray.push(widthCustom.class)
     }
 
     const styleArray = [
-      `--width:${widthCustom.default !== undefined ? widthCustom.default : '100%'}`,
-      `--width-small:${widthCustom.small !== undefined ? widthCustom.small : '100%'}`,
-      `--width-medium:${widthCustom.medium !== undefined ? widthCustom.medium : '100%'}`,
-      `--width-large:${widthCustom.large !== undefined ? widthCustom.large : '100%'}`
+      `--width:${isStringStrict(widthCustom.default) ? widthCustom.default : '100%'}`,
+      `--width-small:${isStringStrict(widthCustom.small) ? widthCustom.small : '100%'}`,
+      `--width-medium:${isStringStrict(widthCustom.medium) ? widthCustom.medium : '100%'}`,
+      `--width-large:${isStringStrict(widthCustom.large) ? widthCustom.large : '100%'}`
     ]
 
     stylesArray.push(styleArray.join(';'))
@@ -99,7 +118,7 @@ const Column = async (props: ColumnProps = { args: {} }): Promise<ColumnReturn> 
 
   let attrs = ''
 
-  if (attr !== '') {
+  if (isStringStrict(attr)) {
     attrs = ` ${attr}`
   }
 

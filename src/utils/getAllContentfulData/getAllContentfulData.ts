@@ -5,10 +5,10 @@
 /* Imports */
 
 import type { AllContentfulDataArgs } from './getAllContentfulDataTypes'
-import type { Generic } from '../../global/globalTypes'
-import type { RenderAllData } from '../../render/RenderTypes'
+import type { RenderAllData, RenderItem } from '../../render/RenderTypes'
 import { config } from '../../config/config'
 import { getContentfulData } from '../getContentfulData/getContentfulData'
+import { isArray } from '../isArray/isArray'
 import { isObjectStrict } from '../isObject/isObject'
 import { isStringStrict } from '../isString/isString'
 
@@ -40,7 +40,7 @@ const getAllContentfulData = async (args: AllContentfulDataArgs = {}): Promise<R
 
     /* Get single entry data if serverless or preview data */
 
-    let entry: { items?: Generic[] } | undefined
+    let entry: { items?: RenderItem[] } | undefined
 
     if (serverlessData !== undefined || previewData !== undefined) {
       let contentType = ''
@@ -73,10 +73,10 @@ const getAllContentfulData = async (args: AllContentfulDataArgs = {}): Promise<R
           include: 10
         }
 
-        entry = await getContentfulData(key, params)
+        const data = await getContentfulData(key, params)
 
-        if (entry.items !== undefined) {
-          allData.content[contentType] = entry.items
+        if (isArray(data.items)) {
+          allData.content[contentType] = data.items
         }
       }
     }
@@ -102,7 +102,7 @@ const getAllContentfulData = async (args: AllContentfulDataArgs = {}): Promise<R
           data = filterData(data, serverlessData, previewData)
         }
 
-        if (data.items !== undefined) {
+        if (isArray(data.items)) {
           allData[contentType] = data.items
         }
       }
@@ -130,7 +130,7 @@ const getAllContentfulData = async (args: AllContentfulDataArgs = {}): Promise<R
           data = filterData(data, serverlessData, previewData)
         }
 
-        if (data.items !== undefined) {
+        if (isArray(data.items)) {
           allData.content[contentType] = data.items
         }
       }

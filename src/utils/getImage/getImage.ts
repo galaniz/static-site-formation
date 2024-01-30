@@ -4,67 +4,12 @@
 
 /* Imports */
 
-import type { ImageArgs, ImageReturn, ImageData, ImageNormalData } from './getImageTypes'
+import type { ImageArgs, ImageReturn } from './getImageTypes'
 import { config } from '../../config/config'
-import { isString, isStringStrict } from '../isString/isString'
+import { isString } from '../isString/isString'
 import { isNumber } from '../isNumber/isNumber'
-
-/**
- * Function - consistent data object regardless of source
- *
- * @private
- * @param {ImageData} data
- * @return {ImageNormalData|undefined}
- */
-const _normalizeImageData = (data: ImageData): ImageNormalData | undefined => {
-  if (config.source === 'static') {
-    const {
-      base = '',
-      alt = '',
-      width = 0,
-      height = 0,
-      format = 'jpg'
-    } = data
-
-    if (!isStringStrict(base) || width === 0 || height === 0) {
-      return
-    }
-
-    const url = `${config.image.url}${base}`
-
-    return {
-      url,
-      alt,
-      naturalWidth: width,
-      naturalHeight: height,
-      format
-    }
-  } else {
-    const { file, description = '' } = data
-
-    /* File required */
-
-    if (file === undefined) {
-      return
-    }
-
-    const { url = '', contentType = 'image/jpg', details } = file
-
-    /* Url and details required */
-
-    if (!isStringStrict(url) || details === undefined) {
-      return
-    }
-
-    return {
-      url,
-      alt: description,
-      naturalWidth: details.image.width,
-      naturalHeight: details.image.height,
-      format: contentType.split('/')[1]
-    }
-  }
-}
+import { getProp } from '../getProp/getProp'
+import { isObjectStrict } from '../isObject/isObject'
 
 /**
  * Function - get responsive image output
@@ -74,7 +19,7 @@ const _normalizeImageData = (data: ImageData): ImageNormalData | undefined => {
  */
 const getImage = (args: ImageArgs = {}): ImageReturn | string => {
   const {
-    data,
+    data = {},
     classes = '',
     attr = '',
     width = 'auto',
@@ -85,17 +30,13 @@ const getImage = (args: ImageArgs = {}): ImageReturn | string => {
     quality = config.image.quality,
     maxWidth = 1200,
     viewportWidth = 100
-  } = args
+  } = isObjectStrict(args) ? args : {}
 
   /* Data required */
 
-  if (data === undefined) {
-    return ''
-  }
+  const normalData = getProp.file(data, 'all')
 
-  const normalData = _normalizeImageData(data)
-
-  if (normalData === undefined) {
+  if (!isObjectStrict(normalData)) {
     return ''
   }
 
@@ -141,14 +82,14 @@ const getImage = (args: ImageArgs = {}): ImageReturn | string => {
   } else {
     const common = `&q=${quality}&w=${w}&h=${h}`
 
-    src = `https:${url}?fm=webp${common}`
-    srcFallback = `https:${url}?fm=${format}${common}`
+    src = `${url}?fm=webp${common}`
+    srcFallback = `${url}?fm=${format}${common}`
   }
 
   const sizes = `(min-width: ${w / 16}rem) ${w / 16}rem, ${viewportWidth}vw`
+  const srcsetFallback: string[] = []
 
   let srcset: string[] | number[] = config.image.sizes
-  const srcsetFallback: string[] = []
 
   if (!srcset.includes(w)) {
     srcset.push(w)
@@ -168,9 +109,9 @@ const getImage = (args: ImageArgs = {}): ImageReturn | string => {
     } else {
       const common = `&q=${quality}&w=${s}&h=${Math.round(s * aspectRatio)} ${s}w`
 
-      srcsetFallback.push(`https:${url}?fm=${format}${common}`)
+      srcsetFallback.push(`${url}?fm=${format}${common}`)
 
-      return `https:${url}?fm=webp${common}`
+      return `${url}?fm=webp${common}`
     }
   })
 

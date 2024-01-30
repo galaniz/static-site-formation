@@ -3,6 +3,14 @@
  */
 
 /**
+ * @typedef {object} SendFormOutputData
+ * @prop {string[]|SendFormOutputData} [key] - Dynamic key
+ */
+export interface SendFormOutputData {
+  [key: string]: string[] | SendFormOutputData
+}
+
+/**
  * @typedef {object} SendFormRequestBody
  * @prop {string} api_key
  * @prop {string[]} to

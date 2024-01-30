@@ -5,6 +5,7 @@
 /* Imports */
 
 import type { PaginationProps, PaginationData, PaginationReturn } from './PaginationTypes'
+import { isObjectStrict, isStringStrict } from '../../utils'
 
 /**
  * Function - output pagination navigation
@@ -13,6 +14,19 @@ import type { PaginationProps, PaginationData, PaginationReturn } from './Pagina
  * @return {string} HTML - ol
  */
 const Pagination = (props: PaginationProps = {}): PaginationReturn => {
+  /* Fallback output */
+
+  const fallback = {
+    output: '',
+    data: {}
+  }
+
+  /* Props must be object */
+
+  if (!isObjectStrict(props)) {
+    return fallback
+  }
+
   const {
     total = 1,
     display = 5,
@@ -39,15 +53,12 @@ const Pagination = (props: PaginationProps = {}): PaginationReturn => {
     prevLinkClass = '',
     nextSpanClass = '',
     nextLinkClass = ''
-  } = args
+  } = isObjectStrict(args) ? args : {}
 
   /* Total must be greater than 1 and base link required */
 
-  if (total <= 1 || basePermaLink === '') {
-    return {
-      output: '',
-      data: {}
-    }
+  if (total <= 1 || !isStringStrict(basePermaLink)) {
+    return fallback
   }
 
   /* Store items output */
@@ -60,7 +71,7 @@ const Pagination = (props: PaginationProps = {}): PaginationReturn => {
   let nextFilters = filters
   let currentFilters = filters
 
-  if (filters !== '') {
+  if (isStringStrict(filters)) {
     if (current > 2) {
       prevFilters = `&${prevFilters}`
     } else {
@@ -120,13 +131,17 @@ const Pagination = (props: PaginationProps = {}): PaginationReturn => {
 
   const listAttrs: string[] = []
 
-  if (listClass !== '') {
+  if (isStringStrict(listClass)) {
     listAttrs.push(`class="${listClass}"`)
   }
 
-  if (listAttr !== '') {
+  if (isStringStrict(listAttr)) {
     listAttrs.push(listAttr)
   }
+
+  /* Check if ellipsis exists */
+
+  const hasEllipsis = isStringStrict(ellipsis)
 
   /* Max width */
 
@@ -135,11 +150,11 @@ const Pagination = (props: PaginationProps = {}): PaginationReturn => {
   if (itemMaxWidth) {
     let totalListItems = totalPagesItems + 2 // 2 for prev and next buttons
 
-    if (center && ellipsis !== '' && current >= limit) {
+    if (center && hasEllipsis && current >= limit) {
       totalListItems += 1
     }
 
-    if (center && ellipsis !== '' && current < total - half) {
+    if (center && hasEllipsis && current < total - half) {
       totalListItems += 1
     }
 
@@ -148,15 +163,15 @@ const Pagination = (props: PaginationProps = {}): PaginationReturn => {
 
   /* Item attributes */
 
-  const itemAttrs = `${itemClass !== '' ? ` class="${itemClass}"` : ''}${itemAttr !== '' ? ` ${itemAttr}` : ''}${maxWidth}`
+  const itemAttrs = `${isStringStrict(itemClass) ? ` class="${itemClass}"` : ''}${itemAttr !== '' ? ` ${itemAttr}` : ''}${maxWidth}`
 
   /* Previous item */
 
-  let prevItem = `<span${prevSpanClass !== '' ? ` class="${prevSpanClass}"` : ''}>${prev}</span>`
+  let prevItem = `<span${isStringStrict(prevSpanClass) ? ` class="${prevSpanClass}"` : ''}>${prev}</span>`
 
   if (current > 1) {
     prevItem = `
-      <a${prevLinkClass !== '' ? ` class="${prevLinkClass}"` : ''}
+      <a${isStringStrict(prevLinkClass) ? ` class="${prevLinkClass}"` : ''}
         href="${basePermaLink}${current > 2 ? `?page=${current - 1}` : ''}${prevFilters}"
         aria-label="Previous page"
       >
@@ -171,7 +186,7 @@ const Pagination = (props: PaginationProps = {}): PaginationReturn => {
 
   let ellipsisOutput = ''
 
-  if (ellipsis !== '') {
+  if (hasEllipsis) {
     ellipsisOutput = `<li${itemAttrs} aria-hidden="true">${ellipsis}</li>`
   }
 
@@ -186,7 +201,7 @@ const Pagination = (props: PaginationProps = {}): PaginationReturn => {
 
     if (i === current) {
       content = `
-        <span${currentClass !== '' ? ` class="${currentClass}"` : ''}>
+        <span${isStringStrict(currentClass) ? ` class="${currentClass}"` : ''}>
           <span class="${a11yClass}">Current page </span>
           ${i}
         </span>
@@ -195,7 +210,7 @@ const Pagination = (props: PaginationProps = {}): PaginationReturn => {
       const link = i === 1 ? basePermaLink : `${basePermaLink}?page=${i}`
 
       content = `
-        <a${linkClass !== '' ? ` class="${linkClass}"` : ''}${linkAttr !== '' ? ` ${linkAttr}` : ''}href="${link}${currentFilters}">
+        <a${isStringStrict(linkClass) ? ` class="${linkClass}"` : ''}${linkAttr !== '' ? ` ${linkAttr}` : ''}href="${link}${currentFilters}">
           <span class="${a11yClass}">Page </span>
           ${i}
         </a>
@@ -213,11 +228,11 @@ const Pagination = (props: PaginationProps = {}): PaginationReturn => {
 
   /* Next item */
 
-  let nextItem = `<span${nextSpanClass !== '' ? ` class="${nextSpanClass}"` : ''}>${next}</span>`
+  let nextItem = `<span${isStringStrict(nextSpanClass) ? ` class="${nextSpanClass}"` : ''}>${next}</span>`
 
   if (current < total) {
     nextItem = `
-      <a${nextLinkClass !== '' ? ` class="${nextLinkClass}"` : ''}
+      <a${isStringStrict(nextLinkClass) ? ` class="${nextLinkClass}"` : ''}
         href="${basePermaLink}?page=${current + 1}${nextFilters}"
         aria-label="Next page"
       >

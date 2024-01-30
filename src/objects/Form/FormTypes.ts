@@ -101,3 +101,12 @@ export interface FormMessages {
   successMessage?: FormMessage
   errorMessage?: FormMessage
 }
+
+/**
+ * @typedef {function} FormPropsFilter
+ * @prop {FormProps} props
+ * @prop {object} args
+ * @prop {string} args.renderType
+ * @return {Promise<FormProps>}
+ */
+export type FormPropsFilter = (props: FormProps, args: { renderType: string }) => Promise<FormProps>

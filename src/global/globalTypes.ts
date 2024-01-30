@@ -42,7 +42,7 @@ export interface InternalLinkBase {
 /**
  * @typedef InternalLink
  * @type {InternalLinkBase}
- * @prop {*} [key] - Dynamic string key
+ * @prop {*} [key] - Dynamic key
  */
 export interface InternalLink extends InternalLinkBase {
   [key: string]: unknown
@@ -59,8 +59,37 @@ export interface ParentArgs {
 }
 
 /**
+ * @typedef {object} HtmlString
+ * @prop {string} html
+ */
+export interface HtmlString {
+  html: string
+}
+
+/**
  * @typedef {Object.<string, *>} Generic
  */
 export interface Generic {
   [key: string]: unknown
+}
+
+/**
+ * @typedef {Object.<string, function>} GenericFunctions
+ */
+export interface GenericFunctions {
+  [key: string]: Function
+}
+
+/**
+ * @typedef {Object.<string, string>} GenericStrings
+ */
+export interface GenericStrings {
+  [key: string]: string
+}
+
+/**
+ * @typedef {Object.<string, number>} GenericNumbers
+ */
+export interface GenericNumbers {
+  [key: string]: number
 }

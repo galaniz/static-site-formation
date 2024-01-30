@@ -4,44 +4,35 @@
 
 /* Imports */
 
-import type { Generic } from '../../global/globalTypes'
 import { isObject } from '../isObject/isObject'
-import { isArray } from '../isArray/isArray'
+import { getObjectKeys } from '../getObjectKeys/getObjectKeys'
 
 /**
  * Function - set property in object or array of objects to undefined
  *
- * @param {Generic|Generic[]} obj
+ * @param {object|object[]} obj
  * @param {string[]} props
- * @return {Generic|Generic[]}
+ * @return {object|object[]}
  */
-const undefineProps = (obj: Generic | Generic[], props: string[] = []): Generic | Generic[] => {
+const undefineProps = <T>(obj: T, props: string[] = []): T => {
   if (!isObject(obj)) {
     return obj
   }
 
-  const isArr = isArray(obj)
-  let objArr = isArr ? obj : [obj]
+  const clone = structuredClone(obj)
 
-  objArr = structuredClone(objArr)
+  getObjectKeys(clone).forEach((prop) => {
+    const value = clone[prop]
 
-  objArr.forEach((o) => {
-    if (!isObject(o)) {
-      return
+    if (props.includes(prop.toString())) {
+      // @ts-expect-error: Type 'undefined' is not assignable to type 'T[keyof T]'
+      clone[prop] = undefined
+    } else if (isObject(value)) {
+      undefineProps(value, props)
     }
-
-    Object.keys(o).forEach((k) => {
-      if (props.includes(k) && o[k] !== undefined) {
-        o[k] = undefined
-      }
-    })
   })
 
-  if (!isArr) {
-    return objArr[0]
-  }
-
-  return objArr
+  return clone
 }
 
 /* Exports */

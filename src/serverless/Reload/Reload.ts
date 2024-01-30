@@ -5,8 +5,9 @@
 /* Imports */
 
 import type { ReloadArgs, ReloadQuery } from './ReloadTypes'
+import type { CustomErrorObject } from '../serverlessTypes'
 import { config, setConfig } from '../../config/config'
-import { getAllContentfulData, isArray, isObjectStrict, isNumber } from '../../utils'
+import { getAllContentfulData, isObjectStrict, isStringStrict, isNumber } from '../../utils'
 import { Render } from '../../render/Render'
 
 /**
@@ -25,21 +26,28 @@ const Reload = async ({ request, env, next, siteConfig }: ReloadArgs): Promise<R
     const path = pathname
     const query: ReloadQuery = {}
 
-    if (page !== null) {
+    let noPage = false
+    let noFilters = false
+
+    if (isStringStrict(page)) {
       query.page = page
+    } else {
+      noPage = true
     }
 
-    if (filters !== null) {
+    if (isStringStrict(filters)) {
       query.filters = filters
+    } else {
+      noFilters = true
     }
 
     /* No query move on to default page */
 
-    if (page === null || filters === null) {
+    if (noPage || noFilters) {
       return next()
     }
 
-    /* config */
+    /* Config */
 
     setConfig(siteConfig)
 
@@ -63,7 +71,7 @@ const Reload = async ({ request, env, next, siteConfig }: ReloadArgs): Promise<R
 
     let html = ''
 
-    if (!isArray(data)) {
+    if (isObjectStrict(data)) {
       html = data.output !== undefined ? data.output : ''
     }
 
@@ -78,13 +86,17 @@ const Reload = async ({ request, env, next, siteConfig }: ReloadArgs): Promise<R
 
     let statusCode = 500
 
-    if (isObjectStrict(error) && isNumber(error.httpStatusCode)) {
-      statusCode = error.httpStatusCode
+    if (isObjectStrict(error)) {
+      const err: CustomErrorObject = error
+
+      if (isNumber(err.httpStatusCode)) {
+        statusCode = err.httpStatusCode
+      }
     }
 
     let html = ''
 
-    if (config.renderFunctions.httpError !== undefined) {
+    if (typeof config.renderFunctions.httpError === 'function') {
       html = await config.renderFunctions.httpError(statusCode)
     }
 

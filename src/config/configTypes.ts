@@ -4,8 +4,10 @@
 
 /* Imports */
 
-import type { Generic, SlugBase } from '../global/globalTypes'
+import type { Generic, GenericFunctions, GenericStrings, GenericNumbers, SlugBase } from '../global/globalTypes'
 import type { Navigation, NavigationItem } from '../components/Navigation/NavigationTypes'
+import type { RenderItem } from '../render/RenderTypes'
+import type { Filters } from '../utils/filters/filtersTypes'
 
 /**
  * @typedef {object} ConfigMeta
@@ -36,7 +38,7 @@ export interface ConfigSlugParent {
  * @prop {Object.<string, ConfigSlugParent>} parents
  * @prop {object} bases
  * @prop {SlugBase} bases.page
- * @prop {SlugBase} bases.[key] - Dynamic string key
+ * @prop {SlugBase} bases.[key] - Dynamic key
  */
 export interface ConfigSlug {
   parents: {
@@ -65,9 +67,7 @@ export interface ConfigContentTypesArchive {
   order?: string
   display?: number
   linkContentType?: string[]
-  id: {
-    [key: string]: unknown
-  }
+  id: Generic
 }
 
 /**
@@ -112,23 +112,21 @@ export interface ConfigImage {
 
 /**
  * @typedef {object} ConfigArchive
- * @prop {Object.<string, unknown>} ids
- * @prop {Object.<string, unknown>} posts
- * @prop {Object.<string, unknown>} terms
+ * @prop {Object.<string, *>} ids
+ * @prop {Object.<string, *>} posts
+ * @prop {Object.<string, *>} terms
  */
 export interface ConfigArchive {
   ids: {
-    [key: string]: {
-      [key: string]: string
-    }
+    [key: string]: GenericStrings
   }
   posts: {
-    [key: string]: unknown[]
+    [key: string]: RenderItem[]
   }
   terms: {
     [key: string]: {
       [key: string]: {
-        [key: string]: unknown[]
+        [key: string]: RenderItem[]
       }
     }
   }
@@ -172,7 +170,7 @@ export interface ConfigStoreFile {
  * @prop {ConfigStoreFile} files.slugs
  * @prop {ConfigStoreFile} files.slugParents
  * @prop {ConfigStoreFile} files.navigations
- * @prop {ConfigStoreFile} files.[key] - Dynamic string key
+ * @prop {ConfigStoreFile} files.[key] - Dynamic key
  */
 export interface ConfigStore {
   dir: string
@@ -204,7 +202,7 @@ export interface ConfigServerlessRoute {
  * @prop {string} files.reload
  * @prop {object} routes
  * @prop {ConfigServerlessRoute[]} routes.reload
- * @prop {ConfigServerlessRoute[]} routes.[key] - Dynamic string key
+ * @prop {ConfigServerlessRoute[]} routes.[key] - Dynamic key
  */
 export interface ConfigServerless {
   dir: string
@@ -267,16 +265,12 @@ export interface ConfigStatic {
 
 /**
  * @typedef {object} ConfigScriptsStyles
- * @prop {Object.<string, number>} item
- * @prop {Object.<string, string>} build
+ * @prop {GenericNumbers} item
+ * @prop {GenericStrings} build
  */
 export interface ConfigScriptsStyles {
-  item: {
-    [key: string]: number
-  }
-  build: {
-    [key: string]: string
-  }
+  item: GenericNumbers
+  build: GenericStrings
 }
 
 /**
@@ -298,18 +292,33 @@ export interface ConfigConsole {
 }
 
 /**
- * @typedef {object} Config
+ * @typedef {object} ConfigBase
  * @prop {string} namespace
  * @prop {string} source
  * @prop {string} title
  * @prop {ConfigMeta} meta
  * @prop {ConfigSlug} slug
  * @prop {ConfigContentTypes} contentTypes
- * @prop {Object.<string, string>} renderTypes
- * @prop {Object.<string, function>} renderFunctions
- * @prop {Object.<string, function>} ajaxFunctions
- * @prop {Object.<string, function>} actions
- * @prop {Object.<string, function>} filters
+ * @prop {GenericStrings} renderTypes
+ * @prop {GenericFunctions} renderFunctions
+ */
+export interface ConfigBase {
+  namespace: string
+  source: string
+  title: string
+  meta: ConfigMeta
+  slug: ConfigSlug
+  contentTypes: ConfigContentTypes
+  renderTypes: GenericStrings
+  renderFunctions: GenericFunctions
+}
+
+/**
+ * @typedef Config
+ * @type {ConfigBase}
+ * @prop {GenericFunctions} ajaxFunctions
+ * @prop {GenericFunctions} actions
+ * @prop {Filters} filters
  * @prop {ConfigImage} image
  * @prop {Navigation[]} navigation
  * @prop {NavigationItem[]} navigationItem
@@ -327,28 +336,10 @@ export interface ConfigConsole {
  * @prop {ConfigApiKeys} apiKeys
  * @prop {ConfigConsole} console
  */
-export interface Config {
-  namespace: string
-  source: string
-  title: string
-  meta: ConfigMeta
-  slug: ConfigSlug
-  contentTypes: ConfigContentTypes
-  renderTypes: {
-    [key: string]: string
-  }
-  renderFunctions: {
-    [key: string]: Function
-  }
-  ajaxFunctions: {
-    [key: string]: Function
-  }
-  actions: {
-    [key: string]: Function
-  }
-  filters: {
-    [key: string]: Function
-  }
+export interface Config extends ConfigBase {
+  ajaxFunctions: GenericFunctions
+  actions: GenericFunctions
+  filters: Partial<Filters>
   image: ConfigImage
   navigation: Navigation[]
   navigationItem: NavigationItem[]
@@ -365,5 +356,26 @@ export interface Config {
   scripts: ConfigScriptsStyles
   apiKeys: ConfigApiKeys
   console: ConfigConsole
-  vars: unknown
 }
+
+/**
+ * @typedef ConfigArgs
+ * @type {ConfigBase}
+ * @prop {GenericFunctions} [ajaxFunctions]
+ * @prop {GenericFunctions} [actions]
+ * @prop {Filters} [filters]
+ * @prop {ConfigImage} [image]
+ * @prop {Generic} [scriptMeta]
+ * @prop {Generic} [formMeta]
+ * @prop {ConfigArchive} [archive]
+ * @prop {ConfigEnv} [env]
+ * @prop {ConfigStore} [store]
+ * @prop {ConfigServerless} [serverless]
+ * @prop {ConfigRedirects} [redirects]
+ * @prop {ConfigCms} [cms]
+ * @prop {ConfigStatic} [static]
+ * @prop {ConfigScriptsStyles} [styles]
+ * @prop {ConfigScriptsStyles} [scripts]
+ * @prop {ConfigApiKeys} [apiKeys]
+ */
+export type ConfigArgs = Partial<Config>

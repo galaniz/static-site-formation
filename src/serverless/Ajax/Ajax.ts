@@ -5,7 +5,7 @@
 /* Imports */
 
 import type { AjaxArgs, AjaxCustomErrorArgs, AjaxResOptions } from './AjaxTypes'
-import type { AjaxActionReturn, AjaxActionArgs } from '../serverlessTypes'
+import type { AjaxActionReturn, AjaxActionArgs, CustomErrorObject } from '../serverlessTypes'
 import { setConfig } from '../../config/config'
 import {
   setActions,
@@ -63,7 +63,7 @@ class _CustomError extends Error {
  */
 const Ajax = async ({ request, env, siteConfig }: AjaxArgs): Promise<Response> => {
   try {
-    /* config */
+    /* Config */
 
     setConfig(siteConfig)
     setFilters(siteConfig.filters)
@@ -182,12 +182,14 @@ const Ajax = async ({ request, env, siteConfig }: AjaxArgs): Promise<Response> =
     let message = ''
 
     if (isObjectStrict(error)) {
-      if (isNumber(error.httpStatusCode)) {
-        statusCode = error.httpStatusCode
+      const err: CustomErrorObject = error
+
+      if (isNumber(err.httpStatusCode)) {
+        statusCode = err.httpStatusCode
       }
 
-      if (isStringStrict(error.message)) {
-        message = error.message
+      if (isStringStrict(err.message)) {
+        message = err.message
       }
     }
 

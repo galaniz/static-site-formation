@@ -57,3 +57,12 @@ export interface ContainerReturn {
   start: string
   end: string
 }
+
+/**
+ * @typedef {function} ContainerPropsFilter
+ * @prop {ContainerProps} props
+ * @prop {object} args
+ * @prop {string} args.renderType
+ * @return {Promise<ContainerProps>}
+ */
+export type ContainerPropsFilter = (props: ContainerProps, args: { renderType: string }) => Promise<ContainerProps>

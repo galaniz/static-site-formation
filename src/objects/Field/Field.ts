@@ -6,7 +6,7 @@
 
 import type { FieldProps, FieldOption, FieldCheckboxRadioArgs } from './FieldTypes'
 import { v4 as uuid } from 'uuid'
-import { applyFilters } from '../../utils/filters/filters'
+import { applyFilters, isStringStrict, isObjectStrict, isArrayStrict } from '../../utils'
 
 /**
  * Function - output checkbox and radio inputs from options
@@ -60,9 +60,23 @@ const _getCheckboxRadioOpts = (args: FieldCheckboxRadioArgs = {}): string => {
  * @return {Promise<string>} HTML - div
  */
 const Field = async (props: FieldProps = { args: {} }): Promise<string> => {
+  /* Props must be object */
+
+  if (!isObjectStrict(props)) {
+    return ''
+  }
+
   props = await applyFilters('fieldProps', props, { renderType: 'Field' })
 
-  const { args = {} } = props
+  /* Filtered props must be object */
+
+  if (!isObjectStrict(props)) {
+    return ''
+  }
+
+  let { args } = props
+
+  args = isObjectStrict(args) ? args : {}
 
   const {
     type = 'text',
@@ -91,7 +105,7 @@ const Field = async (props: FieldProps = { args: {} }): Promise<string> => {
 
   /* Name and label required */
 
-  if (name === '' || label === '') {
+  if (!isStringStrict(name) || !isStringStrict(label)) {
     return ''
   }
 
@@ -103,25 +117,25 @@ const Field = async (props: FieldProps = { args: {} }): Promise<string> => {
 
   const fieldClassesArray: string[] = []
 
-  if (fieldClasses !== '') {
+  if (isStringStrict(fieldClasses)) {
     fieldClassesArray.push(fieldClasses)
   }
 
   /* Width */
 
-  if (width !== '') {
+  if (isStringStrict(width)) {
     fieldClassesArray.push(width)
   }
 
-  if (widthSmall !== '' && widthSmall !== width) {
+  if (isStringStrict(widthSmall) && widthSmall !== width) {
     fieldClassesArray.push(widthSmall)
   }
 
-  if (widthMedium !== '' && widthMedium !== widthSmall) {
+  if (isStringStrict(widthMedium) && widthMedium !== widthSmall) {
     fieldClassesArray.push(widthMedium)
   }
 
-  if (widthLarge !== '' && widthLarge !== widthMedium) {
+  if (isStringStrict(widthLarge) && widthLarge !== widthMedium) {
     fieldClassesArray.push(widthLarge)
   }
 
@@ -129,7 +143,7 @@ const Field = async (props: FieldProps = { args: {} }): Promise<string> => {
 
   const classesArray: string[] = []
 
-  if (classes !== '') {
+  if (isStringStrict(classes)) {
     classesArray.push(classes)
   }
 
@@ -141,7 +155,7 @@ const Field = async (props: FieldProps = { args: {} }): Promise<string> => {
 
   const opts: FieldOption[] = []
 
-  if (options.length > 0) {
+  if (isArrayStrict(options)) {
     options.forEach((option) => {
       const data = option.split(' : ')
 
@@ -172,27 +186,27 @@ const Field = async (props: FieldProps = { args: {} }): Promise<string> => {
     attr.push('aria-required="true"')
   }
 
-  if (value !== '' && !checkboxRadioOpts) {
+  if (isStringStrict(value) && !checkboxRadioOpts) {
     attr.push(`value="${value}"`)
   }
 
-  if (placeholder !== '') {
+  if (isStringStrict(placeholder)) {
     attr.push(`placeholder="${placeholder}"`)
   }
 
-  if (autoCompleteToken !== '') {
+  if (isStringStrict(autoCompleteToken)) {
     attr.push(`autocomplete="${autoCompleteToken}"`)
   }
 
-  if (emptyErrorMessage !== '') {
+  if (isStringStrict(emptyErrorMessage)) {
     attr.push(`data-empty-message="${emptyErrorMessage}"`)
   }
 
-  if (invalidErrorMessage !== '') {
+  if (isStringStrict(invalidErrorMessage)) {
     attr.push(`data-invalid-message="${invalidErrorMessage}"`)
   }
 
-  if (rows !== 0 && type === 'textarea') {
+  if (rows > 0 && type === 'textarea') {
     attr.push(`rows="${rows}"`)
   }
 
@@ -304,7 +318,7 @@ const Field = async (props: FieldProps = { args: {} }): Promise<string> => {
 
   return `
     <div class="${fieldClassesArray.join(' ')}" data-type="${type}">
-      ${fieldset ? `<fieldset${fieldsetClasses !== '' ? ` class="${fieldsetClasses}"` : ''}>` : ''}
+      ${fieldset ? `<fieldset${isStringStrict(fieldsetClasses) ? ` class="${fieldsetClasses}"` : ''}>` : ''}
       ${labelBefore}
       ${input}
       ${labelAfter}

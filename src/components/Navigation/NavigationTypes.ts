@@ -4,7 +4,7 @@
 
 /* Imports */
 
-import type { InternalLink, Generic } from '../../global/globalTypes'
+import type { InternalLink, Generic, HtmlString } from '../../global/globalTypes'
 
 /**
  * @typedef {object} NavigationProps
@@ -46,7 +46,7 @@ export interface Navigation extends Generic {
  */
 export interface NavigationItem extends Generic {
   id?: string
-  title?: string
+  title: string
   link?: string
   internalLink?: InternalLink
   externalLink?: string
@@ -61,10 +61,12 @@ export interface NavigationItem extends Generic {
  * @type NavigationItem
  * @prop {string} slug
  * @prop {string} contentType
+ * @prop {string} [linkContentType]
  */
 export interface NavigationBreadcrumbItem extends NavigationItem {
   slug: string
   contentType: string
+  linkContentType?: string
 }
 
 /**
@@ -90,16 +92,13 @@ export interface NavigationOutputBaseArgs {
 /**
  * @typedef {object} NavigationOutputListFilterArgs
  * @prop {NavigationOutputArgs} args
- * @prop {object} output
- * @prop {string} output.html
+ * @prop {HtmlString} output
  * @prop {NavigationItem[]} items
  * @prop {number} depth
  */
 export interface NavigationOutputListFilterArgs {
   args: NavigationOutputArgs
-  output: {
-    html: string
-  }
+  output: HtmlString
   items: NavigationItem[]
   depth: number
 }
@@ -108,8 +107,7 @@ export interface NavigationOutputListFilterArgs {
  * @typedef {object} NavigationOutputFilterArgs
  * @prop {NavigationOutputArgs} args
  * @prop {NavigationItem} item
- * @prop {object} output
- * @prop {string} output.html
+ * @prop {HtmlString} output
  * @prop {number} index
  * @prop {NavigationItem[]} items
  * @prop {number} depth
@@ -117,9 +115,7 @@ export interface NavigationOutputListFilterArgs {
 export interface NavigationOutputFilterArgs {
   args: NavigationOutputArgs
   item: NavigationItem
-  output: {
-    html: string
-  }
+  output: HtmlString
   index: number
   items: NavigationItem[]
   depth: number
@@ -164,14 +160,11 @@ export interface NavigationOutputArgs extends NavigationOutputBaseArgs {
 
 /**
  * @typedef {object} NavigationBreadcrumbOutputFilterArgs
- * @prop {object} output
- * @prop {string} output.html
+ * @prop {HtmlString} output
  * @prop {boolean} isLastLevel
  */
 export interface NavigationBreadcrumbOutputFilterArgs {
-  output: {
-    html: string
-  }
+  output: HtmlString
   isLastLevel: boolean
 }
 

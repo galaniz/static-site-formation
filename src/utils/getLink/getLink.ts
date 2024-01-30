@@ -4,7 +4,7 @@
 
 /* Imports */
 
-import type { Generic, InternalLink } from '../../global/globalTypes'
+import type { InternalLink } from '../../global/globalTypes'
 import { getPermalink } from '../getPermalink/getPermalink'
 import { getSlug } from '../getSlug/getSlug'
 import { getProp } from '../getProp/getProp'
@@ -14,21 +14,18 @@ import { isString, isStringStrict } from '../isString/isString'
 /**
  * Function - get permalink from external or internal source
  *
- * @param {InternalLink|Generic} [internalLink]
+ * @param {InternalLink} [internalLink]
  * @param {string} [externalLink]
  * @return {string}
  */
-const getLink = (internalLink?: InternalLink | Generic, externalLink?: string): string => {
+const getLink = (internalLink?: InternalLink, externalLink?: string): string => {
   if (isObjectStrict(internalLink)) {
-    const id = getProp(internalLink, 'id')
-    const contentType = getProp(internalLink, 'contentType')
-    const linkContentType = getProp(internalLink, 'linkContentType')
-    const slug = getProp(internalLink, 'slug')
+    const slug = getProp.fields(internalLink, 'slug')
 
     const res = getSlug({
-      id: isStringStrict(id) ? id : '',
-      contentType: isStringStrict(contentType) ? contentType : '',
-      linkContentType: isStringStrict(linkContentType) ? linkContentType : undefined,
+      id: getProp.id(internalLink),
+      contentType: getProp.type(internalLink, 'content'),
+      linkContentType: getProp.fields(internalLink, 'linkContentType'),
       slug: isString(slug) ? slug : ''
     })
 

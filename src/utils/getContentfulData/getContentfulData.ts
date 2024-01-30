@@ -4,23 +4,22 @@
 
 /* Imports */
 
-import type { ContentfulDataParams, ContentfulDataItems } from './getContentfulDataTypes'
-import type { Generic } from '../../global/globalTypes'
+import type { ContentfulDataParams, ContentfulDataReturn } from './getContentfulDataTypes'
 import resolveResponse from 'contentful-resolve-response'
-import { applyFilters, isObject, isStringStrict } from '../../utils'
+import { applyFilters, isObject, isObjectStrict, isStringStrict } from '../../utils'
 import { config } from '../../config/config'
 
 /**
  * Function - fetch data from contentful cms or cache
  *
  * @param {string} key
- * @param {ContentfulDataItems} params
- * @return {Promise<ContentfulDataItems>}
+ * @param {ContentfulDataParams} params
+ * @return {Promise<ContentfulDataReturn>}
  */
 const getContentfulData = async (
   key: string = '',
   params: ContentfulDataParams = {}
-): Promise<ContentfulDataItems> => {
+): Promise<ContentfulDataReturn> => {
   try {
     /* Key required for cache */
 
@@ -31,7 +30,7 @@ const getContentfulData = async (
     /* Check cache */
 
     if (config.env.cache) {
-      let cacheData: Generic = {}
+      let cacheData: ContentfulDataReturn = {}
 
       const cacheDataFilterArgs = {
         key,
@@ -40,7 +39,7 @@ const getContentfulData = async (
 
       cacheData = await applyFilters('cacheData', cacheData, cacheDataFilterArgs)
 
-      if (isObject(cacheData)) {
+      if (isObject(cacheData) && Object.keys(cacheData).length > 0) {
         return structuredClone(cacheData)
       }
     }
@@ -80,13 +79,17 @@ const getContentfulData = async (
     /* New data */
 
     const resp = await fetch(url)
-    const data: ContentfulDataItems = await resp.json()
+    const data: ContentfulDataReturn = await resp.json()
 
-    if (data.items !== undefined) {
-      data.items = resolveResponse(data)
-    } else {
+    if (!isObjectStrict(data)) {
+      throw new Error('No data')
+    }
+
+    if (data.items === undefined) {
       throw new Error('No items')
     }
+
+    data.items = resolveResponse(data)
 
     /* Store in cache */
 

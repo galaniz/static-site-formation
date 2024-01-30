@@ -2,6 +2,8 @@
  * Utils - Get File Data Types
  */
 
+import type { RenderItem } from '../../render/RenderTypes'
+
 /**
  * @typedef {object} FileDataParams
  * @prop {boolean} [all]
@@ -10,4 +12,8 @@
 export interface FileDataParams {
   all?: boolean
   id?: string
+}
+
+export interface FileDataReturn {
+  [key: string]: RenderItem
 }

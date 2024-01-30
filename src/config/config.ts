@@ -4,7 +4,7 @@
 
 /* Imports */
 
-import type { Config } from './configTypes'
+import type { Config, ConfigArgs } from './configTypes'
 
 /**
  * Default options
@@ -150,17 +150,16 @@ let config: Config = {
   console: {
     green: '\x1b[32m%s\x1b[0m',
     red: '\x1b[31m%s\x1b[0m'
-  },
-  vars: {}
+  }
 }
 
 /**
  * Function - update default config with user options
  *
- * @param {Config} args
+ * @param {ConfigArgs} args
  * @return {Config}
  */
-const setConfig = (args: Config): Config => {
+const setConfig = (args: ConfigArgs): Config => {
   config = Object.assign(config, args)
 
   return config

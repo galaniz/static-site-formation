@@ -4,8 +4,7 @@
 
 /* Imports */
 
-import type { SendFormRequestBody, SendFormRequestRes } from './SendFormTypes'
-import type { Generic } from '../../global/globalTypes'
+import type { SendFormOutputData, SendFormRequestBody, SendFormRequestRes } from './SendFormTypes'
 import type { AjaxActionArgs, AjaxActionReturn } from '../serverlessTypes'
 import { config } from '../../config/config'
 import {
@@ -15,7 +14,8 @@ import {
   isStringStrict,
   isObject,
   isObjectStrict,
-  getPermalink
+  getPermalink,
+  getObjectKeys
 } from '../../utils'
 
 /**
@@ -43,8 +43,9 @@ const _recurseEmailHtml = <T>(
 
   const isArr = isArray(data)
 
-  Object.keys(data).forEach((label) => {
-    const value = data[label as keyof T]
+  getObjectKeys(data).forEach((label) => {
+    const value = data[label]
+    const l = label.toString()
     const h = depth + 1
 
     if (depth === 1) {
@@ -57,11 +58,11 @@ const _recurseEmailHtml = <T>(
     if (label !== '' && !isArr) {
       output.html += `
         <h${h} style='font-family: sans-serif; color: #222; margin: 16px 0; line-height: 1.3em'>
-          ${label}
+          ${l}
         </h${h}>
       `
 
-      output.plain += `${label}\n`
+      output.plain += `${l}\n`
     }
 
     if (isObject(value)) {
@@ -166,10 +167,10 @@ const SendForm = async ({ id, inputs }: AjaxActionArgs): Promise<AjaxActionRetur
 
   const header = `${config.title} contact form submission`
   const footer = `This email was sent from a contact form on ${config.title} (${getPermalink()})`
-  const outputData: Generic = {}
+  const outputData: SendFormOutputData = {}
   const output = { html: '', plain: '' }
 
-  Object.keys(inputs).forEach((name) => {
+  getObjectKeys(inputs).forEach((name) => {
     const input = inputs[name]
 
     /* Skip if exclude true */
@@ -227,36 +228,30 @@ const SendForm = async ({ id, inputs }: AjaxActionArgs): Promise<AjaxActionRetur
     }
 
     if (hasLegend) {
-      if (outputData[legend] === undefined) {
-        outputData[legend] = {}
-      }
-
       const legendData = outputData[legend]
 
       if (isObjectStrict(legendData)) {
-        if (legendData[inputLabel] === undefined) {
-          legendData[inputLabel] = []
-        }
-
         const inputData = legendData[inputLabel]
 
         if (isArray(inputData)) {
           inputData.push(outputValue)
+        } else {
+          legendData[inputLabel] = []
         }
+      } else {
+        outputData[legend] = {}
       }
     }
 
     /* Label */
 
     if (!hasLegend) {
-      if (outputData[inputLabel] === undefined) {
-        outputData[inputLabel] = []
-      }
-
       const inputData = outputData[inputLabel]
 
       if (isArray(inputData)) {
         inputData.push(outputValue)
+      } else {
+        outputData[inputLabel] = []
       }
     }
   })

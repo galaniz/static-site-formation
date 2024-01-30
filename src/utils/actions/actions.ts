@@ -4,6 +4,7 @@
 
 /* Imports */
 
+import type { GenericFunctions } from '../../global/globalTypes'
 import { isStringStrict } from '../isString/isString'
 import { isArrayStrict } from '../isArray/isArray'
 import { isObjectStrict } from '../isObject/isObject'
@@ -99,7 +100,7 @@ const resetActions = (): void => {
  * @param {Object.<string, Function>} args
  * @return {boolean}
  */
-const setActions = (args: { [key: string]: Function }): boolean => {
+const setActions = (args: GenericFunctions): boolean => {
   if (!isObjectStrict(args)) {
     return false
   }

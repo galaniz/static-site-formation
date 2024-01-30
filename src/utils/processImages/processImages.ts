@@ -4,7 +4,7 @@
 
 /* Imports */
 
-import type { ProcessImagesStore, ProcessImagesSharp } from './processImagesTypes'
+import type { ImagesStore, ImagesSharp } from './processImagesTypes'
 import sharp from 'sharp'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { extname, resolve, basename, dirname } from 'node:path'
@@ -18,7 +18,7 @@ import { isStringStrict } from '../isString/isString'
  * @return {Promise<void>}
  */
 const processImages = async (): Promise<void> => {
-  const store: ProcessImagesStore = {}
+  const store: ImagesStore = {}
 
   try {
     const inputDir = config.static.image.inputDir
@@ -31,7 +31,7 @@ const processImages = async (): Promise<void> => {
 
     await mkdir(resolve(outputDir), { recursive: true })
 
-    const sharpImages: ProcessImagesSharp[] = []
+    const sharpImages: ImagesSharp[] = []
 
     for await (const path of getAllFilePaths(inputDir)) {
       if (!path.includes('.DS_Store')) {
@@ -55,9 +55,22 @@ const processImages = async (): Promise<void> => {
         const id = `${folders !== '' ? `${folders}/` : ''}${base}`
         const format = ext.split('.')[1]
 
-        const { width = 0, height = 0 } = metadata
+        const {
+          width = 0,
+          height = 0,
+          size: fileSize = 0,
+          format: fileFormat = 'jpeg'
+        } = metadata
 
-        store[id] = { base: id, width, height, format }
+        store[id] = {
+          path: id,
+          name: baseName,
+          size: fileSize,
+          type: `image/${fileFormat}`,
+          format,
+          width,
+          height
+        }
 
         /* Sizes */
 

@@ -7,6 +7,7 @@
 import { isArray } from '../isArray/isArray'
 import { isString } from '../isString/isString'
 import { isObject } from '../isObject/isObject'
+import { getObjectKeys } from '../getObjectKeys/getObjectKeys'
 
 /**
  * Function - recursively set internal props from outer data
@@ -27,14 +28,14 @@ const resolveInternalLinks = <T, U>(
     return
   }
 
-  Object.keys(currentData).forEach((prop) => {
-    const value = currentData[prop as keyof U]
+  getObjectKeys(currentData).forEach((prop) => {
+    const value = currentData[prop]
 
-    if (props.includes(prop)) {
+    if (props.includes(prop.toString())) {
       let v
 
       if (isArray(value)) {
-        v = value.map((v) => data[v as keyof T])
+        v = value.map((k) => data[k as keyof T])
       }
 
       if (isString(value)) {
@@ -45,7 +46,7 @@ const resolveInternalLinks = <T, U>(
         v = filterValue(prop, v)
       }
 
-      currentData[prop as keyof U] = v
+      currentData[prop] = v
     } else if (isObject(value)) {
       resolveInternalLinks(data, value, props, filterValue)
     }

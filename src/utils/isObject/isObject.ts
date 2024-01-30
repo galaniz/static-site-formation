@@ -2,15 +2,13 @@
  * Utils - Is Object
  */
 
-import type { Generic } from '../../global/globalTypes'
-
 /**
  * Function - check if value is an object
  *
  * @param {*} value
  * @return {boolean}
  */
-const isObject = (value: unknown): value is unknown[] | Generic => {
+const isObject = <T>(value: T): value is object & T => {
   return typeof value === 'object' && value !== null && value !== undefined
 }
 
@@ -20,7 +18,7 @@ const isObject = (value: unknown): value is unknown[] | Generic => {
  * @param {*} value
  * @return {boolean}
  */
-const isObjectStrict = (value: unknown): value is Generic => {
+const isObjectStrict = <T>(value: T): value is object & Exclude<T, string | number | boolean | Function | null | undefined | unknown[] | string[] | number[] | boolean[] | Function[]> => {
   if (Array.isArray(value)) {
     return false
   }

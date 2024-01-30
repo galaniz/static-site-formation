@@ -4,22 +4,19 @@
 
 /* Imports */
 
-import type { Generic } from '../../global/globalTypes'
+import type { ImagesProps } from '../processImages/processImagesTypes'
 
-/**
- * @typedef Prop
- * @type {Generic}
- * @prop {object} [sys]
- * @prop {string} [sys.id]
- * @prop {string} [sys.type]
- * @prop {object} [sys.contentType]
- * @prop {object} [sys.contentType.sys]
- * @prop {string} [sys.contentType.sys.id]
- * @prop {Object.<string, *>} [fields]
- */
-export interface Prop extends Generic {
+export interface PropId {
+  id?: string
   sys?: {
     id?: string
+  }
+}
+
+export interface PropType {
+  renderType?: string
+  contentType?: string
+  sys?: {
     type?: string
     contentType?: {
       sys?: {
@@ -27,5 +24,43 @@ export interface Prop extends Generic {
       }
     }
   }
-  fields?: Generic
+}
+
+export interface PropFile extends Partial<ImagesProps> {
+  fields?: {
+    file?: {
+      url?: string
+      contentType?: string
+      fileName?: string
+      details?: {
+        image?: {
+          width?: number
+          height?: number
+        }
+        size?: number
+      }
+    }
+    description?: string
+    [key: string]: unknown
+  }
+}
+
+export interface PropFileReturn {
+  url: string
+  path: string
+  name: string
+  type: string
+  format: string
+  alt: string
+  naturalWidth: number
+  naturalHeight: number
+  size: number
+}
+
+export interface Prop {
+  id: (obj?: PropId) => string
+  type: (obj?: PropType, subtype?: string) => string
+  self: <T>(obj: T) => T
+  fields: <T, P extends keyof T>(obj: T, prop: P) => T[P] | undefined
+  file: (obj?: PropFile, prop?: string) => string | PropFileReturn | undefined
 }

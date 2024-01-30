@@ -4,8 +4,10 @@
 
 /* Imports */
 
-import type { Generic, InternalLink, ParentArgs } from '../global/globalTypes'
+import type { Generic, GenericFunctions, GenericStrings, ParentArgs, HtmlString } from '../global/globalTypes'
 import type { Navigation, NavigationItem } from '../components/Navigation/NavigationTypes'
+import type { RichTextContentItem } from '../text/RichText/RichTextTypes'
+import { PropFile, PropId, PropType } from '../utils/getProp/getPropTypes'
 
 /**
  * @typedef {object} RenderSlug
@@ -30,22 +32,13 @@ export interface RenderSlugs {
  * @prop {RenderMetaReturn} [meta]
  * @prop {string} [metaTitle]
  * @prop {string} [metaDescription]
- * @prop {object} [metaImage]
- * @prop {object} [metaImage.fields]
- * @prop {object} [metaImage.fields.file]
- * @prop {string} [metaImage.fields.file.url]
+ * @prop {Generic} [metaImage]
  */
 export interface RenderMetaArgs extends Generic {
   meta?: RenderMetaReturn
   metaTitle?: string
   metaDescription?: string
-  metaImage?: {
-    fields?: {
-      file?: {
-        url?: string
-      }
-    }
-  }
+  metaImage?: Generic
 }
 
 /**
@@ -75,37 +68,39 @@ export interface RenderMetaReturn {
 }
 
 /**
+ * @typedef {} RenderContentData
+ */
+export type RenderContentData =
+  Generic &
+  PropId &
+  PropFile &
+  PropType &
+  Omit<RichTextContentItem, 'content'> &
+  {
+    content?: RenderContentData | RenderContentData[]
+    templates?: RenderContentData[]
+  }
+
+/**
  * @typedef {object} RenderContentArgs
- * @prop {Generic[]} contentData
+ * @prop {RenderContentData[]} contentData
  * @prop {RenderServerlessData} [serverlessData]
- * @prop {object} output
- * @prop {string} output.html
+ * @prop {HtmlString} output
  * @prop {ParentArgs[]} parents
  * @prop {RenderItem} pageData
  * @prop {string[]} pageContains
- * @prop {Object.<string, string>} navigations
- * @prop {RenderFunctions} renderFunctions
+ * @prop {GenericStrings} navigations
+ * @prop {GenericFunctions} renderFunctions
  */
 export interface RenderContentArgs {
-  contentData: Generic[]
+  contentData: RenderContentData[]
   serverlessData?: RenderServerlessData
-  output: {
-    html: string
-  }
+  output: HtmlString
   parents: ParentArgs[]
   pageData: RenderItem
   pageContains: string[]
-  navigations: {
-    [key: string]: string
-  }
-  renderFunctions: RenderFunctions
-}
-
-/**
- * @typedef {Object.<string, function>} RenderFunctions
- */
-export interface RenderFunctions {
-  [key: string]: Function
+  navigations: GenericStrings
+  renderFunctions: GenericFunctions
 }
 
 /**
@@ -129,49 +124,33 @@ export interface RenderPreviewData {
 }
 
 /**
- * @typedef RenderRichTextDataTargetProp
- * @type {InternalLink}
- * @prop {object} [fields]
- * @prop {object} [fields.file]
- * @prop {string} [fields.file.url]
+ * @typedef {object} RenderRedirect
+ * @prop {object} [key] - Dynamic key
+ * @prop {string[]} key.redirect
  */
-export interface RenderRichTextDataTargetProp extends InternalLink {
-  fields?: {
-    file?: {
-      url?: string
-    }
-    [key: string]: unknown
-  }
-}
-
-/**
- * @typedef {object} RenderRichTextData
- * @prop {object} [data]
- * @prop {RenderRichTextDataTargetProp} [data.target]
- */
-export interface RenderRichTextData {
-  data?: {
-    target?: RenderRichTextDataTargetProp
+export interface RenderRedirect {
+  [key: string]: {
+    redirect: string[]
   }
 }
 
 /**
  * @typedef RenderItem
  * @type {Generic}
- * @prop {string} [id]
+ * @prop {string} id
+ * @prop {string} slug
  * @prop {string} [title]
- * @prop {string} [slug]
- * @prop {Generic|Generic[]} [content]
- * @prop {Generic} [meta]
+ * @prop {RenderContentData|RenderContentData[]} [content]
+ * @prop {RenderMetaReturn} [meta]
  * @prop {string} [basePermalink]
  * @prop {string} [linkContentType]
  */
 export interface RenderItem extends Generic {
-  id?: string
+  id: string
+  slug: string
   title?: string
-  slug?: string
-  content?: Generic | Generic[]
-  meta?: Generic
+  content?: RenderContentData | RenderContentData[]
+  meta?: RenderMetaReturn
   basePermalink?: string
   linkContentType?: string
 }
@@ -187,7 +166,7 @@ export interface RenderItemArgs {
   item: RenderItem
   contentType: string
   serverlessData?: RenderServerlessData
-  renderFunctions: RenderFunctions
+  renderFunctions: GenericFunctions
 }
 
 /**
@@ -247,7 +226,7 @@ export interface RenderItemActionArgs {
  * @typedef {object} RenderLayoutArgs
  * @prop {string} id
  * @prop {RenderMetaReturn} meta
- * @prop {Object.<string, string>} [navigations]
+ * @prop {GenericStrings} [navigations]
  * @prop {string} contentType
  * @prop {string} content
  * @prop {string} slug
@@ -258,9 +237,7 @@ export interface RenderItemActionArgs {
 export interface RenderLayoutArgs {
   id: string
   meta: RenderMetaReturn
-  navigations?: {
-    [key: string]: string
-  }
+  navigations?: GenericStrings
   contentType: string
   content: string
   slug: string
@@ -275,17 +252,17 @@ export interface RenderLayoutArgs {
  * @prop {Navigation[]} navigation
  * @prop {NavigationItem[]} navigationItem
  * @prop {object} content
- * @prop {Generic[]} content.page
- * @prop {Generic[]} redirect
+ * @prop {RenderItem[]} content.page
+ * @prop {RenderRedirect[]} redirect
  */
 export interface RenderAllData extends Generic {
   navigation: Navigation[]
   navigationItem: NavigationItem[]
   content: {
-    page: Generic[]
-    [key: string]: Generic[]
+    page: RenderItem[]
+    [key: string]: RenderItem[]
   }
-  redirect: Generic[]
+  redirect: RenderRedirect[]
 }
 
 /**
@@ -309,3 +286,9 @@ export interface RenderReturn {
   slug: string
   output: string
 }
+
+export type RenderContentFilter = (content: string, args: ParentArgs) => Promise<string>
+
+export type RenderItemFilter = (output: string, args: RenderItemActionArgs) => Promise<string>
+
+export type RenderNameFilter = (name: string) => Promise<string>

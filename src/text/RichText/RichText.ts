@@ -12,7 +12,15 @@ import type {
   RichTextNormalizeContentFilterArgs,
   RichTextContentFilterArgs
 } from './RichTextTypes'
-import { getLink, applyFilters, isString, isStringStrict, isObjectStrict, isArrayStrict } from '../../utils/'
+import {
+  getLink,
+  getProp,
+  applyFilters,
+  isString,
+  isStringStrict,
+  isObjectStrict,
+  isArrayStrict
+} from '../../utils/'
 
 /**
  * Function - get html tag from type
@@ -150,7 +158,7 @@ const _normalizeContent = async (content: RichTextContentItem[]): Promise<RichTe
 
     /* Content */
 
-    let contentValue: string | RichTextContentReturn[] = ''
+    let contentValue
 
     if (isStringStrict(value)) {
       contentValue = value
@@ -198,10 +206,10 @@ const _normalizeContent = async (content: RichTextContentItem[]): Promise<RichTe
           internalLink = target
         }
 
-        const url = target?.fields?.file?.url
+        const url = getProp.file(target, 'url')
 
         if (nodeType === 'asset-hyperlink' && isStringStrict(url)) {
-          link = `https:${url}`
+          link = url
         }
       }
     }
@@ -210,7 +218,7 @@ const _normalizeContent = async (content: RichTextContentItem[]): Promise<RichTe
 
     const obj: RichTextContentReturn = { tag, content: contentValue }
 
-    if (link !== '') {
+    if (isStringStrict(link)) {
       obj.link = link
     }
 
@@ -308,9 +316,23 @@ const _getContent = async ({ content = [], props, _output = '' }: RichTextConten
  * @return {Promise<string>}
  */
 const RichText = async (props: RichTextProps = { args: {}, parents: [] }): Promise<string> => {
+  /* Props must be object */
+
+  if (!isObjectStrict(props)) {
+    return ''
+  }
+
   props = await applyFilters('richTextProps', props, { renderType: 'RichText' })
 
-  const { args = {} } = props
+  /* Filtered props must be object */
+
+  if (!isObjectStrict(props)) {
+    return ''
+  }
+
+  let { args } = props
+
+  args = isObjectStrict(args) ? args : {}
 
   const {
     type = '',
@@ -329,7 +351,7 @@ const RichText = async (props: RichTextProps = { args: {}, parents: [] }): Promi
     content = []
   } = args
 
-  if (type !== '') {
+  if (isStringStrict(type)) {
     tag = _getTag(type)
   }
 
@@ -353,19 +375,19 @@ const RichText = async (props: RichTextProps = { args: {}, parents: [] }): Promi
 
   const classesArray: string[] = []
 
-  if (classes !== '') {
+  if (isStringStrict(classes)) {
     classesArray.push(classes)
   }
 
-  if (textStyle !== '') {
+  if (isStringStrict(textStyle)) {
     classesArray.push(textStyle)
   }
 
-  if (headingStyle !== '' && heading) {
+  if (isStringStrict(headingStyle) && heading) {
     classesArray.push(headingStyle)
   }
 
-  if (align !== '') {
+  if (isStringStrict(align)) {
     classesArray.push(align)
   }
 
@@ -395,8 +417,10 @@ const RichText = async (props: RichTextProps = { args: {}, parents: [] }): Promi
   if (tag === 'a') {
     let anchorLink = link
 
-    if (internalLink !== undefined && internalLink !== null) {
-      anchorLink = getLink(internalLink)
+    const inLink = getLink(internalLink)
+
+    if (isStringStrict(inLink)) {
+      anchorLink = inLink
     }
 
     if (anchorLink !== '') {
@@ -408,11 +432,11 @@ const RichText = async (props: RichTextProps = { args: {}, parents: [] }): Promi
     attrs.push(`class="${classesArray.join(' ')}"`)
   }
 
-  if (style !== '') {
+  if (isStringStrict(style)) {
     attrs.push(`style="${style}"`)
   }
 
-  if (attr !== '') {
+  if (isStringStrict(attr)) {
     attrs.push(attr)
   }
 
@@ -422,9 +446,7 @@ const RichText = async (props: RichTextProps = { args: {}, parents: [] }): Promi
     output = `<${tag}${(attrs.length > 0) ? ` ${attrs.join(' ')}` : ''}>${output}</${tag}>`
   }
 
-  const richTextOutputFilterArgs: RichTextProps = props
-
-  output = await applyFilters('richTextOutput', output, richTextOutputFilterArgs)
+  output = await applyFilters('richTextOutput', output, props)
 
   return output
 }

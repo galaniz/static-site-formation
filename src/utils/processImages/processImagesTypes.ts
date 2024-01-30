@@ -3,13 +3,13 @@
  */
 
 /**
- * @typedef {object} ProcessImagesSharp
+ * @typedef {object} ImagesSharp
  * @prop {number} size
  * @prop {string} ext
  * @prop {string} path
  * @prop {string} newPath
  */
-export interface ProcessImagesSharp {
+export interface ImagesSharp {
   size: number
   ext: string
   path: string
@@ -17,22 +17,28 @@ export interface ProcessImagesSharp {
 }
 
 /**
- * @typedef {object} ProcessImagesProps
- * @prop {string} base
+ * @typedef {object} ImagesProps
+ * @prop {string} path
+ * @prop {string} name
+ * @prop {string} type
+ * @prop {string} format
  * @prop {number} width
  * @prop {number} height
- * @prop {string} format
+ * @prop {number} size
  */
-export interface ProcessImagesProps {
-  base: string
+export interface ImagesProps {
+  path: string
+  name: string
+  type: string
+  format: string
   width: number
   height: number
-  format: string
+  size: number
 }
 
 /**
- * @typedef {Object.<string, ProcessImagesProps>} ProcessImagesStore
+ * @typedef {Object.<string, ImagesProps>} ImagesStore
  */
-export interface ProcessImagesStore {
-  [key: string]: ProcessImagesProps
+export interface ImagesStore {
+  [key: string]: ImagesProps
 }

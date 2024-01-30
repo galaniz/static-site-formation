@@ -2,7 +2,8 @@
  * Serverless - Ajax Types
  */
 
-import type { EnvCloudflare } from '../serverlessTypes'
+import type { GenericStrings } from '../../global/globalTypes'
+import type { EnvCloudflare, AjaxActionReturn, AjaxActionArgs } from '../serverlessTypes'
 import type { Config } from '../../config/configTypes'
 
 /**
@@ -34,7 +35,7 @@ export interface AjaxCustomErrorArgs {
  */
 export interface AjaxResOptions {
   status: number
-  headers?: {
-    [key: string]: string
-  }
+  headers?: GenericStrings
 }
+
+export type AjaxResFilter = (res: AjaxActionReturn | null, args: AjaxActionArgs) => Promise<AjaxActionReturn | null>

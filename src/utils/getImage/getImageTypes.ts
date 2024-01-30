@@ -2,44 +2,13 @@
  * Utils - Get Image Types
  */
 
-/**
- * @typedef {object} ImageData
- * @prop {string} [base]
- * @prop {string} [alt]
- * @prop {number} [width]
- * @prop {number} [height]
- * @prop {string} [format]
- * @prop {string} [description]
- * @prop {object} [file]
- * @prop {string} file.url
- * @prop {string} file.contentType
- * @prop {object} file.details
- * @prop {object} file.details.image
- * @prop {number} file.details.image.width
- * @prop {number} file.details.image.height
- */
-export interface ImageData {
-  base?: string
-  alt?: string
-  width?: number
-  height?: number
-  format?: string
-  description?: string
-  file?: {
-    url: string
-    contentType: string
-    details: {
-      image: {
-        width: number
-        height: number
-      }
-    }
-  }
-}
+/* Imports */
+
+import type { PropFile } from '../getProp/getPropTypes'
 
 /**
  * @typedef {object} ImageArgs
- * @prop {ImageData} [data]
+ * @prop {PropFile} [data]
  * @prop {string} [classes]
  * @prop {string} [attr]
  * @prop {string|number} [width]
@@ -52,7 +21,7 @@ export interface ImageData {
  * @prop {number} [viewportWidth]
  */
 export interface ImageArgs {
-  data?: ImageData | undefined
+  data?: PropFile
   classes?: string
   attr?: string
   width?: string | number
@@ -73,21 +42,4 @@ export interface ImageArgs {
 export interface ImageReturn {
   output: string
   aspectRatio: number
-}
-
-/**
- * @private
- * @typedef {object} ImageNormalData
- * @prop {string} url
- * @prop {string} alt
- * @prop {number} naturalWidth
- * @prop {number} naturalHeight
- * @prop {string} format
- */
-export interface ImageNormalData {
-  url: string
-  alt: string
-  naturalWidth: number
-  naturalHeight: number
-  format: string
 }

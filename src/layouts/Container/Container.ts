@@ -5,7 +5,7 @@
 /* Imports */
 
 import type { ContainerProps, ContainerReturn } from './ContainerTypes'
-import { applyFilters } from '../../utils/filters/filters'
+import { applyFilters, isObjectStrict, isStringStrict } from '../../utils'
 
 /**
  * Function - output container wrapper
@@ -14,9 +14,28 @@ import { applyFilters } from '../../utils/filters/filters'
  * @return {Promise<ContainerReturn>}
  */
 const Container = async (props: ContainerProps = { args: {} }): Promise<ContainerReturn> => {
+  /* Fallback output */
+
+  const fallback = {
+    start: '',
+    end: ''
+  }
+
+  /* Props must be object */
+
+  if (!isObjectStrict(props)) {
+    return fallback
+  }
+
   props = await applyFilters('containerProps', props, { renderType: 'Container' })
 
-  const { args = {} } = props
+  /* Filtered props must be object */
+
+  if (!isObjectStrict(props)) {
+    return fallback
+  }
+
+  const { args } = props
 
   const {
     tag = 'div',
@@ -33,13 +52,13 @@ const Container = async (props: ContainerProps = { args: {} }): Promise<Containe
     classes = '',
     style = '',
     attr = ''
-  } = args
+  } = isObjectStrict(args) ? args : {}
 
   /* Classes */
 
   const classesArray: string[] = []
 
-  if (classes !== '') {
+  if (isStringStrict(classes)) {
     classesArray.push(classes)
   }
 
@@ -49,53 +68,53 @@ const Container = async (props: ContainerProps = { args: {} }): Promise<Containe
 
   /* Max width */
 
-  if (maxWidth !== '') {
+  if (isStringStrict(maxWidth)) {
     classesArray.push(maxWidth)
   }
 
   /* Layout */
 
-  if (layout !== '') {
+  if (isStringStrict(layout)) {
     classesArray.push(layout)
   }
 
   /* Gap */
 
-  if (gap !== '') {
+  if (isStringStrict(gap)) {
     classesArray.push(gap)
   }
 
-  if (gapLarge !== '' && gapLarge !== gap) {
+  if (isStringStrict(gapLarge) && gapLarge !== gap) {
     classesArray.push(gapLarge)
   }
 
   /* Justify */
 
-  if (justify !== '') {
+  if (isStringStrict(justify)) {
     classesArray.push(justify)
   }
 
   /* Align */
 
-  if (align !== '') {
+  if (isStringStrict(align)) {
     classesArray.push(align)
   }
 
   /* Padding */
 
-  if (paddingTop !== '') {
+  if (isStringStrict(paddingTop)) {
     classesArray.push(paddingTop)
   }
 
-  if (paddingTopLarge !== '' && paddingTopLarge !== paddingTop) {
+  if (isStringStrict(paddingTopLarge) && paddingTopLarge !== paddingTop) {
     classesArray.push(paddingTopLarge)
   }
 
-  if (paddingBottom !== '') {
+  if (isStringStrict(paddingBottom)) {
     classesArray.push(paddingBottom)
   }
 
-  if (paddingBottomLarge !== '' && paddingBottomLarge !== paddingBottom) {
+  if (isStringStrict(paddingBottomLarge) && paddingBottomLarge !== paddingBottom) {
     classesArray.push(paddingBottomLarge)
   }
 
@@ -107,13 +126,13 @@ const Container = async (props: ContainerProps = { args: {} }): Promise<Containe
 
   /* Style */
 
-  if (style !== '') {
+  if (isStringStrict(style)) {
     attrs.push(`style="${style}"`)
   }
 
   /* Attributes */
 
-  if (attr !== '') {
+  if (isStringStrict(attr)) {
     attrs.push(attr)
   }
 

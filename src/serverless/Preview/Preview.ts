@@ -6,7 +6,7 @@
 
 import type { PreviewArgs } from './PreviewTypes'
 import { config, setConfig } from '../../config/config'
-import { getAllContentfulData, isArray, isStringStrict } from '../../utils'
+import { getAllContentfulData, isObjectStrict, isStringStrict } from '../../utils'
 import { Render } from '../../render/Render'
 
 /**
@@ -28,7 +28,7 @@ const Preview = async ({ request, next, siteConfig }: PreviewArgs): Promise<Resp
     return next()
   }
 
-  /* config */
+  /* Config */
 
   setConfig(siteConfig)
 
@@ -50,7 +50,7 @@ const Preview = async ({ request, next, siteConfig }: PreviewArgs): Promise<Resp
 
   let html = ''
 
-  if (!isArray(data)) {
+  if (isObjectStrict(data)) {
     html = data.output !== undefined ? data.output : ''
   }
 

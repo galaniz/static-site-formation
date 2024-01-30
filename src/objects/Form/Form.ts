@@ -6,7 +6,7 @@
 
 import type { FormProps, FormReturn, FormMeta, FormMessages } from './FormTypes'
 import { v4 as uuid } from 'uuid'
-import { applyFilters, isStringStrict } from '../../utils'
+import { applyFilters, isStringStrict, isObjectStrict } from '../../utils'
 import { config } from '../../config/config'
 
 /**
@@ -16,9 +16,28 @@ import { config } from '../../config/config'
  * @return {Promise<FormReturn>}
  */
 const Form = async (props: FormProps = { args: {} }): Promise<FormReturn> => {
+  /* Fallback output */
+
+  const fallback = {
+    start: '',
+    end: ''
+  }
+
+  /* Props must be object */
+
+  if (!isObjectStrict(props)) {
+    return fallback
+  }
+
   props = await applyFilters('formProps', props, { renderType: 'Form' })
 
-  const { args = {} } = props
+  /* Filtered props must be object */
+
+  if (!isObjectStrict(props)) {
+    return fallback
+  }
+
+  const { args } = props
 
   const {
     id = '',
@@ -45,15 +64,12 @@ const Form = async (props: FormProps = { args: {} }): Promise<FormReturn> => {
     honeypotFieldClasses = '',
     honeypotLabelClasses = '',
     honeypotClasses = ''
-  } = args
+  } = isObjectStrict(args) ? args : {}
 
   /* Id required */
 
   if (!isStringStrict(id)) {
-    return {
-      start: '',
-      end: ''
-    }
+    return fallback
   }
 
   /* Add to form meta data */
@@ -105,25 +121,25 @@ const Form = async (props: FormProps = { args: {} }): Promise<FormReturn> => {
   const honeypotId: string = uuid()
   const honeypotName = `${config.namespace}_asi`
   const honeypot = `
-    <div${honeypotFieldClasses !== '' ? ` class="${honeypotFieldClasses}"` : ''} data-asi>
-      <label${honeypotLabelClasses !== '' ? ` class="${honeypotLabelClasses}"` : ''} for="${honeypotId}">Website</label>
-      <input${honeypotClasses !== '' ? ` class="${honeypotClasses}"` : ''} type="url" name="${honeypotName}" id="${honeypotId}" autocomplete="off">
+    <div${isStringStrict(honeypotFieldClasses) ? ` class="${honeypotFieldClasses}"` : ''} data-asi>
+      <label${isStringStrict(honeypotLabelClasses) ? ` class="${honeypotLabelClasses}"` : ''} for="${honeypotId}">Website</label>
+      <input${isStringStrict(honeypotClasses) ? ` class="${honeypotClasses}"` : ''} type="url" name="${honeypotName}" id="${honeypotId}" autocomplete="off">
     </div>
   `
 
   /* Output */
 
   const start = `
-    <form${formClasses !== '' ? ` class="${formClasses}"` : ''} id="${id}" data-action="${action}"${formAttr !== '' ? ` ${formAttr}` : ''} novalidate>
-      <div${fieldsClasses !== '' ? ` class="${fieldsClasses}"` : ''}${fieldsAttr !== '' ? ` ${fieldsAttr}` : ''}>
+    <form${isStringStrict(formClasses) ? ` class="${formClasses}"` : ''} id="${id}" data-action="${action}"${isStringStrict(formAttr) ? ` ${formAttr}` : ''} novalidate>
+      <div${isStringStrict(fieldsClasses) ? ` class="${fieldsClasses}"` : ''}${isStringStrict(fieldsAttr) ? ` ${fieldsAttr}` : ''}>
         ${errorSummary}
   `
 
   const end = `
         ${honeypot}
         ${errorResult}
-        <div${submitFieldClasses !== '' ? ` class="${submitFieldClasses}"` : ''} data-type="submit">
-          <button${submitClasses !== '' ? ` class="${submitClasses}"` : ''}${submitAttr !== '' ? ` ${submitAttr}` : ''} type="submit">
+        <div${isStringStrict(submitFieldClasses) ? ` class="${submitFieldClasses}"` : ''} data-type="submit">
+          <button${isStringStrict(submitClasses) ? ` class="${submitClasses}"` : ''}${isStringStrict(submitAttr) ? ` ${submitAttr}` : ''} type="submit">
             ${submitLoader}
             <span>${submitLabel}</span>
           </button>

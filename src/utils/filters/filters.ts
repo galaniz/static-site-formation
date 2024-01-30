@@ -4,6 +4,7 @@
 
 /* Imports */
 
+import type { FiltersFunctions, Filters } from './filtersTypes'
 import { isArrayStrict } from '../isArray/isArray'
 import { isStringStrict } from '../isString/isString'
 import { isObjectStrict } from '../isObject/isObject'
@@ -11,9 +12,27 @@ import { isObjectStrict } from '../isObject/isObject'
 /**
  * Store filter callbacks by name
  *
- * @type {Object.<string, function>}
+ * @type {FiltersFunctions}
  */
-let filters: { [key: string]: Function[] } = {}
+let filters: FiltersFunctions = {
+  columnProps: [],
+  containerProps: [],
+  fieldProps: [],
+  formProps: [],
+  richTextProps: [],
+  richTextOutput: [],
+  richTextContent: [],
+  richTextContentOutput: [],
+  richTextNormalizeContent: [],
+  renderArchiveName: [],
+  renderLinkContentTypeName: [],
+  renderItem: [],
+  renderContent: [],
+  renderContentStart: [],
+  renderContentEnd: [],
+  ajaxRes: [],
+  cacheData: []
+}
 
 /**
  * Function - add filter to filters object
@@ -22,7 +41,7 @@ let filters: { [key: string]: Function[] } = {}
  * @param {function} filter
  * @return {boolean}
  */
-const addFilter = (name: string, filter: Function): boolean => {
+const addFilter = <T extends keyof Filters>(name: T, filter: Filters[T]): boolean => {
   if (!isStringStrict(name) || typeof filter !== 'function') {
     return false
   }
@@ -71,7 +90,7 @@ const removeFilter = (name: string, filter: Function): boolean => {
  * @param {*} [args]
  * @return {Promise<*>}
  */
-const applyFilters = async <T, U>(name: string, value: T, args?: U): Promise<T> => {
+const applyFilters = async <T, U,>(name: string, value: T, args?: U): Promise<T> => {
   const callbacks = filters[name]
 
   if (isArrayStrict(callbacks)) {
@@ -93,16 +112,34 @@ const applyFilters = async <T, U>(name: string, value: T, args?: U): Promise<T> 
  * @return {void}
  */
 const resetFilters = (): void => {
-  filters = {}
+  filters = {
+    columnProps: [],
+    containerProps: [],
+    fieldProps: [],
+    formProps: [],
+    richTextProps: [],
+    richTextOutput: [],
+    richTextContent: [],
+    richTextContentOutput: [],
+    richTextNormalizeContent: [],
+    renderArchiveName: [],
+    renderLinkContentTypeName: [],
+    renderItem: [],
+    renderContent: [],
+    renderContentStart: [],
+    renderContentEnd: [],
+    ajaxRes: [],
+    cacheData: []
+  }
 }
 
 /**
  * Function - fill filters object
  *
- * @param {Object.<string, Function>} args
+ * @param {Filters} args
  * @return {boolean}
  */
-const setFilters = (args: { [key: string]: Function }): boolean => {
+const setFilters = (args: Partial<Filters>): boolean => {
   if (!isObjectStrict(args)) {
     return false
   }
@@ -114,7 +151,13 @@ const setFilters = (args: { [key: string]: Function }): boolean => {
   resetFilters()
 
   Object.keys(args).forEach((a) => {
-    addFilter(a, args[a])
+    const arg = args[a]
+
+    if (typeof arg !== 'function') {
+      return
+    }
+
+    addFilter(a, arg)
   })
 
   return true

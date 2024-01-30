@@ -12,6 +12,7 @@ import type {
   NavigationOutputArgs,
   NavigationBreadcrumbOutputArgs
 } from './NavigationTypes'
+import type { HtmlString } from '../../global/globalTypes'
 import {
   getSlug,
   getPermalink,
@@ -74,7 +75,7 @@ class Navigation {
   #navigationsByLocation: {
     [key: string]: {
       title: string
-      items: NavigationItem[] | unknown[]
+      items: NavigationItem[]
     }
   } = {}
 
@@ -124,13 +125,9 @@ class Navigation {
     /* Items by id */
 
     this.items.forEach(item => {
-      if (!isObjectStrict(item)) {
-        return
-      }
-
       const info = this.#getItemInfo(item)
 
-      if (isStringStrict(info.id)) {
+      if (info !== undefined && isStringStrict(info.id)) {
         this.#itemsById[info.id] = info
       }
     })
@@ -138,8 +135,11 @@ class Navigation {
     /* Navigations by location */
 
     this.navigations.forEach(nav => {
-      const fieldsProp = getProp(nav, '', {})
-      const fields = isObjectStrict(fieldsProp) ? fieldsProp : {}
+      const fields = getProp.self(nav)
+
+      if (!isObjectStrict(fields)) {
+        return
+      }
 
       const {
         title = '',
@@ -148,7 +148,7 @@ class Navigation {
       } = fields
 
       if (isStringStrict(title) && isStringStrict(location) && isArrayStrict(items)) {
-        this.#navigationsByLocation[location.toLowerCase().replace(/ /g, '')] = {
+        this.#navigationsByLocation[location.toLowerCase().replace(/\s+/g, '')] = {
           title,
           items
         }
@@ -165,11 +165,14 @@ class Navigation {
    *
    * @private
    * @param {NavigationItem} item
-   * @return {NavigationItem}
+   * @return {NavigationItem|undefined}
    */
-  #getItemInfo (item: NavigationItem): NavigationItem {
-    const fieldsProp = getProp(item, '', {})
-    const fields = isObjectStrict(fieldsProp) ? fieldsProp : {}
+  #getItemInfo (item: NavigationItem): NavigationItem | undefined {
+    const fields = getProp.self(item)
+
+    if (!isObjectStrict(fields)) {
+      return
+    }
 
     const {
       title = '',
@@ -178,46 +181,29 @@ class Navigation {
       children
     } = fields
 
-    let id = ''
-    let titleStr = ''
-
-    if (isStringStrict(title)) {
-      id = title
-      titleStr = title
-    }
-
+    let id = isStringStrict(title) ? title : ''
     let external = false
-    let externalLinkStr = ''
 
     if (isStringStrict(externalLink)) {
       id = externalLink
-      externalLinkStr = externalLink
       external = true
     }
 
-    let internal = false
-    let internalLinkObj
+    const internalId = getProp.id(internalLink)
 
-    if (isObjectStrict(internalLink)) {
-      internalLinkObj = internalLink
-      internal = true
-
-      const idProp = getProp(internalLinkObj, 'id', '')
-
-      if (isStringStrict(idProp)) {
-        id = idProp
-      }
+    if (isStringStrict(internalId)) {
+      id = internalId
     }
 
-    const link = getLink(internalLinkObj, externalLinkStr)
+    const link = getLink(internalLink, externalLink)
     const props: NavigationItem = {
       id,
-      title: titleStr,
+      title,
       link,
       external
     }
 
-    if (isStringStrict(link) && internal) {
+    if (isStringStrict(link) && !external) {
       props.current = props.link === this.current
     }
 
@@ -253,17 +239,17 @@ class Navigation {
    * @return {boolean}
    */
   #recurseItemChildren (
-    children: NavigationItem[] | unknown[] = [],
+    children: NavigationItem[] = [],
     store: NavigationItem[] = []
   ): boolean {
     let childCurrent = false
 
     children.forEach(child => {
-      if (!isObjectStrict(child)) {
+      const info = this.#getItemInfo(child)
+
+      if (info === undefined) {
         return
       }
-
-      const info = this.#getItemInfo(child)
 
       const { current = false } = info
 
@@ -284,7 +270,7 @@ class Navigation {
    * @param {NavigationItem[]} items
    * @return {NavigationItem[]}
    */
-  #getItems (items: NavigationItem[] | unknown[] = []): NavigationItem[] {
+  #getItems (items: NavigationItem[] = []): NavigationItem[] {
     if (items.length === 0) {
       return []
     }
@@ -292,11 +278,7 @@ class Navigation {
     const resItems: NavigationItem[] = []
 
     items.forEach(item => {
-      if (!isObjectStrict(item)) {
-        return
-      }
-
-      const fields = getProp(item, '', {})
+      const fields = getProp.self(item)
 
       if (!isObjectStrict(fields)) {
         return
@@ -318,12 +300,10 @@ class Navigation {
         id = externalLink
       }
 
-      if (isObjectStrict(internalLink)) {
-        const idProp = getProp(internalLink, 'id', '')
+      const internalId = getProp.id(internalLink)
 
-        if (isStringStrict(idProp)) {
-          id = idProp
-        }
+      if (isStringStrict(internalId)) {
+        id = internalId
       }
 
       const storedItem = this.#itemsById[id]
@@ -341,8 +321,7 @@ class Navigation {
    *
    * @private
    * @param {NavigationItem[]} items
-   * @param {object} output
-   * @param {string} output.html
+   * @param {HtmlString} output
    * @param {NavigationOutputArgs} args
    * @param {number} depth
    * @param {number} maxDepth
@@ -350,7 +329,7 @@ class Navigation {
    */
   #recurseOutput = (
     items: NavigationItem[] = [],
-    output: { html: string },
+    output: HtmlString,
     args: NavigationOutputArgs,
     depth: number = -1,
     maxDepth?: number
@@ -367,8 +346,8 @@ class Navigation {
       args.filterBeforeList(listFilterArgs)
     }
 
-    const listClasses = args.listClass !== undefined ? ` class="${args.listClass}"` : ''
-    const listAttrs = args.listAttr !== undefined ? ` ${args.listAttr}` : ''
+    const listClasses = isStringStrict(args.listClass) ? ` class="${args.listClass}"` : ''
+    const listAttrs = isStringStrict(args.listAttr) ? ` ${args.listAttr}` : ''
 
     output.html += `<ul data-depth="${depth}"${listClasses}${listAttrs}>`
 
@@ -392,8 +371,8 @@ class Navigation {
         args.filterBeforeItem(filterArgs)
       }
 
-      const itemClasses = args.itemClass !== undefined ? ` class="${args.itemClass}"` : ''
-      let itemAttrs = args.itemAttr !== undefined ? ` ${args.itemAttr}` : ''
+      const itemClasses = isStringStrict(args.itemClass) ? ` class="${args.itemClass}"` : ''
+      let itemAttrs = isStringStrict(args.itemAttr) ? ` ${args.itemAttr}` : ''
 
       if (current) {
         itemAttrs += ' data-current="true"'
@@ -413,19 +392,18 @@ class Navigation {
 
       const linkClassesArray: string[] = []
 
-      if (args.linkClass !== undefined) {
+      if (isStringStrict(args.linkClass)) {
         linkClassesArray.push(args.linkClass)
       }
 
-      if (!external && args.internalLinkClass !== undefined) {
+      if (!external && isStringStrict(args.internalLinkClass)) {
         linkClassesArray.push(args.internalLinkClass)
       }
 
       const linkClasses = (linkClassesArray.length > 0) ? ` class="${linkClassesArray.join(' ')}"` : ''
-
       const linkAttrsArray = [link !== '' ? `href="${link}"` : 'type="button"']
 
-      if (args.linkAttr !== undefined) {
+      if (isStringStrict(args.linkAttr)) {
         linkAttrsArray.push(args.linkAttr)
       }
 
@@ -442,7 +420,6 @@ class Navigation {
       }
 
       const linkAttrs = (linkAttrsArray.length > 0) ? ` ${linkAttrsArray.join(' ')}` : ''
-
       const linkTag = link !== '' ? 'a' : 'button'
 
       output.html += `<${linkTag} data-depth="${depth}"${linkClasses}${linkAttrs}>`
@@ -547,7 +524,7 @@ class Navigation {
   ): string {
     /* Items required */
 
-    if (items.length === 0) {
+    if (!isArrayStrict(items)) {
       return ''
     }
 
@@ -569,13 +546,13 @@ class Navigation {
 
     /* List attributes */
 
-    const listClasses = args.listClass !== undefined ? ` class="${args.listClass}"` : ''
-    const listAttrs = args.listAttr !== undefined ? ` ${args.listAttr}` : ''
+    const listClasses = isStringStrict(args.listClass) ? ` class="${args.listClass}"` : ''
+    const listAttrs = isStringStrict(args.listAttr) ? ` ${args.listAttr}` : ''
 
     /* Loop through items */
 
-    const itemClasses = args.itemClass !== undefined ? ` class="${args.itemClass}"` : ''
-    const itemAttrs = args.itemAttr !== undefined ? ` ${args.itemAttr}` : ''
+    const itemClasses = isStringStrict(args.itemClass) ? ` class="${args.itemClass}"` : ''
+    const itemAttrs = isStringStrict(args.itemAttr) ? ` ${args.itemAttr}` : ''
     const lastItemIndex = items.length - 1
 
     const itemsArray = items.map((item, index) => {
@@ -584,6 +561,21 @@ class Navigation {
       /* Title required */
 
       if (!isStringStrict(title)) {
+        return ''
+      }
+
+      /* Permalink required */
+
+      const slug = getSlug({
+        id: item.id,
+        slug: item.slug,
+        contentType: item.contentType,
+        linkContentType: item.linkContentType
+      })
+
+      const permalink = isString(slug) ? getPermalink(slug) : ''
+
+      if (permalink === '') {
         return ''
       }
 
@@ -611,26 +603,16 @@ class Navigation {
 
       const linkClassesArray: string[] = []
 
-      if (args.linkClass !== undefined) {
+      if (isStringStrict(args.linkClass)) {
         linkClassesArray.push(args.linkClass)
       }
 
-      if (args.internalLinkClass !== undefined) {
+      if (isStringStrict(args.internalLinkClass)) {
         linkClassesArray.push(args.internalLinkClass)
       }
 
       const linkClasses = (linkClassesArray.length > 0) ? ` class="${linkClassesArray.join(' ')}"` : ''
-
-      const linkAttrs = args.linkAttr !== undefined ? ` ${args.linkAttr}` : ''
-
-      const slug = getSlug({
-        id: item.id,
-        slug: item.slug,
-        contentType: item.contentType,
-        linkContentType: isStringStrict(item.linkContentType) ? item.linkContentType : undefined
-      })
-
-      const permalink = isString(slug) ? getPermalink(slug) : ''
+      const linkAttrs = isStringStrict(args.linkAttr) ? ` ${args.linkAttr}` : ''
 
       output.html += `<a${linkClasses} href="${permalink}"${linkAttrs}>${title}</a>`
 
@@ -647,8 +629,8 @@ class Navigation {
 
     /* Output */
 
-    const currentClasses = args.currentClass !== undefined ? ` class="${args.currentClass}"` : ''
-    const a11yClasses = args.a11yClass !== undefined ? ` class="${args.a11yClass}"` : ''
+    const currentClasses = isStringStrict(args.currentClass) ? ` class="${args.currentClass}"` : ''
+    const a11yClasses = isStringStrict(args.a11yClass) ? ` class="${args.a11yClass}"` : ''
 
     return `
       <ol${listClasses}${listAttrs}>

@@ -4,7 +4,7 @@
 
 /* Imports */
 
-import type { Generic } from '../global/globalTypes'
+import type { Generic, GenericStrings } from '../global/globalTypes'
 
 /**
  * @typedef EnvCloudflare
@@ -72,9 +72,7 @@ export interface AjaxActionReturn {
   }
   success?: {
     message: string
-    headers?: {
-      [key: string]: string
-    }
+    headers?: GenericStrings
   }
 }
 
