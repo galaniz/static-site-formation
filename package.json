@@ -24,9 +24,9 @@
   "license": "MIT",
   "devDependencies": {
     "@types/contentful-resolve-response": "^0.1.33",
-    "@types/node": "^20.11.0",
-    "@types/uuid": "^9.0.7",
-    "release-it": "^17.0.1",
+    "@types/node": "^20.11.13",
+    "@types/uuid": "^9.0.8",
+    "release-it": "^17.0.3",
     "sharp": "^0.33.2",
     "ts-standard": "^12.0.2",
     "typescript": "^5.3.3"
