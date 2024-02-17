@@ -9,7 +9,7 @@ import type { Config, ConfigArgs } from './configTypes'
 /**
  * Default options
  *
- * @type {Config}
+ * @type {import('./configTypes').Config}
  */
 let config: Config = {
   namespace: 'ssf',
@@ -21,6 +21,7 @@ let config: Config = {
   },
   slug: {
     parents: {},
+    archives: {},
     bases: {
       page: {
         slug: '',
@@ -45,6 +46,7 @@ let config: Config = {
   ajaxFunctions: {},
   actions: {},
   filters: {},
+  shortcodes: {},
   image: {
     url: '/assets/img/',
     quality: 75,
@@ -66,6 +68,7 @@ let config: Config = {
     prod: false,
     build: false,
     cache: false,
+    dir: '',
     urls: {
       dev: '/',
       prod: ''
@@ -77,6 +80,10 @@ let config: Config = {
       slugs: {
         data: '',
         name: 'slugs.json'
+      },
+      slugArchives: {
+        data: '',
+        name: 'slug-archives.json'
       },
       slugParents: {
         data: '',
@@ -156,8 +163,8 @@ let config: Config = {
 /**
  * Function - update default config with user options
  *
- * @param {ConfigArgs} args
- * @return {Config}
+ * @param {import('./configTypes').ConfigArgs} args
+ * @return {import('./configTypes').Config}
  */
 const setConfig = (args: ConfigArgs): Config => {
   config = Object.assign(config, args)

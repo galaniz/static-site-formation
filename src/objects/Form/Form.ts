@@ -6,14 +6,14 @@
 
 import type { FormProps, FormReturn, FormMeta, FormMessages } from './FormTypes'
 import { v4 as uuid } from 'uuid'
-import { applyFilters, isStringStrict, isObjectStrict } from '../../utils'
+import { applyFilters, isStringStrict, isObjectStrict } from '../../utils/utilsMin'
 import { config } from '../../config/config'
 
 /**
  * Function - output form wrapper
  *
- * @param {FormProps} props
- * @return {Promise<FormReturn>}
+ * @param {import('./FormTypes').FormProps} props
+ * @return {Promise<import('./FormTypes').FormReturn>}
  */
 const Form = async (props: FormProps = { args: {} }): Promise<FormReturn> => {
   /* Fallback output */

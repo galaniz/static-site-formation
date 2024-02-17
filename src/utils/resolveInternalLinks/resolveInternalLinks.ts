@@ -8,6 +8,7 @@ import { isArray } from '../isArray/isArray'
 import { isString } from '../isString/isString'
 import { isObject } from '../isObject/isObject'
 import { getObjectKeys } from '../getObjectKeys/getObjectKeys'
+import { isFunction } from '../isFunction/isFunction'
 
 /**
  * Function - recursively set internal props from outer data
@@ -42,7 +43,7 @@ const resolveInternalLinks = <T, U>(
         v = data[value as keyof T]
       }
 
-      if (typeof filterValue === 'function') {
+      if (isFunction(filterValue)) {
         v = filterValue(prop, v)
       }
 

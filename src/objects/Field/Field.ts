@@ -6,13 +6,13 @@
 
 import type { FieldProps, FieldOption, FieldCheckboxRadioArgs } from './FieldTypes'
 import { v4 as uuid } from 'uuid'
-import { applyFilters, isStringStrict, isObjectStrict, isArrayStrict } from '../../utils'
+import { applyFilters, isStringStrict, isObjectStrict, isArrayStrict } from '../../utils/utilsMin'
 
 /**
  * Function - output checkbox and radio inputs from options
  *
  * @private
- * @param {FieldCheckboxRadioArgs} args
+ * @param {import('./FieldTypes').FieldCheckboxRadioArgs} args
  * @return {string[]}
  */
 const _getCheckboxRadioOpts = (args: FieldCheckboxRadioArgs = {}): string => {
@@ -56,7 +56,7 @@ const _getCheckboxRadioOpts = (args: FieldCheckboxRadioArgs = {}): string => {
 /**
  * Function - output form field
  *
- * @param {FieldProps} props
+ * @param {import('./FieldTypes').FieldProps} props
  * @return {Promise<string>} HTML - div
  */
 const Field = async (props: FieldProps = { args: {} }): Promise<string> => {
@@ -115,36 +115,36 @@ const Field = async (props: FieldProps = { args: {} }): Promise<string> => {
 
   /* Field classes */
 
-  const fieldClassesArray: string[] = []
+  const fieldClassesArr: string[] = []
 
   if (isStringStrict(fieldClasses)) {
-    fieldClassesArray.push(fieldClasses)
+    fieldClassesArr.push(fieldClasses)
   }
 
   /* Width */
 
   if (isStringStrict(width)) {
-    fieldClassesArray.push(width)
+    fieldClassesArr.push(width)
   }
 
   if (isStringStrict(widthSmall) && widthSmall !== width) {
-    fieldClassesArray.push(widthSmall)
+    fieldClassesArr.push(widthSmall)
   }
 
   if (isStringStrict(widthMedium) && widthMedium !== widthSmall) {
-    fieldClassesArray.push(widthMedium)
+    fieldClassesArr.push(widthMedium)
   }
 
   if (isStringStrict(widthLarge) && widthLarge !== widthMedium) {
-    fieldClassesArray.push(widthLarge)
+    fieldClassesArr.push(widthLarge)
   }
 
   /* Classes */
 
-  const classesArray: string[] = []
+  const classesArr: string[] = []
 
   if (isStringStrict(classes)) {
-    classesArray.push(classes)
+    classesArr.push(classes)
   }
 
   /* Checkbox or radio */
@@ -223,7 +223,7 @@ const Field = async (props: FieldProps = { args: {} }): Promise<string> => {
 
   const labelRequired = required ? ' data-required' : ''
   const labelRequiredIcon = required ? '<span data-required-icon aria-hidden="true"></span>' : ''
-  const labelClass = labelClasses !== '' ? ` class="${labelClasses}"` : ''
+  const labelClass = isStringStrict(labelClasses) ? ` class="${labelClasses}"` : ''
 
   if (checkboxRadio) {
     labelAfter = `
@@ -238,7 +238,7 @@ const Field = async (props: FieldProps = { args: {} }): Promise<string> => {
     if (fieldset) {
       labelBefore = `
         <legend${labelRequired}>
-          <span>${label}${required ? `<span${visuallyHiddenClass !== '' ? ` class="${visuallyHiddenClass}"` : ''}> required</span>` : ''}
+          <span>${label}${required ? `<span${isStringStrict(visuallyHiddenClass) ? ` class="${visuallyHiddenClass}"` : ''}> required</span>` : ''}
             ${labelRequiredIcon}
           </span>
         </legend>
@@ -267,7 +267,7 @@ const Field = async (props: FieldProps = { args: {} }): Promise<string> => {
     case 'number':
     case 'password':
     case 'tel': {
-      input = `<input type="${type}" name="${name}" id="${id}" class="${classesArray.join(' ')}"${attrs}>`
+      input = `<input type="${type}" name="${name}" id="${id}" class="${classesArr.join(' ')}"${attrs}>`
 
       if (checkboxRadioOpts) {
         input = _getCheckboxRadioOpts({
@@ -283,7 +283,7 @@ const Field = async (props: FieldProps = { args: {} }): Promise<string> => {
       break
     }
     case 'textarea': {
-      input = `<textarea name="${name}" id="${id}" class="${classesArray.join(' ')}"${attrs}></textarea>`
+      input = `<textarea name="${name}" id="${id}" class="${classesArr.join(' ')}"${attrs}></textarea>`
       break
     }
     case 'select': {
@@ -300,7 +300,7 @@ const Field = async (props: FieldProps = { args: {} }): Promise<string> => {
 
         input = `
           <div data-type="select">
-            <select name="${name}" id="${id}" class="${classesArray.join(' ')}"${attrs}>${optsOutput}</select>
+            <select name="${name}" id="${id}" class="${classesArr.join(' ')}"${attrs}>${optsOutput}</select>
             <div data-select-arrow></div>
           </div>
         `
@@ -317,7 +317,7 @@ const Field = async (props: FieldProps = { args: {} }): Promise<string> => {
   /* Output */
 
   return `
-    <div class="${fieldClassesArray.join(' ')}" data-type="${type}">
+    <div class="${fieldClassesArr.join(' ')}" data-type="${type}">
       ${fieldset ? `<fieldset${isStringStrict(fieldsetClasses) ? ` class="${fieldsetClasses}"` : ''}>` : ''}
       ${labelBefore}
       ${input}

@@ -14,8 +14,8 @@ import { isObjectStrict } from '../isObject/isObject'
 /**
  * Function - get responsive image output
  *
- * @param {ImageArgs} args
- * @return {ImageReturn|string}
+ * @param {import('./getImageTypes').ImageArgs} args
+ * @return {import('./getImageTypes').ImageReturn|string}
  */
 const getImage = (args: ImageArgs = {}): ImageReturn | string => {
   const {
@@ -26,15 +26,16 @@ const getImage = (args: ImageArgs = {}): ImageReturn | string => {
     height = 'auto',
     returnAspectRatio = false,
     lazy = true,
-    source = false,
+    picture = false,
     quality = config.image.quality,
+    source = config.source,
     maxWidth = 1200,
     viewportWidth = 100
   } = isObjectStrict(args) ? args : {}
 
   /* Data required */
 
-  const normalData = getProp.file(data, 'all')
+  const normalData = getProp.file(data, 'all', source)
 
   if (!isObjectStrict(normalData)) {
     return ''
@@ -76,7 +77,7 @@ const getImage = (args: ImageArgs = {}): ImageReturn | string => {
   let src = url
   let srcFallback = url
 
-  if (config.source === 'static') {
+  if (source === 'static') {
     src = `${url}.webp`
     srcFallback = `${url}.${format}`
   } else {
@@ -100,7 +101,7 @@ const getImage = (args: ImageArgs = {}): ImageReturn | string => {
   srcset.sort((a, b) => a - b)
 
   srcset = srcset.map(s => {
-    if (config.source === 'static') {
+    if (source === 'static') {
       const common = `${url}${s !== naturalWidth ? `@${s}` : ''}`
 
       srcsetFallback.push(`${common}.${format} ${s}w`)
@@ -119,7 +120,7 @@ const getImage = (args: ImageArgs = {}): ImageReturn | string => {
 
   let sourceOutput = ''
 
-  if (source) {
+  if (picture) {
     sourceOutput = `<source srcset="${srcset.join(', ')}" sizes="${sizes}" type="image/webp">`
   }
 
@@ -132,7 +133,7 @@ const getImage = (args: ImageArgs = {}): ImageReturn | string => {
   const output = `
     ${eagerHackOutput}
     ${sourceOutput}
-    <img${classes !== '' ? ` class="${classes}"` : ''} alt="${alt}" src="${source ? srcFallback : src}" srcset="${source ? srcsetFallback.join(', ') : srcset.join(', ')}" sizes="${sizes}" width="${w}" height="${h}"${attr !== '' ? ` ${attr}` : ''}${lazy ? ' loading="lazy" decoding="async"' : ' loading="eager"'}>
+    <img${classes !== '' ? ` class="${classes}"` : ''} alt="${alt}" src="${picture ? srcFallback : src}" srcset="${picture ? srcsetFallback.join(', ') : srcset.join(', ')}" sizes="${sizes}" width="${w}" height="${h}"${attr !== '' ? ` ${attr}` : ''}${lazy ? ' loading="lazy" decoding="async"' : ' loading="eager"'}>
   `
 
   if (returnAspectRatio) {

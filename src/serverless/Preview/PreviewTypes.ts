@@ -10,7 +10,7 @@ import type { Config } from '../../config/configTypes'
  * @typedef {object} PreviewArgs
  * @prop {Request} request
  * @prop {function} next
- * @prop {Config} siteConfig
+ * @prop {import('../../config/configTypes').Config} siteConfig
  */
 export interface PreviewArgs {
   request: Request

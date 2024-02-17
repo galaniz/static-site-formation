@@ -7,7 +7,9 @@
 import type {
   NavigationProps,
   Navigation as Navigations,
+  NavigationByLocation,
   NavigationItem,
+  NavigationItemsById,
   NavigationBreadcrumbItem,
   NavigationOutputArgs,
   NavigationBreadcrumbOutputArgs
@@ -21,8 +23,9 @@ import {
   isArrayStrict,
   isStringStrict,
   isString,
-  isObjectStrict
-} from '../../utils'
+  isObjectStrict,
+  isFunction
+} from '../../utils/utilsMin'
 
 /**
  * Class - recursively generate navigation output
@@ -31,14 +34,14 @@ class Navigation {
   /**
    * Store all navigations
    *
-   * @type {Navigations[]}
+   * @type {import('./NavigationTypes').Navigations[]}
    */
   navigations: Navigations[] = []
 
   /**
    * Store all navigation items
    *
-   * @type {NavigationItem[]}
+   * @type {import('./NavigationTypes').NavigationItem[]}
    */
   items: NavigationItem[] = []
 
@@ -60,29 +63,22 @@ class Navigation {
    * Store navigation items by id
    *
    * @private
-   * @type {Object.<string, NavigationItem>}
+   * @type {import('./NavigationTypes').NavigationItemsById}
    */
-  #itemsById: {
-    [key: string]: NavigationItem
-  } = {}
+  #itemsById: NavigationItemsById = {}
 
   /**
    * Store navigations by location
    *
    * @private
-   * @type {object}
+   * @type {import('./NavigationTypes').NavigationByLocation}
    */
-  #navigationsByLocation: {
-    [key: string]: {
-      title: string
-      items: NavigationItem[]
-    }
-  } = {}
+  #navigationsByLocation: NavigationByLocation = {}
 
   /**
    * Set properties and initialize
    *
-   * @param {NavigationProps} props
+   * @param {import('./NavigationTypes').NavigationProps} props
    */
   constructor (props: NavigationProps) {
     this.init = this.#initialize(props)
@@ -92,7 +88,7 @@ class Navigation {
    * Initialize - check required props and set props
    *
    * @private
-   * @param {NavigationProps} props
+   * @param {import('./NavigationTypes').NavigationProps} props
    * @return {boolean}
    */
   #initialize (props: NavigationProps): boolean {
@@ -164,8 +160,8 @@ class Navigation {
    * Normalize navigation item props
    *
    * @private
-   * @param {NavigationItem} item
-   * @return {NavigationItem|undefined}
+   * @param {import('./NavigationTypes').NavigationItem} item
+   * @return {import('./NavigationTypes').NavigationItem|undefined}
    */
   #getItemInfo (item: NavigationItem): NavigationItem | undefined {
     const fields = getProp.self(item)
@@ -234,8 +230,8 @@ class Navigation {
    * Loop through items to check and set children
    *
    * @private
-   * @param {NavigationItem[]} children
-   * @param {NavigationItem[]} store
+   * @param {import('./NavigationTypes').NavigationItem[]} children
+   * @param {import('./NavigationTypes').NavigationItem[]} store
    * @return {boolean}
    */
   #recurseItemChildren (
@@ -267,8 +263,8 @@ class Navigation {
    * Return navigation items by id
    *
    * @private
-   * @param {NavigationItem[]} items
-   * @return {NavigationItem[]}
+   * @param {import('./NavigationTypes').NavigationItem[]} items
+   * @return {import('./NavigationTypes').NavigationItem[]}
    */
   #getItems (items: NavigationItem[] = []): NavigationItem[] {
     if (items.length === 0) {
@@ -320,9 +316,9 @@ class Navigation {
    * Loop through items to create html
    *
    * @private
-   * @param {NavigationItem[]} items
-   * @param {HtmlString} output
-   * @param {NavigationOutputArgs} args
+   * @param {import('./NavigationTypes').NavigationItem[]} items
+   * @param {import('../../global/globalTypes').HtmlString} output
+   * @param {import('./NavigationTypes').NavigationOutputArgs} args
    * @param {number} depth
    * @param {number} maxDepth
    * @return {void}
@@ -342,7 +338,7 @@ class Navigation {
 
     const listFilterArgs = { args, output, items, depth }
 
-    if (typeof args.filterBeforeList === 'function') {
+    if (isFunction(args.filterBeforeList)) {
       args.filterBeforeList(listFilterArgs)
     }
 
@@ -367,7 +363,7 @@ class Navigation {
 
       /* Item start */
 
-      if (typeof args.filterBeforeItem === 'function') {
+      if (isFunction(args.filterBeforeItem)) {
         args.filterBeforeItem(filterArgs)
       }
 
@@ -386,51 +382,51 @@ class Navigation {
 
       /* Link start */
 
-      if (typeof args.filterBeforeLink === 'function') {
+      if (isFunction(args.filterBeforeLink)) {
         args.filterBeforeLink(filterArgs)
       }
 
-      const linkClassesArray: string[] = []
+      const linkClassesArr: string[] = []
 
       if (isStringStrict(args.linkClass)) {
-        linkClassesArray.push(args.linkClass)
+        linkClassesArr.push(args.linkClass)
       }
 
       if (!external && isStringStrict(args.internalLinkClass)) {
-        linkClassesArray.push(args.internalLinkClass)
+        linkClassesArr.push(args.internalLinkClass)
       }
 
-      const linkClasses = (linkClassesArray.length > 0) ? ` class="${linkClassesArray.join(' ')}"` : ''
-      const linkAttrsArray = [link !== '' ? `href="${link}"` : 'type="button"']
+      const linkClasses = (linkClassesArr.length > 0) ? ` class="${linkClassesArr.join(' ')}"` : ''
+      const linkAttrsArr = [link !== '' ? `href="${link}"` : 'type="button"']
 
       if (isStringStrict(args.linkAttr)) {
-        linkAttrsArray.push(args.linkAttr)
+        linkAttrsArr.push(args.linkAttr)
       }
 
       if (current) {
-        linkAttrsArray.push('data-current="true"')
+        linkAttrsArr.push('data-current="true"')
 
         if (link !== '') {
-          linkAttrsArray.push('aria-current="page"')
+          linkAttrsArr.push('aria-current="page"')
         }
       }
 
       if (descendentCurrent) {
-        linkAttrsArray.push('data-descendent-current="true"')
+        linkAttrsArr.push('data-descendent-current="true"')
       }
 
-      const linkAttrs = (linkAttrsArray.length > 0) ? ` ${linkAttrsArray.join(' ')}` : ''
+      const linkAttrs = (linkAttrsArr.length > 0) ? ` ${linkAttrsArr.join(' ')}` : ''
       const linkTag = link !== '' ? 'a' : 'button'
 
       output.html += `<${linkTag} data-depth="${depth}"${linkClasses}${linkAttrs}>`
 
-      if (typeof args.filterBeforeLinkText === 'function') {
+      if (isFunction(args.filterBeforeLinkText)) {
         args.filterBeforeLinkText(filterArgs)
       }
 
       output.html += title
 
-      if (typeof args.filterAfterLinkText === 'function') {
+      if (isFunction(args.filterAfterLinkText)) {
         args.filterAfterLinkText(filterArgs)
       }
 
@@ -438,7 +434,7 @@ class Navigation {
 
       output.html += `</${linkTag}>`
 
-      if (typeof args.filterAfterLink === 'function') {
+      if (isFunction(args.filterAfterLink)) {
         args.filterAfterLink(filterArgs)
       }
 
@@ -452,14 +448,14 @@ class Navigation {
 
       output.html += '</li>'
 
-      if (typeof args.filterAfterItem === 'function') {
+      if (isFunction(args.filterAfterItem)) {
         args.filterAfterItem(filterArgs)
       }
     })
 
     output.html += '</ul>'
 
-    if (typeof args.filterAfterList === 'function') {
+    if (isFunction(args.filterAfterList)) {
       args.filterAfterList(listFilterArgs)
     }
   }
@@ -468,7 +464,7 @@ class Navigation {
    * Return navigation html output
    *
    * @param {string} location
-   * @param {NavigationOutputArgs} args
+   * @param {import('./NavigationTypes').NavigationOutputArgs} args
    * @param {number} maxDepth
    * @return {string} HTML - ul
    */
@@ -512,15 +508,15 @@ class Navigation {
   /**
    * Return breadcrumbs html output
    *
-   * @param {NavigationBreadcrumbItem[]} items
+   * @param {import('./NavigationTypes').NavigationBreadcrumbItem[]} items
+   * @param {import('./NavigationTypes').NavigationBreadcrumbOutputArgs} args
    * @param {string} current
-   * @param {NavigationBreadcrumbOutputArgs} args
    * @return {string} HTML - ol
    */
   getBreadcrumbs (
     items: NavigationBreadcrumbItem[] = [],
-    current: string = '',
-    args: NavigationBreadcrumbOutputArgs
+    args: NavigationBreadcrumbOutputArgs,
+    current: string = ''
   ): string {
     /* Items required */
 
@@ -555,7 +551,7 @@ class Navigation {
     const itemAttrs = isStringStrict(args.itemAttr) ? ` ${args.itemAttr}` : ''
     const lastItemIndex = items.length - 1
 
-    const itemsArray = items.map((item, index) => {
+    const itemsArr = items.map((item, index) => {
       const { title } = item
 
       /* Title required */
@@ -597,26 +593,26 @@ class Navigation {
 
       /* Link */
 
-      if (typeof args.filterBeforeLink === 'function') {
+      if (isFunction(args.filterBeforeLink)) {
         args.filterBeforeLink(filterArgs)
       }
 
-      const linkClassesArray: string[] = []
+      const linkClassesArr: string[] = []
 
       if (isStringStrict(args.linkClass)) {
-        linkClassesArray.push(args.linkClass)
+        linkClassesArr.push(args.linkClass)
       }
 
       if (isStringStrict(args.internalLinkClass)) {
-        linkClassesArray.push(args.internalLinkClass)
+        linkClassesArr.push(args.internalLinkClass)
       }
 
-      const linkClasses = (linkClassesArray.length > 0) ? ` class="${linkClassesArray.join(' ')}"` : ''
+      const linkClasses = (linkClassesArr.length > 0) ? ` class="${linkClassesArr.join(' ')}"` : ''
       const linkAttrs = isStringStrict(args.linkAttr) ? ` ${args.linkAttr}` : ''
 
       output.html += `<a${linkClasses} href="${permalink}"${linkAttrs}>${title}</a>`
 
-      if (typeof args.filterAfterLink === 'function') {
+      if (isFunction(args.filterAfterLink)) {
         args.filterAfterLink(filterArgs)
       }
 
@@ -634,7 +630,7 @@ class Navigation {
 
     return `
       <ol${listClasses}${listAttrs}>
-        ${itemsArray.join('')}
+        ${itemsArr.join('')}
         <li${itemClasses}${itemAttrs} data-current="true">
           <span${currentClasses}>${current}<span${a11yClasses}> (current page)</span></span>
         </li>

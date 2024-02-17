@@ -24,7 +24,8 @@ import type { ParentArgs } from '../../global/globalTypes'
  * @prop {string} [args.classes] - Back end option
  * @prop {string} [args.style] - Back end option
  * @prop {string} [args.attr] - Back end option
- * @prop {ParentArgs} [parents]
+ * @prop {boolean} [args.nest] - Back end option
+ * @prop {import('../../global/globalTypes').ParentArgs} [parents]
  */
 export interface ContainerProps {
   args: {
@@ -43,6 +44,7 @@ export interface ContainerProps {
     style?: string
     attr?: string
     richTextStyles?: boolean
+    nest?: boolean
     [key: string]: unknown
   }
   parents?: ParentArgs[]

@@ -4,15 +4,16 @@
 
 /* Imports */
 
-import type { FiltersFunctions, Filters } from './filtersTypes'
+import type { Filters, FiltersFunctions } from './filtersTypes'
 import { isArrayStrict } from '../isArray/isArray'
 import { isStringStrict } from '../isString/isString'
 import { isObjectStrict } from '../isObject/isObject'
+import { isFunction } from '../isFunction/isFunction'
 
 /**
  * Store filter callbacks by name
  *
- * @type {FiltersFunctions}
+ * @type {import('./filtersTypes').FiltersFunctions}
  */
 let filters: FiltersFunctions = {
   columnProps: [],
@@ -42,7 +43,7 @@ let filters: FiltersFunctions = {
  * @return {boolean}
  */
 const addFilter = <T extends keyof Filters>(name: T, filter: Filters[T]): boolean => {
-  if (!isStringStrict(name) || typeof filter !== 'function') {
+  if (!isStringStrict(name) || !isFunction(filter)) {
     return false
   }
 
@@ -62,8 +63,8 @@ const addFilter = <T extends keyof Filters>(name: T, filter: Filters[T]): boolea
  * @param {function} filter
  * @return {boolean}
  */
-const removeFilter = (name: string, filter: Function): boolean => {
-  if (!isStringStrict(name) || typeof filter !== 'function') {
+const removeFilter = <T extends keyof Filters>(name: T, filter: Filters[T]): boolean => {
+  if (!isStringStrict(name) || !isFunction(filter)) {
     return false
   }
 
@@ -90,14 +91,14 @@ const removeFilter = (name: string, filter: Function): boolean => {
  * @param {*} [args]
  * @return {Promise<*>}
  */
-const applyFilters = async <T, U,>(name: string, value: T, args?: U): Promise<T> => {
+const applyFilters = async <T, U>(name: string, value: T, args?: U): Promise<T> => {
   const callbacks = filters[name]
 
   if (isArrayStrict(callbacks)) {
     for (let i = 0; i < callbacks.length; i += 1) {
       const callback = callbacks[i]
 
-      if (typeof callback === 'function') {
+      if (isFunction(callback)) {
         value = await callback(value, args)
       }
     }
@@ -136,7 +137,7 @@ const resetFilters = (): void => {
 /**
  * Function - fill filters object
  *
- * @param {Filters} args
+ * @param {import('./filtersTypes').Filters} args
  * @return {boolean}
  */
 const setFilters = (args: Partial<Filters>): boolean => {
@@ -153,7 +154,7 @@ const setFilters = (args: Partial<Filters>): boolean => {
   Object.keys(args).forEach((a) => {
     const arg = args[a]
 
-    if (typeof arg !== 'function') {
+    if (!isFunction(arg)) {
       return
     }
 

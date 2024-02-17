@@ -16,7 +16,7 @@ import { isString } from '../isString/isString'
  *
  * @param {string} contentType
  * @param {string} linkContentType
- * @return {ArchiveLinkReturn}
+ * @return {import('./getArchiveLinkTypes').ArchiveLinkReturn}
  */
 const getArchiveLink = (contentType: string = '', linkContentType: string = ''): ArchiveLinkReturn => {
   let archiveLink = ''

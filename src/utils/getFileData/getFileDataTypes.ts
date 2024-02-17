@@ -2,6 +2,8 @@
  * Utils - Get File Data Types
  */
 
+/* Imports */
+
 import type { RenderItem } from '../../render/RenderTypes'
 
 /**
@@ -14,6 +16,9 @@ export interface FileDataParams {
   id?: string
 }
 
+/**
+ * @typedef {Object.<string, import('../../render/RenderTypes').RenderItem>} FileDataReturn
+ */
 export interface FileDataReturn {
   [key: string]: RenderItem
 }

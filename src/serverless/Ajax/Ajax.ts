@@ -9,12 +9,13 @@ import type { AjaxActionReturn, AjaxActionArgs, CustomErrorObject } from '../ser
 import { setConfig } from '../../config/config'
 import {
   setActions,
-  applyFilters,
+  setShortcodes,
   setFilters,
+  applyFilters,
   isObjectStrict,
   isStringStrict,
   isNumber
-} from '../../utils'
+} from '../../utils/utilsMin'
 import { SendForm } from '../SendForm/SendForm'
 
 /**
@@ -40,7 +41,7 @@ class _CustomError extends Error {
   /**
    * Set properties
    *
-   * @param {AjaxCustomErrorArgs} args
+   * @param {import('./AjaxTypes').AjaxCustomErrorArgs} args
    */
   constructor (args: AjaxCustomErrorArgs) {
     if (!isObjectStrict(args)) {
@@ -58,7 +59,7 @@ class _CustomError extends Error {
 /**
  * Function - set env variables, normalize request body, check for required props and call actions
  *
- * @param {AjaxArgs} args
+ * @param {import('./AjaxTypes').AjaxArgs} args
  * @return {Promise<Response>} Response
  */
 const Ajax = async ({ request, env, siteConfig }: AjaxArgs): Promise<Response> => {
@@ -68,6 +69,7 @@ const Ajax = async ({ request, env, siteConfig }: AjaxArgs): Promise<Response> =
     setConfig(siteConfig)
     setFilters(siteConfig.filters)
     setActions(siteConfig.actions)
+    setShortcodes(siteConfig.shortcodes)
 
     if (isObjectStrict(env)) {
       siteConfig.env.dev = env.ENVIRONMENT === 'dev'
@@ -92,7 +94,7 @@ const Ajax = async ({ request, env, siteConfig }: AjaxArgs): Promise<Response> =
     if (data.inputs[honeypotName] !== undefined) {
       const honeypotValue = data.inputs[honeypotName].value
 
-      if (honeypotValue !== '' && honeypotValue !== undefined) {
+      if (isStringStrict(honeypotValue)) {
         const options = {
           status: 200,
           headers: {

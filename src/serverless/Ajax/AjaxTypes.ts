@@ -9,8 +9,8 @@ import type { Config } from '../../config/configTypes'
 /**
  * @typedef {object} AjaxArgs
  * @prop {Request} request
- * @prop {EnvCloudflare} env
- * @prop {Config} siteConfig
+ * @prop {import('../serverlessTypes').EnvCloudflare} env
+ * @prop {import(../../config/configTypes').Config} siteConfig
  */
 export interface AjaxArgs {
   request: Request
@@ -31,11 +31,17 @@ export interface AjaxCustomErrorArgs {
 /**
  * @typedef {object} AjaxResOptions
  * @prop {number} status
- * @prop {Object.<string, string>} [headers]
+ * @prop {import('../../global/globalTypes').GenericStrings} [headers]
  */
 export interface AjaxResOptions {
   status: number
   headers?: GenericStrings
 }
 
+/**
+ * @typedef {function} AjaxResFilter
+ * @param {import('../serverlessTypes').AjaxActionReturn|null} res
+ * @param {import('../serverlessTypes').AjaxActionArgs} args
+ * @return {Promise<import('../serverlessTypes').AjaxActionReturn|null>}
+ */
 export type AjaxResFilter = (res: AjaxActionReturn | null, args: AjaxActionArgs) => Promise<AjaxActionReturn | null>

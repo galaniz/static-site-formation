@@ -20,7 +20,7 @@ export interface NavigationProps {
 
 /**
  * @typedef Navigation
- * @type {Generic}
+ * @type {import('../../global/globalTypes').Generic}
  * @prop {string} [title]
  * @prop {string} location
  * @prop {NavigationItem[]} items
@@ -32,12 +32,29 @@ export interface Navigation extends Generic {
 }
 
 /**
+ * @typedef {object} NavigationByLocationItem
+ * @prop {string} title
+ * @prop {NavigationItem[]} items
+ */
+export interface NavigationByLocationItem {
+  title: string
+  items: NavigationItem[]
+}
+
+/**
+ * @typedef {Object.<string, NavigationInfo>} NavigationByLocation
+ */
+export interface NavigationByLocation {
+  [key: string]: NavigationByLocationItem
+}
+
+/**
  * @typedef NavigationItem
- * @type {Generic}
+ * @type {import('../../global/globalTypes').Generic}
  * @prop {string} [id]
  * @prop {string} [title]
  * @prop {string} [link]
- * @prop {InternalLink} [internalLink]
+ * @prop {import('../../global/globalTypes').InternalLink} [internalLink]
  * @prop {string} [externalLink]
  * @prop {NavigationItem[]} [children]
  * @prop {boolean} [current]
@@ -57,8 +74,15 @@ export interface NavigationItem extends Generic {
 }
 
 /**
+ * @typedef {Object.<string, NavigationItem>} NavigationItemsById
+ */
+export interface NavigationItemsById {
+  [key: string]: NavigationItem
+}
+
+/**
  * @typedef NavigationBreadcrumbItem
- * @type NavigationItem
+ * @type {NavigationItem}
  * @prop {string} slug
  * @prop {string} contentType
  * @prop {string} [linkContentType]
@@ -92,7 +116,7 @@ export interface NavigationOutputBaseArgs {
 /**
  * @typedef {object} NavigationOutputListFilterArgs
  * @prop {NavigationOutputArgs} args
- * @prop {HtmlString} output
+ * @prop {import('../../global/globalTypes').HtmlString} output
  * @prop {NavigationItem[]} items
  * @prop {number} depth
  */
@@ -107,7 +131,7 @@ export interface NavigationOutputListFilterArgs {
  * @typedef {object} NavigationOutputFilterArgs
  * @prop {NavigationOutputArgs} args
  * @prop {NavigationItem} item
- * @prop {HtmlString} output
+ * @prop {import('../../global/globalTypes').HtmlString} output
  * @prop {number} index
  * @prop {NavigationItem[]} items
  * @prop {number} depth
@@ -122,14 +146,14 @@ export interface NavigationOutputFilterArgs {
 }
 
 /**
- * @typedef {Function} NavigationOutputListFilter
+ * @typedef {function} NavigationOutputListFilter
  * @param {NavigationOutputListFilterArgs} args
  * @return {void}
  */
 export type NavigationOutputListFilter = (args: NavigationOutputListFilterArgs) => void
 
 /**
- * @typedef {Function} NavigationFilter
+ * @typedef {function} NavigationFilter
  * @param {NavigationOutputFilterArgs} args
  * @return {void}
  */
@@ -137,7 +161,7 @@ export type NavigationFilter = (args: NavigationOutputFilterArgs) => void
 
 /**
  * @typedef NavigationOutputArgs
- * @type NavigationOutputBaseArgs
+ * @type {NavigationOutputBaseArgs}
  * @prop {NavigationOutputListFilter} [filterBeforeList]
  * @prop {NavigationOutputListFilter} [filterAfterList]
  * @prop {NavigationFilter} [filterBeforeItem]
@@ -160,7 +184,7 @@ export interface NavigationOutputArgs extends NavigationOutputBaseArgs {
 
 /**
  * @typedef {object} NavigationBreadcrumbOutputFilterArgs
- * @prop {HtmlString} output
+ * @prop {import('../../global/globalTypes').HtmlString} output
  * @prop {boolean} isLastLevel
  */
 export interface NavigationBreadcrumbOutputFilterArgs {
@@ -169,7 +193,7 @@ export interface NavigationBreadcrumbOutputFilterArgs {
 }
 
 /**
- * @typedef {Function} NavigationBreadcrumbOutputFilter
+ * @typedef {function} NavigationBreadcrumbOutputFilter
  * @param {NavigationBreadcrumbOutputFilterArgs} args
  * @return {void}
  */

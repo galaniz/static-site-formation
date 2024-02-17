@@ -1,8 +1,8 @@
 {
   "name": "static-site-formation",
   "version": "1.0.0",
-  "description": "Helpers for static sites built with Contentful or from the file system",
-  "main": "./esm/index.js",
+  "description": "Base and helpers for static sites built with json files or Contentful",
+  "main": "./esm/config/config.js",
   "engines": {
     "node": ">=17"
   },

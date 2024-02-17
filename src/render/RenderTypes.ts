@@ -7,7 +7,7 @@
 import type { Generic, GenericFunctions, GenericStrings, ParentArgs, HtmlString } from '../global/globalTypes'
 import type { Navigation, NavigationItem } from '../components/Navigation/NavigationTypes'
 import type { RichTextContentItem } from '../text/RichText/RichTextTypes'
-import { PropFile, PropId, PropType } from '../utils/getProp/getPropTypes'
+import type { PropFile, PropId, PropType } from '../utils/getProp/getPropTypes'
 
 /**
  * @typedef {object} RenderSlug
@@ -28,11 +28,11 @@ export interface RenderSlugs {
 
 /**
  * @typedef RenderMetaArgs
- * @type {Generic}
+ * @type {import('../global/globalTypes').Generic}
  * @prop {RenderMetaReturn} [meta]
  * @prop {string} [metaTitle]
  * @prop {string} [metaDescription]
- * @prop {Generic} [metaImage]
+ * @prop {import('../global/globalTypes').Generic} [metaImage]
  */
 export interface RenderMetaArgs extends Generic {
   meta?: RenderMetaReturn
@@ -68,7 +68,16 @@ export interface RenderMetaReturn {
 }
 
 /**
- * @typedef {} RenderContentData
+ * @typedef RenderContentData
+ * @type {
+ * import('../global/globalTypes').Generic|
+ * import('../utils/getProp/getPropTypes').PropId|
+ * import('../utils/getProp/getPropTypes').PropFile|
+ * import('../utils/getProp/getPropTypes').PropType|
+ * import('../text/RichText/RichTextTypes').RichTextContentItem
+ * }
+ * @prop {RenderContentData|RenderContentData[]} [content]
+ * @prop {RenderContentData[]} [templates]
  */
 export type RenderContentData =
   Generic &
@@ -85,12 +94,12 @@ export type RenderContentData =
  * @typedef {object} RenderContentArgs
  * @prop {RenderContentData[]} contentData
  * @prop {RenderServerlessData} [serverlessData]
- * @prop {HtmlString} output
- * @prop {ParentArgs[]} parents
+ * @prop {import('../global/globalTypes').HtmlString} output
+ * @prop {import('../global/globalTypes').ParentArgs[]} parents
  * @prop {RenderItem} pageData
  * @prop {string[]} pageContains
- * @prop {GenericStrings} navigations
- * @prop {GenericFunctions} renderFunctions
+ * @prop {import('../global/globalTypes').GenericStrings} navigations
+ * @prop {import('../global/globalTypes').GenericFunctions} renderFunctions
  */
 export interface RenderContentArgs {
   contentData: RenderContentData[]
@@ -106,7 +115,7 @@ export interface RenderContentArgs {
 /**
  * @typedef {object} RenderServerlessData
  * @prop {string} path
- * @prop {Generic} query
+ * @prop {import('../global/globalTypes').Generic} query
  */
 export interface RenderServerlessData {
   path: string
@@ -124,19 +133,23 @@ export interface RenderPreviewData {
 }
 
 /**
- * @typedef {object} RenderRedirect
- * @prop {object} [key] - Dynamic key
- * @prop {string[]} key.redirect
+ * @typedef {object} RenderRedirectItem
+ * @prop {string[]} redirect
+ */
+export interface RenderRedirectItem {
+  redirect: string[]
+}
+
+/**
+ * @typedef {Object.<string, RenderRedirectItem>} RenderRedirect
  */
 export interface RenderRedirect {
-  [key: string]: {
-    redirect: string[]
-  }
+  [key: string]: RenderRedirectItem
 }
 
 /**
  * @typedef RenderItem
- * @type {Generic}
+ * @type {import('../global/globalTypes').Generic}
  * @prop {string} id
  * @prop {string} slug
  * @prop {string} [title]
@@ -226,7 +239,7 @@ export interface RenderItemActionArgs {
  * @typedef {object} RenderLayoutArgs
  * @prop {string} id
  * @prop {RenderMetaReturn} meta
- * @prop {GenericStrings} [navigations]
+ * @prop {import('../global/globalTypes').GenericStrings} [navigations]
  * @prop {string} contentType
  * @prop {string} content
  * @prop {string} slug
@@ -248,9 +261,9 @@ export interface RenderLayoutArgs {
 
 /**
  * @typedef RenderAllData
- * @type {Generic}
- * @prop {Navigation[]} navigation
- * @prop {NavigationItem[]} navigationItem
+ * @type {import('../global/globalTypes').Generic}
+ * @prop {import('../components/Navigation/NavigationTypes').Navigation[]} navigation
+ * @prop {import('../components/Navigation/NavigationTypes').NavigationItem[]} navigationItem
  * @prop {object} content
  * @prop {RenderItem[]} content.page
  * @prop {RenderRedirect[]} redirect
@@ -287,8 +300,62 @@ export interface RenderReturn {
   output: string
 }
 
+/**
+ * @typedef {function} RenderContentFilter
+ * @param {string} content
+ * @param {import('../global/globalTypes').ParentArgs}
+ * @return {Promise<string>}
+ */
 export type RenderContentFilter = (content: string, args: ParentArgs) => Promise<string>
 
+/**
+ * @typedef {function} RenderItemFilter
+ * @param {string} output
+ * @param {RenderItemActionArgs} args
+ * @return {Promise<string>}
+ */
 export type RenderItemFilter = (output: string, args: RenderItemActionArgs) => Promise<string>
 
+/**
+ * @typedef {function} RenderNameFilter
+ * @param {string} name
+ * @return {Promise<string>}
+ */
 export type RenderNameFilter = (name: string) => Promise<string>
+
+/**
+ * @typedef {function} RenderStartAction
+ * @param {RenderArgs} args
+ * @return {Promise<void>}
+ */
+export type RenderStartAction = (args: RenderArgs) => Promise<void>
+
+/**
+ * @typedef RenderEndActionArgs
+ * @type {RenderArgs}
+ * @prop {RenderReturn[]|RenderReturn} data
+ */
+export interface RenderEndActionArgs extends RenderArgs {
+  data: RenderReturn[] | RenderReturn
+}
+
+/**
+ * @typedef {function} RenderEndAction
+ * @param {RenderEndActionArgs} args
+ * @return {Promise<void>}
+ */
+export type RenderEndAction = (args: RenderEndActionArgs) => Promise<void>
+
+/**
+ * @typedef {function} RenderItemStartAction
+ * @param {RenderItemStartActionArgs} args
+ * @return {Promise<void>}
+ */
+export type RenderItemStartAction = (args: RenderItemStartActionArgs) => Promise<void>
+
+/**
+ * @typedef {function} RenderItemEndAction
+ * @param {RenderItemActionArgs} args
+ * @return {Promise<void>}
+ */
+export type RenderItemEndAction = (args: RenderItemActionArgs) => Promise<void>

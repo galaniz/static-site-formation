@@ -5,7 +5,7 @@
 /* Imports */
 
 import type { Generic } from '../../global/globalTypes'
-import { RenderItem } from '../../render/RenderTypes'
+import type { RenderItem } from '../../render/RenderTypes'
 
 /**
  * @typedef {Object.<string, (string|number|boolean)>} ContentfulDataParams
@@ -16,8 +16,8 @@ export interface ContentfulDataParams {
 
 /**
  * @typedef ContentfulDataReturn
- * @type {Generic}
- * @prop {*[]} [items]
+ * @type {import('../../global/globalTypes').Generic}
+ * @prop {import('../../render/RenderTypes').RenderItem[]} [items]
  * @prop {*[]} [errors]
  */
 export interface ContentfulDataReturn extends Generic {

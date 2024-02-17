@@ -8,7 +8,7 @@ import type { Generic, GenericStrings } from '../global/globalTypes'
 
 /**
  * @typedef EnvCloudflare
- * @type {Generic}
+ * @type {import('../global/globalTypes').Generic}
  * @prop {string} [ENVIRONMENT]
  * @prop {string} [SMPT2GO_API_KEY]
  */
@@ -63,7 +63,7 @@ export interface AjaxActionArgs extends AjaxActionData {
  * @prop {number} error.code
  * @prop {object} [success]
  * @prop {string} success.message
- * @prop {Object.<string, string>} [headers]
+ * @prop {import('../global/globalTypes').GenericStrings} [headers]
  */
 export interface AjaxActionReturn {
   error?: {

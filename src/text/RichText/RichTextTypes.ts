@@ -16,10 +16,10 @@ import type { PropFile } from '../../utils/getProp/getPropTypes'
  * @prop {string} [args.caption]
  * @prop {string} [args.align]
  * @prop {string} [args.link]
- * @prop {InternalLink} [args.internalLink]
+ * @prop {import('../../global/globalTypes').InternalLink} [args.internalLink]
  * @prop {string} [args.style]
  * @prop {string} [args.attr]
- * @prop {ParentArgs} [parents]
+ * @prop {import('../../global/globalTypes').ParentArgs} [parents]
  */
 export interface RichTextProps {
   args: {
@@ -44,14 +44,18 @@ export interface RichTextProps {
  * @typedef RichTextContentItem
  * @prop {string} [tag]
  * @prop {string} [link]
- * @prop {InternalLink} [internalLink]
+ * @prop {import('../../global/globalTypes').InternalLink} [internalLink]
  * @prop {string|RichTextContentItem[]} [content]
  * @prop {string} [nodeType]
  * @prop {string} [value]
  * @prop {RichTextContentItemMark} [marks]
  * @prop {object} [data]
  * @prop {string} [data.uri]
- * @prop {PropFile | InternalLink} [data.target]
+ * @prop {
+ * import('../../global/globalTypes').Generic|
+ * import('../../utils/getProp/getPropTypes').PropFile|
+ * import('../../global/globalTypes').InternalLink
+ * } [data.target]
  */
 export interface RichTextContentItem {
   tag?: string
@@ -79,7 +83,7 @@ export interface RichTextContentItemMark {
  * @typedef {object} RichTextContentReturn
  * @prop {string} [tag]
  * @prop {string} [link]
- * @prop {InternalLink} [internalLink]
+ * @prop {import('../../global/globalTypes').InternalLink} [internalLink]
  * @prop {string|RichTextContentReturn[]} [content]
  */
 export interface RichTextContentReturn {
@@ -130,12 +134,38 @@ export interface RichTextNormalizeContentFilterArgs {
   args: RichTextContentItem
 }
 
+/**
+ * @typedef {RichTextContentItem[]|string|undefined} RichTextNormalizeContent
+ */
 type RichTextNormalizeContent = RichTextContentItem[] | string | undefined
 
+/**
+ * @typedef {function} RichTextNormalizeContentFilter
+ * @param {RichTextNormalizeContent} content
+ * @param {RichTextNormalizeContentFilterArgs} args
+ * @return {Promise<RichTextNormalizeContent>}
+ */
 export type RichTextNormalizeContentFilter = (content: RichTextNormalizeContent, args: RichTextNormalizeContentFilterArgs) => Promise<RichTextNormalizeContent>
 
+/**
+ * @typedef {function} RichTextContentFilter
+ * @param {string} content
+ * @param {RichTextContentFilterArgs} args
+ * @return {Promise<string>}
+ */
 export type RichTextContentFilter = (content: string, args: RichTextContentFilterArgs) => Promise<string>
 
+/**
+ * @typedef {function} RichTextContentOutputFilter
+ * @param {string} content
+ * @param {RichTextContentFilterArgs} args
+ */
 export type RichTextContentOutputFilter = (content: string, args: RichTextContentFilterArgs) => Promise<string>
 
+/**
+ * @typedef {function} RichTextOutputFilter
+ * @param {string} output
+ * @param {RichTextProps} props
+ * @return {Promise<string>}
+ */
 export type RichTextOutputFilter = (output: string, props: RichTextProps) => Promise<string>

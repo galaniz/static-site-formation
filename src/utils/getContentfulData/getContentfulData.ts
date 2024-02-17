@@ -6,15 +6,15 @@
 
 import type { ContentfulDataParams, ContentfulDataReturn } from './getContentfulDataTypes'
 import resolveResponse from 'contentful-resolve-response'
-import { applyFilters, isObject, isObjectStrict, isStringStrict } from '../../utils'
+import { applyFilters, isObject, isObjectStrict, isStringStrict } from '../utilsMin'
 import { config } from '../../config/config'
 
 /**
  * Function - fetch data from contentful cms or cache
  *
  * @param {string} key
- * @param {ContentfulDataParams} params
- * @return {Promise<ContentfulDataReturn>}
+ * @param {import('./getContentfulDataTypes').ContentfulDataParams} params
+ * @return {Promise<import('./getContentfulDataTypes').ContentfulDataReturn>}
  */
 const getContentfulData = async (
   key: string = '',

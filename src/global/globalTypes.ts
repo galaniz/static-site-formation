@@ -41,8 +41,7 @@ export interface InternalLinkBase {
 
 /**
  * @typedef InternalLink
- * @type {InternalLinkBase}
- * @prop {*} [key] - Dynamic key
+ * @type {InternalLinkBase|Generic}
  */
 export interface InternalLink extends InternalLinkBase {
   [key: string]: unknown

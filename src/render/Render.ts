@@ -18,17 +18,27 @@ import type {
   RenderArgs,
   RenderReturn
 } from './RenderTypes'
+import type {
+  ConfigArchiveIds,
+  ConfigArchivePosts,
+  ConfigSlugParents,
+  ConfigTerms,
+  ConfigFormMeta,
+  ConfigSlugArchives
+} from '../config/configTypes'
 import type { Generic, GenericStrings, ParentArgs, SlugParent } from '../global/globalTypes'
-import type { PaginationData } from '../components/Pagination/PaginationTypes'
 import type { SlugArgs } from '../utils/getSlug/getSlugTypes'
+import type { PaginationData } from '../components/Pagination/PaginationTypes'
+import type { RichTextContentItem } from '../text/RichText/RichTextTypes'
+import type { Navigation, NavigationItem } from '../components/Navigation/NavigationTypes'
 import {
-  setActions,
   doActions,
-  setFilters,
   applyFilters,
   getSlug,
   getPermalink,
   getProp,
+  getPath,
+  getJsonFile,
   isString,
   isStringStrict,
   isArray,
@@ -36,21 +46,21 @@ import {
   isObject,
   isObjectStrict,
   isNumber,
+  isFunction,
   getObjectKeys
-} from '../utils'
+} from '../utils/utilsMin'
 import { config } from '../config/config'
 import { Container } from '../layouts/Container/Container'
 import { Column } from '../layouts/Column/Column'
 import { Form } from '../objects/Form/Form'
 import { Field } from '../objects/Field/Field'
 import { RichText } from '../text/RichText/RichText'
-import { RichTextContentItem } from '../text/RichText/RichTextTypes'
 
 /**
  * Store slug data for json
  *
  * @private
- * @type {RenderSlugs}
+ * @type {import('./RenderTypes').RenderSlugs}
  */
 const _slugs: RenderSlugs = {}
 
@@ -58,8 +68,8 @@ const _slugs: RenderSlugs = {}
  * Function - normalize meta properties into one object
  *
  * @private
- * @param {RenderMetaArgs} args
- * @return {RenderMetaReturn}
+ * @param {import('./RenderTypes').RenderMetaArgs} args
+ * @return {import('./RenderTypes').RenderMetaReturn}
  */
 const _getMeta = (args: RenderMetaArgs): RenderMetaReturn => {
   const meta = {
@@ -100,7 +110,7 @@ const _getMeta = (args: RenderMetaArgs): RenderMetaReturn => {
  * Function - add pagination data to meta object
  *
  * @private
- * @param {PaginationData} args
+ * @param {import('../components/Pagination/PaginationTypes').PaginationData} args
  * @return {void}
  */
 const _setPaginationMeta = (args: PaginationData, slugArgs: SlugArgs, meta: RenderMetaReturn): void => {
@@ -153,35 +163,79 @@ const _setPaginationMeta = (args: PaginationData, slugArgs: SlugArgs, meta: Rend
  * @return {undefined}
  */
 const _mapContentTemplate = <T, U>(templates: T, content: U): undefined => {
-  if (!isArray(content)) {
+  if (!isArrayStrict(content)) {
     return
   }
 
+  /* Transform templates */
+
   if (isArrayStrict(templates)) {
     templates.forEach((t, i) => {
-      const templateRenderType = getProp.type(t as Generic, 'render')
-      const templateChildren = getProp.fields(t as Generic, 'content')
+      /* Remove template break */
 
-      if (templateRenderType === 'content' && content.length > 0) {
+      if (isObjectStrict(getProp.tag(content[0] as Generic, 'templateBreak'))) {
+        content.shift()
+      }
+
+      /* Check if slot */
+
+      const isSlot = isObjectStrict(getProp.tag(t as Generic, 'templateSlot'))
+
+      /* Check for repeatable template item */
+
+      const children = getProp.fields(t as Generic, 'content')
+      const repeat = getProp.fields(t as Generic, 'repeat')
+
+      if (isObjectStrict(repeat) && isArrayStrict(children) && !isSlot) {
+        const repeatId = getProp.id(repeat)
+
+        const repeatIndex = children.findIndex((c) => {
+          return getProp.id(c as Generic) === repeatId
+        })
+
+        if (repeatIndex !== -1) {
+          let breakIndex = content.findIndex((c) => {
+            return isObjectStrict(getProp.tag(c as Generic, 'templateBreak'))
+          })
+
+          breakIndex = breakIndex === -1 ? content.length : breakIndex
+
+          let insertIndex = repeatIndex
+
+          for (let i = 0; i < breakIndex - 1; i += 1) {
+            children.splice(insertIndex, 0, structuredClone(repeat))
+
+            insertIndex += 1
+          }
+        }
+      }
+
+      /* Replace slot with content */
+
+      if (isSlot) {
         templates.unshift()
         templates[i] = content.shift()
 
         return
       }
 
-      if (isObject(templateChildren)) {
-        _mapContentTemplate(templateChildren, content)
+      /* Recurse children */
+
+      if (isObject(children)) {
+        _mapContentTemplate(children, content)
       }
     })
   }
 
+  /* Check for nested content */
+
   if (isObjectStrict(templates)) {
     getObjectKeys(templates).forEach((t) => {
       const template = templates[t]
-      const templateChildren = getProp.fields(template as Generic, 'content')
+      const children = getProp.fields(template as Generic, 'content')
 
-      if (isObject(templateChildren)) {
-        _mapContentTemplate(templateChildren, content)
+      if (isObject(children)) {
+        _mapContentTemplate(children, content)
       }
     })
   }
@@ -191,7 +245,7 @@ const _mapContentTemplate = <T, U>(templates: T, content: U): undefined => {
  * Function - recurse and output nested content
  *
  * @private
- * @param {RenderContentArgs} args
+ * @param {import('./RenderTypes').RenderContentArgs} args
  * @return {void}
  */
 const _renderContent = async (args: RenderContentArgs): Promise<void> => {
@@ -311,7 +365,7 @@ const _renderContent = async (args: RenderContentArgs): Promise<void> => {
 
     const renderFunction = renderFunctions[renderType]
 
-    if (typeof renderFunction === 'function') {
+    if (isFunction(renderFunction)) {
       const renderArgs = {
         args: props,
         parents,
@@ -397,8 +451,8 @@ const _renderContent = async (args: RenderContentArgs): Promise<void> => {
  * Function - output single post or page
  *
  * @private
- * @param {RenderItemArgs} args
- * @return {RenderItemReturn}
+ * @param {import('./RenderTypes').RenderItemArgs} args
+ * @return {import('./RenderTypes').RenderItemReturn}
  */
 const _renderItem = async (args: RenderItemArgs): Promise<RenderItemReturn> => {
   if (!isObjectStrict(args)) {
@@ -520,7 +574,7 @@ const _renderItem = async (args: RenderItemArgs): Promise<RenderItemReturn> => {
 
   let navigations: GenericStrings = {}
 
-  if (typeof renderFunctions.navigations === 'function') {
+  if (isFunction(renderFunctions.navigations)) {
     navigations = renderFunctions.navigations({
       navigations: config.navigation,
       items: config.navigationItem,
@@ -588,7 +642,7 @@ const _renderItem = async (args: RenderItemArgs): Promise<RenderItemReturn> => {
 
   let layoutOutput = ''
 
-  if (typeof renderFunctions.layout === 'function') {
+  if (isFunction(renderFunctions.layout)) {
     const layoutArgs: RenderLayoutArgs = {
       id,
       meta,
@@ -645,20 +699,32 @@ const _renderItem = async (args: RenderItemArgs): Promise<RenderItemReturn> => {
 /**
  * Function - loop through all content types to output pages and posts
  *
- * @param {RenderArgs} args
- * @return {Promise<RenderReturn[]|RenderReturn>}
+ * @param {import('./RenderTypes').RenderArgs} args
+ * @return {Promise<import('./RenderTypes').RenderReturn[]|import('./RenderTypes').RenderReturn>}
  */
-const Render = async ({
-  allData,
-  serverlessData,
-  previewData
-}: RenderArgs): Promise<RenderReturn[] | RenderReturn> => {
-  /* Set filters and actions */
+const Render = async (args: RenderArgs): Promise<RenderReturn[] | RenderReturn> => {
+  /* Fallback output */
 
-  setFilters(config.filters)
-  setActions(config.actions)
+  const fallback = [{
+    slug: '',
+    output: ''
+  }]
 
-  await doActions('renderStart')
+  /* Props must be object */
+
+  if (!isObjectStrict(args)) {
+    return fallback
+  }
+
+  const {
+    allData,
+    serverlessData,
+    previewData
+  } = args
+
+  /* Start action */
+
+  await doActions('renderStart', args)
 
   /* Reset script and style directories */
 
@@ -668,10 +734,7 @@ const Render = async ({
   /* Data */
 
   if (!isObjectStrict(allData)) {
-    return [{
-      slug: '',
-      output: ''
-    }]
+    return fallback
   }
 
   const {
@@ -690,23 +753,23 @@ const Render = async ({
 
   const renderFunctions = { ...config.renderFunctions }
 
-  if (typeof renderFunctions.container !== 'function') {
+  if (renderFunctions.container === undefined) {
     renderFunctions.container = Container
   }
 
-  if (typeof renderFunctions.column !== 'function') {
+  if (renderFunctions.column === undefined) {
     renderFunctions.column = Column
   }
 
-  if (typeof renderFunctions.form !== 'function') {
+  if (renderFunctions.form === undefined) {
     renderFunctions.form = Form
   }
 
-  if (typeof renderFunctions.field !== 'function') {
+  if (renderFunctions.field === undefined) {
     renderFunctions.field = Field
   }
 
-  if (typeof renderFunctions.richText !== 'function') {
+  if (renderFunctions.richText === undefined) {
     renderFunctions.richText = RichText
   }
 
@@ -739,8 +802,10 @@ const Render = async ({
       const id = isStringStrict(idProp) ? idProp : ''
       const isArchive = isStringStrict(archive) && id !== ''
 
-      if (isArchive) {
+      if (isArchive && id !== '') {
         const archiveIds = config.archive.ids
+        const archiveSlug = itemProp.slug
+        const archiveTitle = itemProp.title
         const contentTypeArchive = config.contentTypes.archive?.[archive]?.id
 
         if (archiveIds[archive] === undefined) {
@@ -751,6 +816,14 @@ const Render = async ({
 
         if (isObjectStrict(contentTypeArchive)) {
           contentTypeArchive[linkContentType] = id
+        }
+
+        if (isStringStrict(archiveSlug) && isStringStrict(archiveTitle)) {
+          config.slug.archives[id] = {
+            slug: archiveSlug,
+            title: archiveTitle,
+            contentType: archive
+          }
         }
       }
 
@@ -788,48 +861,53 @@ const Render = async ({
       })
     }
   } else {
-    const dir = config.store.dir
-    const files = config.store.files
+    type NavigationsData = { navigation: Navigation[], navigationItem: NavigationItem[] } | undefined
 
-    /* eslint-disable @typescript-eslint/no-var-requires */
-    const slugParentsJson = require(`${dir}${files.slugParents.name}`)
-    const archiveIdsJson = require(`${dir}${files.archiveIds.name}`)
-    const archiveTermsJson = require(`${dir}${files.archiveTerms.name}`)
-    const archivePostsJson = require(`${dir}${files.archivePosts.name}`)
-    const formMetaJson = require(`${dir}${files.formMeta.name}`)
-    const navigationsJson = require(`${dir}${files.navigations.name}`)
+    const slugParentsData: ConfigSlugParents | undefined = await getJsonFile(getPath('slugParents', 'store'))
+    const slugArchivesData: ConfigSlugArchives | undefined = await getJsonFile(getPath('slugArchives', 'store'))
+    const archiveIdsData: ConfigArchiveIds | undefined = await getJsonFile(getPath('archiveIds', 'store'))
+    const archiveTermsData: ConfigTerms | undefined = await getJsonFile(getPath('archiveTerms', 'store'))
+    const archivePostsData: ConfigArchivePosts | undefined = await getJsonFile(getPath('archivePosts', 'store'))
+    const formMetaData: ConfigFormMeta | undefined = await getJsonFile(getPath('formMeta', 'store'))
+    const navigationsData: NavigationsData = await getJsonFile(getPath('navigations', 'store'))
 
-    if (slugParentsJson != null) {
-      Object.keys(slugParentsJson).forEach((s) => {
-        config.slug.parents[s] = slugParentsJson[s]
+    if (slugParentsData !== undefined) {
+      Object.keys(slugParentsData).forEach((s) => {
+        config.slug.parents[s] = slugParentsData[s]
       })
     }
 
-    if (archiveIdsJson != null) {
-      config.archive.ids = archiveIdsJson
+    if (slugArchivesData !== undefined) {
+      Object.keys(slugArchivesData).forEach((s) => {
+        config.slug.archives[s] = slugArchivesData[s]
+      })
+    }
 
-      Object.keys(archiveIdsJson).forEach((a) => {
+    if (archiveIdsData !== undefined) {
+      config.archive.ids = archiveIdsData
+
+      Object.keys(archiveIdsData).forEach((a) => {
         if (config.contentTypes.archive[a] != null) {
-          config.contentTypes.archive[a].id = archiveIdsJson[a]
+          config.contentTypes.archive[a].id = archiveIdsData[a]
         }
       })
     }
 
-    if (archiveTermsJson != null) {
-      config.archive.terms = archiveTermsJson
+    if (archiveTermsData !== undefined) {
+      config.archive.terms = archiveTermsData
     }
 
-    if (archivePostsJson != null) {
-      config.archive.posts = archivePostsJson
+    if (archivePostsData !== undefined) {
+      config.archive.posts = archivePostsData
     }
 
-    if (formMetaJson != null) {
-      config.formMeta = formMetaJson
+    if (formMetaData !== undefined) {
+      config.formMeta = formMetaData
     }
 
-    if (navigationsJson != null) {
-      config.navigation = navigationsJson.navigation
-      config.navigationItem = navigationsJson.navigationItem
+    if (navigationsData !== undefined) {
+      config.navigation = navigationsData.navigation
+      config.navigationItem = navigationsData.navigationItem
     }
   }
 
@@ -876,6 +954,7 @@ const Render = async ({
   if (serverlessData === undefined && previewData === undefined) {
     config.store.files.slugs.data = JSON.stringify(_slugs)
     config.store.files.slugParents.data = JSON.stringify(config.slug.parents)
+    config.store.files.slugArchives.data = JSON.stringify(config.slug.archives)
     config.store.files.archiveIds.data = JSON.stringify(config.archive.ids)
     config.store.files.archiveTerms.data = JSON.stringify(config.archive.terms)
     config.store.files.archivePosts.data = JSON.stringify(config.archive.posts)
@@ -888,13 +967,11 @@ const Render = async ({
 
   /* Output */
 
-  await doActions('renderEnd', serverlessData !== undefined || previewData !== undefined ? data[0] : data)
+  const output = serverlessData !== undefined || previewData !== undefined ? data[0] : data
 
-  if (serverlessData !== undefined || previewData !== undefined) {
-    return data[0]
-  }
+  await doActions('renderEnd', { ...args, data: output })
 
-  return data
+  return output
 }
 
 /* Exports */

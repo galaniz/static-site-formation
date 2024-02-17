@@ -7,21 +7,24 @@
 import type { AllFileDataArgs } from './getAllFileDataTypes'
 import type { Generic } from '../../global/globalTypes'
 import type { RenderAllData } from '../../render/RenderTypes'
+import type { ImagesStore } from '../processImages/processImagesTypes'
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { config } from '../../config/config'
 import { getFileData } from '../getFileData/getFileData'
+import { getJson } from '../getJson/getJson'
 import { undefineProps } from '../undefineProps/undefineProps'
 import { resolveInternalLinks } from '../resolveInternalLinks/resolveInternalLinks'
 import { isObjectStrict } from '../isObject/isObject'
 import { isStringStrict } from '../isString/isString'
 import { isArray, isArrayStrict } from '../isArray/isArray'
+import { isFunction } from '../isFunction/isFunction'
 
 /**
  * Function - get data from file system
  *
- * @param {AllFileDataArgs} args
- * @return {Promise<RenderAllData|undefined>}
+ * @param {import('./getAllFileDataTypes').AllFileDataArgs} args
+ * @return {Promise<import('../../render/RenderTypes').RenderAllData|undefined>}
  */
 const getAllFileData = async (args: AllFileDataArgs): Promise<RenderAllData | undefined> => {
   args = isObjectStrict(args) ? args : {}
@@ -76,11 +79,12 @@ const getAllFileData = async (args: AllFileDataArgs): Promise<RenderAllData | un
 
     let imageData = {}
 
-    if (config.static.image.dataFile !== '') {
-      const imageJson = await readFile(resolve(config.static.image.dataFile), { encoding: 'utf8' })
+    if (isStringStrict(config.static.image.dataFile)) {
+      const imageDataContents = await readFile(resolve(config.static.image.dataFile), { encoding: 'utf8' })
+      const imageDataJson: ImagesStore | undefined = getJson(imageDataContents)
 
-      if (isStringStrict(imageJson)) {
-        imageData = JSON.parse(imageJson)
+      if (imageDataJson !== undefined) {
+        imageData = imageDataJson
       }
     }
 
@@ -116,7 +120,7 @@ const getAllFileData = async (args: AllFileDataArgs): Promise<RenderAllData | un
 
     /* Filter data */
 
-    if (typeof filterData === 'function') {
+    if (isFunction(filterData)) {
       data = filterData(data)
     }
 
@@ -217,7 +221,7 @@ const getAllFileData = async (args: AllFileDataArgs): Promise<RenderAllData | un
 
     /* Filter all data */
 
-    if (typeof filterAllData === 'function') {
+    if (isFunction(filterAllData)) {
       allData = filterAllData(allData)
     }
 

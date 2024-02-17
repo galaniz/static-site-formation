@@ -5,18 +5,21 @@
 /* Imports */
 
 import type { AllContentfulDataArgs } from './getAllContentfulDataTypes'
-import type { RenderAllData, RenderItem } from '../../render/RenderTypes'
+import type { RenderAllData, RenderItem, RenderSlugs } from '../../render/RenderTypes'
 import { config } from '../../config/config'
 import { getContentfulData } from '../getContentfulData/getContentfulData'
 import { isArray } from '../isArray/isArray'
 import { isObjectStrict } from '../isObject/isObject'
 import { isStringStrict } from '../isString/isString'
+import { isFunction } from '../isFunction/isFunction'
+import { getJsonFile } from '../getJson/getJson'
+import { getPath } from '../getPath/getPath'
 
 /**
  * Function - fetch data from all content types or single entry if serverless
  *
- * @param {AllContentfulDataArgs} args
- * @return {Promise<RenderAllData|undefined>}
+ * @param {import('./getAllContentfulDataTypes').AllContentfulDataArgs} args
+ * @return {Promise<import('../../render/RenderTypes').RenderAllData|undefined>}
  */
 const getAllContentfulData = async (args: AllContentfulDataArgs = {}): Promise<RenderAllData | undefined> => {
   const {
@@ -47,12 +50,11 @@ const getAllContentfulData = async (args: AllContentfulDataArgs = {}): Promise<R
       let id = ''
 
       if (serverlessData !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const slugsJson = require(`${config.store.dir}${config.store.files.slugs.name}`)
+        const slugsData: RenderSlugs | undefined = await getJsonFile(getPath('slugs', 'store'))
         const path = serverlessData.path
 
-        if (isObjectStrict(slugsJson)) {
-          const item = slugsJson[path]
+        if (slugsData !== undefined) {
+          const item = slugsData[path]
 
           if (isObjectStrict(item)) {
             id = isStringStrict(item.id) ? item.id : ''
@@ -98,7 +100,7 @@ const getAllContentfulData = async (args: AllContentfulDataArgs = {}): Promise<R
 
         let data = await getContentfulData(key, params)
 
-        if (typeof filterData === 'function') {
+        if (isFunction(filterData)) {
           data = filterData(data, serverlessData, previewData)
         }
 
@@ -126,7 +128,7 @@ const getAllContentfulData = async (args: AllContentfulDataArgs = {}): Promise<R
 
         let data = await getContentfulData(key, params)
 
-        if (typeof filterData === 'function') {
+        if (isFunction(filterData)) {
           data = filterData(data, serverlessData, previewData)
         }
 
@@ -138,7 +140,7 @@ const getAllContentfulData = async (args: AllContentfulDataArgs = {}): Promise<R
 
     /* Filter all data */
 
-    if (typeof filterAllData === 'function') {
+    if (isFunction(filterAllData)) {
       allData = filterAllData(allData, serverlessData, previewData)
     }
 

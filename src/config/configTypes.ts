@@ -8,6 +8,8 @@ import type { Generic, GenericFunctions, GenericStrings, GenericNumbers, SlugBas
 import type { Navigation, NavigationItem } from '../components/Navigation/NavigationTypes'
 import type { RenderItem } from '../render/RenderTypes'
 import type { Filters } from '../utils/filters/filtersTypes'
+import type { Actions } from '../utils/actions/actionsTypes'
+import type { Shortcodes } from '../utils/shortcodes/shortcodesTypes'
 
 /**
  * @typedef {object} ConfigMeta
@@ -34,16 +36,36 @@ export interface ConfigSlugParent {
 }
 
 /**
+ * @typedef {Object.<string, ConfigSlugParent>} ConfigSlugParents
+ */
+export interface ConfigSlugParents {
+  [key: string]: ConfigSlugParent
+}
+
+/**
+ * @typedef {object} ConfigSlugArchive
+ * @prop {string} slug
+ * @prop {string} title
+ * @prop {string} contentType
+ */
+
+/**
+ * @typedef {Object.<string, ConfigSlugArchive>} ConfigSlugArchives
+ */
+export interface ConfigSlugArchives {
+  [key: string]: Omit<ConfigSlugParent, 'id'>
+}
+
+/**
  * @typedef {object} ConfigSlug
- * @prop {Object.<string, ConfigSlugParent>} parents
- * @prop {object} bases
- * @prop {SlugBase} bases.page
- * @prop {SlugBase} bases.[key] - Dynamic key
+ * @prop {ConfigSlugParents} parents
+ * @prop {ConfigSlugArchives} archives
+ * @prop {Object.<string, import('../global/globalTypes').SlugBase>} bases
+ * @prop {import('../global/globalTypes').SlugBase} bases.page
  */
 export interface ConfigSlug {
-  parents: {
-    [key: string]: ConfigSlugParent
-  }
+  parents: ConfigSlugParents
+  archives: ConfigSlugArchives
   bases: {
     page: SlugBase
     [key: string]: SlugBase
@@ -58,7 +80,7 @@ export interface ConfigSlug {
  * @prop {string} [order]
  * @prop {number} [display]
  * @prop {string[]} [linkContentType]
- * @prop {Object.<string, unknown>} id
+ * @prop {import('../global/globalTypes').Generic} id
  */
 export interface ConfigContentTypesArchive {
   singular: string
@@ -68,6 +90,13 @@ export interface ConfigContentTypesArchive {
   display?: number
   linkContentType?: string[]
   id: Generic
+}
+
+/**
+ * @typedef {Object.<string, ConfigContentTypesArchive>} ConfigContentTypesArchives
+ */
+export interface ConfigContentTypesArchives {
+  [key: string]: ConfigContentTypesArchive
 }
 
 /**
@@ -81,21 +110,24 @@ export interface ConfigContentTypesTaxonomy {
 }
 
 /**
+ * @typedef {Object.<string, ConfigContentTypesTaxonomy>} ConfigContentTypesTaxonomies
+ */
+export interface ConfigContentTypesTaxonomies {
+  [key: string]: ConfigContentTypesTaxonomy
+}
+
+/**
  * @typedef {object} ConfigContentTypes
  * @prop {string[]} partial
  * @prop {string[]} whole
- * @prop {Object.<string, ConfigContentTypesArchive>} archive
- * @prop {Object.<string, ConfigContentTypesTaxonomy>} taxonomy
+ * @prop {ConfigContentTypesArchives} archive
+ * @prop {ConfigContentTypesTaxonomies} taxonomy
  */
 export interface ConfigContentTypes {
   partial: string[]
   whole: string[]
-  archive: {
-    [key: string]: ConfigContentTypesArchive
-  }
-  taxonomy: {
-    [key: string]: ConfigContentTypesTaxonomy
-  }
+  archive: ConfigContentTypesArchives
+  taxonomy: ConfigContentTypesTaxonomies
 }
 
 /**
@@ -111,25 +143,59 @@ export interface ConfigImage {
 }
 
 /**
- * @typedef {object} ConfigArchive
- * @prop {Object.<string, *>} ids
- * @prop {Object.<string, *>} posts
- * @prop {Object.<string, *>} terms
+ * @typedef {object} ConfigFormMetaItem
+ * @prop {string} [toEmail]
+ * @prop {string} [senderEmail]
+ * @prop {string} [subject]
  */
-export interface ConfigArchive {
-  ids: {
-    [key: string]: GenericStrings
-  }
-  posts: {
-    [key: string]: RenderItem[]
-  }
-  terms: {
+export interface ConfigFormMetaItem {
+  toEmail?: string
+  senderEmail?: string
+  subject?: string
+}
+
+/**
+ * @typedef {Object.<string, ConfigFormMetaItem>} ConfigFormMeta
+ */
+export interface ConfigFormMeta {
+  [key: string]: ConfigFormMetaItem
+}
+
+/**
+ * @typedef {Object.<string, GenericStrings>} ConfigArchiveIds
+ */
+export interface ConfigArchiveIds {
+  [key: string]: GenericStrings
+}
+
+/**
+ * @typedef {Object.<string, import('../render/RenderTypes').RenderItem[]>} ConfigArchivePosts
+ */
+export interface ConfigArchivePosts {
+  [key: string]: RenderItem[]
+}
+
+/**
+ * @typedef {Object.<string, *>} ConfigTerms
+ */
+export interface ConfigTerms {
+  [key: string]: {
     [key: string]: {
-      [key: string]: {
-        [key: string]: RenderItem[]
-      }
+      [key: string]: RenderItem[]
     }
   }
+}
+
+/**
+ * @typedef {object} ConfigArchive
+ * @prop {ConfigArchiveIds} ids
+ * @prop {ConfigArchivePosts} posts
+ * @prop {ConfigTerms} terms
+ */
+export interface ConfigArchive {
+  ids: ConfigArchiveIds
+  posts: ConfigArchivePosts
+  terms: ConfigTerms
 }
 
 /**
@@ -138,6 +204,7 @@ export interface ConfigArchive {
  * @prop {boolean} prod
  * @prop {boolean} build
  * @prop {boolean} cache
+ * @prop {string} dir
  * @prop {object} urls
  * @prop {string} urls.dev
  * @prop {string} urls.prod
@@ -147,6 +214,7 @@ export interface ConfigEnv {
   prod: boolean
   build: boolean
   cache: boolean
+  dir: string
   urls: {
     dev: string
     prod: string
@@ -166,16 +234,16 @@ export interface ConfigStoreFile {
 /**
  * @typedef {object} ConfigStore
  * @prop {string} dir
- * @prop {object} files
+ * @prop {Object.<string, ConfigStoreFile>} files
  * @prop {ConfigStoreFile} files.slugs
  * @prop {ConfigStoreFile} files.slugParents
  * @prop {ConfigStoreFile} files.navigations
- * @prop {ConfigStoreFile} files.[key] - Dynamic key
  */
 export interface ConfigStore {
   dir: string
   files: {
     slugs: ConfigStoreFile
+    slugArchives: ConfigStoreFile
     slugParents: ConfigStoreFile
     navigations: ConfigStoreFile
     [key: string]: ConfigStoreFile
@@ -193,25 +261,29 @@ export interface ConfigServerlessRoute {
 }
 
 /**
+ * @typedef {object} ConfigServerlessFiles
+ * @prop {string} ajax
+ * @prop {string} preview
+ * @prop {string} reload
+ */
+export interface ConfigServerlessFiles {
+  ajax: string
+  preview: string
+  reload: string
+}
+
+/**
  * @typedef {object} ConfigServerless
  * @prop {string} dir
  * @prop {string} import
- * @prop {object} files
- * @prop {string} files.ajax
- * @prop {string} files.preview
- * @prop {string} files.reload
- * @prop {object} routes
+ * @prop {ConfigServerlessFiles} files
+ * @prop {Object.<string, ConfigServerlessRoute[]>} routes
  * @prop {ConfigServerlessRoute[]} routes.reload
- * @prop {ConfigServerlessRoute[]} routes.[key] - Dynamic key
  */
 export interface ConfigServerless {
   dir: string
   import: string
-  files: {
-    ajax: string
-    preview: string
-    reload: string
-  }
+  files: ConfigServerlessFiles
   routes: {
     reload: ConfigServerlessRoute[]
     [key: string]: ConfigServerlessRoute[]
@@ -265,8 +337,8 @@ export interface ConfigStatic {
 
 /**
  * @typedef {object} ConfigScriptsStyles
- * @prop {GenericNumbers} item
- * @prop {GenericStrings} build
+ * @prop {import('../global/globalTypes').GenericNumbers} item
+ * @prop {import('../global/globalTypes').GenericStrings} build
  */
 export interface ConfigScriptsStyles {
   item: GenericNumbers
@@ -299,8 +371,8 @@ export interface ConfigConsole {
  * @prop {ConfigMeta} meta
  * @prop {ConfigSlug} slug
  * @prop {ConfigContentTypes} contentTypes
- * @prop {GenericStrings} renderTypes
- * @prop {GenericFunctions} renderFunctions
+ * @prop {import('../global/globalTypes').GenericStrings} renderTypes
+ * @prop {import('../global/globalTypes').GenericFunctions} renderFunctions
  */
 export interface ConfigBase {
   namespace: string
@@ -316,14 +388,15 @@ export interface ConfigBase {
 /**
  * @typedef Config
  * @type {ConfigBase}
- * @prop {GenericFunctions} ajaxFunctions
- * @prop {GenericFunctions} actions
- * @prop {Filters} filters
+ * @prop {import('../global/globalTypes').GenericFunctions} ajaxFunctions
+ * @prop {import('../utils/actions/actionsTypes').Actions} actions
+ * @prop {import('../utils/filters/filtersTypes').Filters} filters
+ * @prop {import('../utils/shortcodes/shortcodesTypes').Shortcodes} shortcodes
  * @prop {ConfigImage} image
- * @prop {Navigation[]} navigation
- * @prop {NavigationItem[]} navigationItem
- * @prop {Generic} scriptMeta
- * @prop {Generic} formMeta
+ * @prop {import('../components/Navigation/NavigationTypes').Navigation[]} navigation
+ * @prop {import('../components/Navigation/NavigationTypes').NavigationItem[]} navigationItem
+ * @prop {import('../global/globalTypes').Generic} scriptMeta
+ * @prop {import('../global/globalTypes').Generic} formMeta
  * @prop {ConfigArchive} archive
  * @prop {ConfigEnv} env
  * @prop {ConfigStore} store
@@ -338,8 +411,9 @@ export interface ConfigBase {
  */
 export interface Config extends ConfigBase {
   ajaxFunctions: GenericFunctions
-  actions: GenericFunctions
+  actions: Partial<Actions>
   filters: Partial<Filters>
+  shortcodes: Shortcodes
   image: ConfigImage
   navigation: Navigation[]
   navigationItem: NavigationItem[]
@@ -361,12 +435,13 @@ export interface Config extends ConfigBase {
 /**
  * @typedef ConfigArgs
  * @type {ConfigBase}
- * @prop {GenericFunctions} [ajaxFunctions]
- * @prop {GenericFunctions} [actions]
- * @prop {Filters} [filters]
+ * @prop {import('../global/globalTypes').GenericFunctions} [ajaxFunctions]
+ * @prop {import('../global/globalTypes').GenericFunctions} [actions]
+ * @prop {import('../utils/filters/filtersTypes').Filters} [filters]
+ * @prop {import('../utils/shortcodes/shortcodesTypes').Shortcodes} [shortcodes]
  * @prop {ConfigImage} [image]
- * @prop {Generic} [scriptMeta]
- * @prop {Generic} [formMeta]
+ * @prop {import('../global/globalTypes').Generic} [scriptMeta]
+ * @prop {import('../global/globalTypes').Generic} [formMeta]
  * @prop {ConfigArchive} [archive]
  * @prop {ConfigEnv} [env]
  * @prop {ConfigStore} [store]

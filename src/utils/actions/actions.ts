@@ -4,17 +4,23 @@
 
 /* Imports */
 
-import type { GenericFunctions } from '../../global/globalTypes'
+import type { Actions, ActionsFunctions } from './actionsTypes'
 import { isStringStrict } from '../isString/isString'
 import { isArrayStrict } from '../isArray/isArray'
 import { isObjectStrict } from '../isObject/isObject'
+import { isFunction } from '../isFunction/isFunction'
 
 /**
  * Store action callbacks by name
  *
- * @type {Object.<string, function>}
+ * @type {import('./actionsTypes').ActionsFunctions}
  */
-let actions: { [key: string]: Function[] } = {}
+let actions: ActionsFunctions = {
+  renderStart: [],
+  renderEnd: [],
+  renderItemStart: [],
+  renderItemEnd: []
+}
 
 /**
  * Function - add action to action object
@@ -23,8 +29,8 @@ let actions: { [key: string]: Function[] } = {}
  * @param {function} action
  * @return {boolean}
  */
-const addAction = (name: string, action: Function): boolean => {
-  if (!isStringStrict(name) || typeof action !== 'function') {
+const addAction = <T extends keyof Actions>(name: T, action: Actions[T]): boolean => {
+  if (!isStringStrict(name) || !isFunction(action)) {
     return false
   }
 
@@ -44,8 +50,8 @@ const addAction = (name: string, action: Function): boolean => {
  * @param {function} action
  * @return {boolean}
  */
-const removeAction = (name: string, action: Function): boolean => {
-  if (!isStringStrict(name) || typeof action !== 'function') {
+const removeAction = <T extends keyof Actions>(name: T, action: Actions[T]): boolean => {
+  if (!isStringStrict(name) || !isFunction(action)) {
     return false
   }
 
@@ -78,7 +84,7 @@ const doActions = async <T>(name: string, args?: T): Promise<void> => {
     for (let i = 0; i < callbacks.length; i += 1) {
       const callback = callbacks[i]
 
-      if (typeof callback === 'function') {
+      if (isFunction(callback)) {
         await callback(args)
       }
     }
@@ -91,16 +97,21 @@ const doActions = async <T>(name: string, args?: T): Promise<void> => {
  * @return {void}
  */
 const resetActions = (): void => {
-  actions = {}
+  actions = {
+    renderStart: [],
+    renderEnd: [],
+    renderItemStart: [],
+    renderItemEnd: []
+  }
 }
 
 /**
  * Function - fill actions object
  *
- * @param {Object.<string, Function>} args
+ * @param {import('./actionsTypes').Actions} args
  * @return {boolean}
  */
-const setActions = (args: GenericFunctions): boolean => {
+const setActions = (args: Partial<Actions>): boolean => {
   if (!isObjectStrict(args)) {
     return false
   }
@@ -112,7 +123,13 @@ const setActions = (args: GenericFunctions): boolean => {
   resetActions()
 
   Object.keys(args).forEach((a) => {
-    addAction(a, args[a])
+    const arg = args[a]
+
+    if (!isFunction(arg)) {
+      return
+    }
+
+    addAction(a, arg)
   })
 
   return true

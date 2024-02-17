@@ -5,13 +5,13 @@
 /* Imports */
 
 import type { ColumnProps, ColumnReturn } from './ColumnTypes'
-import { applyFilters, isStringStrict, isObjectStrict } from '../../utils'
+import { applyFilters, isStringStrict, isObjectStrict } from '../../utils/utilsMin'
 
 /**
  * Function - output column wrapper
  *
- * @param {ColumnProps} props
- * @return {Promise<ColumnReturn>}
+ * @param {import('./ColumnTypes').ColumnProps} props
+ * @return {Promise<import('./ColumnTypes').ColumnReturn>}
  */
 const Column = async (props: ColumnProps = { args: {} }): Promise<ColumnReturn> => {
   /* Fallback output */
@@ -53,66 +53,66 @@ const Column = async (props: ColumnProps = { args: {} }): Promise<ColumnReturn> 
 
   /* Classes */
 
-  const classesArray: string[] = []
+  const classesArr: string[] = []
 
   if (isStringStrict(classes)) {
-    classesArray.push(classes)
+    classesArr.push(classes)
   }
 
   /* Width */
 
   if (isStringStrict(width)) {
-    classesArray.push(width)
+    classesArr.push(width)
   }
 
   if (isStringStrict(widthSmall) && widthSmall !== width) {
-    classesArray.push(widthSmall)
+    classesArr.push(widthSmall)
   }
 
   if (isStringStrict(widthMedium) && widthMedium !== widthSmall) {
-    classesArray.push(widthMedium)
+    classesArr.push(widthMedium)
   }
 
   if (isStringStrict(widthLarge) && widthLarge !== widthMedium) {
-    classesArray.push(widthLarge)
+    classesArr.push(widthLarge)
   }
 
   /* Justify */
 
   if (isStringStrict(justify)) {
-    classesArray.push(justify)
+    classesArr.push(justify)
   }
 
   /* Align */
 
   if (isStringStrict(align)) {
-    classesArray.push(align)
+    classesArr.push(align)
   }
 
   /* Style */
 
-  const stylesArray: string[] = []
+  const stylesArr: string[] = []
 
   if (isStringStrict(style)) {
-    stylesArray.push(style)
+    stylesArr.push(style)
   }
 
   if (isObjectStrict(widthCustom)) {
     if (isStringStrict(widthCustom.class)) {
-      classesArray.push(widthCustom.class)
+      classesArr.push(widthCustom.class)
     }
 
-    const styleArray = [
+    const styleArr = [
       `--width:${isStringStrict(widthCustom.default) ? widthCustom.default : '100%'}`,
       `--width-small:${isStringStrict(widthCustom.small) ? widthCustom.small : '100%'}`,
       `--width-medium:${isStringStrict(widthCustom.medium) ? widthCustom.medium : '100%'}`,
       `--width-large:${isStringStrict(widthCustom.large) ? widthCustom.large : '100%'}`
     ]
 
-    stylesArray.push(styleArray.join(';'))
+    stylesArr.push(styleArr.join(';'))
   }
 
-  const styles = (stylesArray.length > 0) ? ` style="${stylesArray.join(';')}"` : ''
+  const styles = (stylesArr.length > 0) ? ` style="${stylesArr.join(';')}"` : ''
 
   /* Attributes */
 
@@ -122,8 +122,8 @@ const Column = async (props: ColumnProps = { args: {} }): Promise<ColumnReturn> 
     attrs = ` ${attr}`
   }
 
-  if (classesArray.length > 0) {
-    attrs += ` class="${classesArray.join(' ')}"`
+  if (classesArr.length > 0) {
+    attrs += ` class="${classesArr.join(' ')}"`
   }
 
   /* Output */

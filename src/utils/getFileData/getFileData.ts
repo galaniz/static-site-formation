@@ -5,17 +5,18 @@
 /* Imports */
 
 import type { FileDataParams, FileDataReturn } from './getFileDataTypes'
+import type { RenderItem } from '../../render/RenderTypes'
 import { readdir, readFile } from 'node:fs/promises'
 import { extname, basename, resolve } from 'node:path'
-import { applyFilters, isObject, isStringStrict } from '../../utils'
+import { applyFilters, isObject, isStringStrict, getJson } from '../utilsMin'
 import { config } from '../../config/config'
 
 /**
  * Function - get data from file or cache
  *
  * @param {string} key
- * @param {FileDataParams} params
- * @return {Promise<FileDataReturn>}
+ * @param {import('./getFileDataTypes').FileDataParams} params
+ * @return {Promise<import('./getFileDataTypes').FileDataReturn>}
  */
 const getFileData = async (
   key: string = '',
@@ -55,13 +56,10 @@ const getFileData = async (
 
     if (isStringStrict(id) && !all) {
       const file = await readFile(resolve(config.static.dir, `${id}.json`), { encoding: 'utf8' })
+      const fileJson: RenderItem | undefined = getJson(file)
 
-      if (isStringStrict(file)) {
-        const fileJson = JSON.parse(file)
-
-        if (isObject(fileJson)) {
-          data[id] = fileJson
-        }
+      if (fileJson !== undefined) {
+        data[id] = fileJson
       }
     }
 
@@ -77,13 +75,10 @@ const getFileData = async (
 
         if (fileExt === '.json') {
           const fileContents = await readFile(resolve(config.static.dir, file), { encoding: 'utf8' })
+          const fileJson: RenderItem | undefined = getJson(fileContents)
 
-          if (isStringStrict(fileContents)) {
-            const fileJson = JSON.parse(fileContents)
-
-            if (isObject(fileJson)) {
-              data[fileName] = fileJson
-            }
+          if (fileJson !== undefined) {
+            data[fileName] = fileJson
           }
         }
       }

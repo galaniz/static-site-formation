@@ -27,7 +27,7 @@ export interface SlugArgs {
 /**
  * @typedef {object} SlugReturn
  * @prop {string} slug
- * @prop {SlugParent[]} parents
+ * @prop {import('../../global/globalTypes').SlugParent[]} parents
  */
 export interface SlugReturn {
   slug: string

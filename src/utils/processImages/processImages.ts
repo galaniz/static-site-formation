@@ -15,9 +15,9 @@ import { isStringStrict } from '../isString/isString'
 /**
  * Function - get and save image data and output multiple sizes
  *
- * @return {Promise<void>}
+ * @return {Promise<PromiseSettledResult<sharp.OutputInfo>[]>}
  */
-const processImages = async (): Promise<void> => {
+const processImages = async (): Promise<Array<PromiseSettledResult<sharp.OutputInfo>>> => {
   const store: ImagesStore = {}
 
   try {
@@ -91,31 +91,35 @@ const processImages = async (): Promise<void> => {
       }
     }
 
-    if (sharpImages.length > 0) {
-      await Promise.all(
-        sharpImages.map(async (c) => {
-          const { size, path, newPath, ext } = c
-
-          await sharp(path)
-            .resize(size)
-            .toFile(`${newPath}.${ext}`)
-
-          const create = await sharp(path)
-            .webp({ quality: config.image.quality })
-            .resize(size)
-            .toFile(`${newPath}.webp`)
-
-          return create
-        })
-      )
+    if (sharpImages.length === 0) {
+      throw new Error('No images to process')
     }
 
-    if (dataFile !== '') {
+    if (isStringStrict(dataFile)) {
       await writeFile(resolve(dataFile), JSON.stringify(store))
     }
+
+    return await Promise.allSettled(
+      sharpImages.map(async (c) => {
+        const { size, path, newPath, ext } = c
+
+        await sharp(path)
+          .resize(size)
+          .toFile(`${newPath}.${ext}`)
+
+        const create = await sharp(path)
+          .webp({ quality: config.image.quality })
+          .resize(size)
+          .toFile(`${newPath}.webp`)
+
+        return create
+      })
+    )
   } catch (error) {
     console.error(config.console.red, '[SSF] Error processing images: ', error)
   }
+
+  return []
 }
 
 /* Exports */

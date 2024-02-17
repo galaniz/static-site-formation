@@ -26,7 +26,7 @@ import type { ParentArgs } from '../../global/globalTypes'
  * @prop {string} [args.classes] - Back end option
  * @prop {string} [args.style] - Back end option
  * @prop {string} [args.attr] - Back end option
- * @prop {ParentArgs} [parents]
+ * @prop {import('../../global/globalTypes').ParentArgs} [parents]
  */
 export interface ColumnProps {
   args: {

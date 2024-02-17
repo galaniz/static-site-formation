@@ -6,13 +6,20 @@
 
 import type { PreviewArgs } from './PreviewTypes'
 import { config, setConfig } from '../../config/config'
-import { getAllContentfulData, isObjectStrict, isStringStrict } from '../../utils'
+import { getAllContentfulData } from '../../utils/getAllContentfulData/getAllContentfulData'
+import {
+  isObjectStrict,
+  isStringStrict,
+  setFilters,
+  setActions,
+  setShortcodes
+} from '../../utils/utilsMin'
 import { Render } from '../../render/Render'
 
 /**
  * Function - output preview from contentful
  *
- * @param {PreviewArgs} args
+ * @param {import('./PreviewTypes').PreviewArgs} args
  * @return {Promise<Response>} Response
  */
 const Preview = async ({ request, next, siteConfig }: PreviewArgs): Promise<Response> => {
@@ -31,6 +38,9 @@ const Preview = async ({ request, next, siteConfig }: PreviewArgs): Promise<Resp
   /* Config */
 
   setConfig(siteConfig)
+  setFilters(siteConfig.filters)
+  setActions(siteConfig.actions)
+  setShortcodes(siteConfig.shortcodes)
 
   config.env.dev = true
   config.env.prod = false

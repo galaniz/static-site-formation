@@ -8,8 +8,8 @@ import type { RenderServerlessData, RenderPreviewData } from '../../render/Rende
 
 /**
  * @typedef {object} AllContentfulDataArgs
- * @prop {ServerlessData} [serverlessData]
- * @prop {PreviewData} [previewData]
+ * @prop {import('../../render/RenderTypes').RenderServerlessData} [serverlessData]
+ * @prop {import('../../render/RenderTypes').RenderPreviewData} [previewData]
  * @prop {function} [filterData]
  * @prop {function} [filterAllData]
  */

@@ -5,12 +5,12 @@
 /* Imports */
 
 import type { PaginationProps, PaginationData, PaginationReturn } from './PaginationTypes'
-import { isObjectStrict, isStringStrict } from '../../utils'
+import { isObjectStrict, isStringStrict } from '../../utils/utilsMin'
 
 /**
  * Function - output pagination navigation
  *
- * @param {PaginationProps} props
+ * @param {import('./PaginationTypes').PaginationProps} props
  * @return {string} HTML - ol
  */
 const Pagination = (props: PaginationProps = {}): PaginationReturn => {
@@ -163,7 +163,7 @@ const Pagination = (props: PaginationProps = {}): PaginationReturn => {
 
   /* Item attributes */
 
-  const itemAttrs = `${isStringStrict(itemClass) ? ` class="${itemClass}"` : ''}${itemAttr !== '' ? ` ${itemAttr}` : ''}${maxWidth}`
+  const itemAttrs = `${isStringStrict(itemClass) ? ` class="${itemClass}"` : ''}${isStringStrict(itemAttr) ? ` ${itemAttr}` : ''}${maxWidth}`
 
   /* Previous item */
 
@@ -210,7 +210,7 @@ const Pagination = (props: PaginationProps = {}): PaginationReturn => {
       const link = i === 1 ? basePermaLink : `${basePermaLink}?page=${i}`
 
       content = `
-        <a${isStringStrict(linkClass) ? ` class="${linkClass}"` : ''}${linkAttr !== '' ? ` ${linkAttr}` : ''}href="${link}${currentFilters}">
+        <a${isStringStrict(linkClass) ? ` class="${linkClass}"` : ''}${isStringStrict(linkAttr) ? ` ${linkAttr}` : ''}href="${link}${currentFilters}">
           <span class="${a11yClass}">Page </span>
           ${i}
         </a>

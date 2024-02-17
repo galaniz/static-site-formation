@@ -6,7 +6,7 @@
  * Alpha value from hex code partial
  *
  * @private
- * @type {object}
+ * @type {Object.<string, number>}
  */
 const _alphaCodes: { [key: string]: number } = {
   FF: 1,
@@ -118,7 +118,7 @@ const _alphaCodes: { [key: string]: number } = {
  * @param {string} hex
  * @param {float} alpha
  * @param {boolean} returnArray
- * @return {array|string}
+ * @return {number[]|string}
  */
 const getRgba = (
   hex: string = '',

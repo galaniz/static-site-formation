@@ -14,7 +14,7 @@ import { isString, isStringStrict } from '../isString/isString'
 /**
  * Function - get permalink from external or internal source
  *
- * @param {InternalLink} [internalLink]
+ * @param {import('../../global/globalTypes').InternalLink} [internalLink]
  * @param {string} [externalLink]
  * @return {string}
  */

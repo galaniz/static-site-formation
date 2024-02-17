@@ -10,7 +10,7 @@ import { config } from '../../config/config'
 /**
  * Function - set scripts and styles paths in config
  *
- * @param {ScriptStyleArgs} args
+ * @param {import('./addScriptStyleTypes').ScriptStyleArgs} args
  * @return {void}
  */
 const addScriptStyle = ({ dir = '', script = '', style = '', priority = 10 }: ScriptStyleArgs): void => {

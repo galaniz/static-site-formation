@@ -5,13 +5,13 @@
 /* Imports */
 
 import type { ContainerProps, ContainerReturn } from './ContainerTypes'
-import { applyFilters, isObjectStrict, isStringStrict } from '../../utils'
+import { applyFilters, isObjectStrict, isStringStrict } from '../../utils/utilsMin'
 
 /**
  * Function - output container wrapper
  *
- * @param {ContainerProps} props
- * @return {Promise<ContainerReturn>}
+ * @param {import('./ContainerTypes').ContainerProps} props
+ * @return {Promise<import('./ContainerTypes').ContainerReturn>}
  */
 const Container = async (props: ContainerProps = { args: {} }): Promise<ContainerReturn> => {
   /* Fallback output */
@@ -35,7 +35,9 @@ const Container = async (props: ContainerProps = { args: {} }): Promise<Containe
     return fallback
   }
 
-  const { args } = props
+  let { args } = props
+
+  args = isObjectStrict(args) ? args : {}
 
   const {
     tag = 'div',
@@ -51,15 +53,17 @@ const Container = async (props: ContainerProps = { args: {} }): Promise<Containe
     align = '',
     classes = '',
     style = '',
-    attr = ''
-  } = isObjectStrict(args) ? args : {}
+    attr = '',
+    nest = false
+  } = args
 
   /* Classes */
 
-  const classesArray: string[] = []
+  const classesArr: string[] = []
+  const layoutClassesArr: string[] = []
 
   if (isStringStrict(classes)) {
-    classesArray.push(classes)
+    classesArr.push(classes)
   }
 
   /* Attributes */
@@ -69,59 +73,65 @@ const Container = async (props: ContainerProps = { args: {} }): Promise<Containe
   /* Max width */
 
   if (isStringStrict(maxWidth)) {
-    classesArray.push(maxWidth)
+    classesArr.push(maxWidth)
   }
 
   /* Layout */
 
   if (isStringStrict(layout)) {
-    classesArray.push(layout)
+    layoutClassesArr.push(layout)
   }
 
   /* Gap */
 
   if (isStringStrict(gap)) {
-    classesArray.push(gap)
+    layoutClassesArr.push(gap)
   }
 
   if (isStringStrict(gapLarge) && gapLarge !== gap) {
-    classesArray.push(gapLarge)
+    layoutClassesArr.push(gapLarge)
   }
 
   /* Justify */
 
   if (isStringStrict(justify)) {
-    classesArray.push(justify)
+    layoutClassesArr.push(justify)
   }
 
   /* Align */
 
   if (isStringStrict(align)) {
-    classesArray.push(align)
+    layoutClassesArr.push(align)
   }
 
   /* Padding */
 
   if (isStringStrict(paddingTop)) {
-    classesArray.push(paddingTop)
+    classesArr.push(paddingTop)
   }
 
   if (isStringStrict(paddingTopLarge) && paddingTopLarge !== paddingTop) {
-    classesArray.push(paddingTopLarge)
+    classesArr.push(paddingTopLarge)
   }
 
   if (isStringStrict(paddingBottom)) {
-    classesArray.push(paddingBottom)
+    classesArr.push(paddingBottom)
   }
 
   if (isStringStrict(paddingBottomLarge) && paddingBottomLarge !== paddingBottom) {
-    classesArray.push(paddingBottomLarge)
+    classesArr.push(paddingBottomLarge)
   }
+
+  /* Nest check */
+
+  const isNested = nest && layoutClassesArr.length > 0
 
   /* Classes */
 
-  if (classesArray.length > 0) {
-    attrs.push(`class="${classesArray.join(' ')}"`)
+  const outerClassesArr = isNested ? classesArr : classesArr.concat(layoutClassesArr)
+
+  if (outerClassesArr.length > 0) {
+    attrs.push(`class="${outerClassesArr.join(' ')}"`)
   }
 
   /* Style */
@@ -138,9 +148,27 @@ const Container = async (props: ContainerProps = { args: {} }): Promise<Containe
 
   /* Output */
 
+  let outerTag = tag
+  let innerTag = ''
+
+  if (isNested) {
+    const isList = tag === 'ul' || tag === 'ol'
+
+    outerTag = isList ? 'div' : tag
+    innerTag = isList ? tag : 'div'
+  }
+
+  let start = `<${outerTag}${(attrs.length > 0) ? ` ${attrs.join(' ')}` : ''}>`
+  let end = `</${outerTag}>`
+
+  if (innerTag !== '') {
+    start = `${start}<${innerTag} class="${layoutClassesArr.join(' ')}">`
+    end = `</${innerTag}>${end}`
+  }
+
   return {
-    start: `<${tag}${(attrs.length > 0) ? ` ${attrs.join(' ')}` : ''}>`,
-    end: `</${tag}>`
+    start,
+    end
   }
 }
 

@@ -3,8 +3,7 @@
  */
 
 /**
- * @typedef {object} SendFormOutputData
- * @prop {string[]|SendFormOutputData} [key] - Dynamic key
+ * @typedef {Object.<string, (string[]|SendFormOutputData)>} SendFormOutputData
  */
 export interface SendFormOutputData {
   [key: string]: string[] | SendFormOutputData
@@ -18,7 +17,7 @@ export interface SendFormOutputData {
  * @prop {string} subject
  * @prop {string} text_body
  * @prop {string} html_body
- * @prop {Generic[]} custom_headers
+ * @prop {import('../../global/globalTypes')Generic[]} custom_headers
  */
 export interface SendFormRequestBody {
   api_key: string

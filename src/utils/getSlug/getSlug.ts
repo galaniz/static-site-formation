@@ -8,13 +8,14 @@ import type { SlugArgs, SlugReturn } from './getSlugTypes'
 import type { SlugBase, SlugParent } from '../../global/globalTypes'
 import { config } from '../../config/config'
 import { getArchiveId } from '../getArchiveId/getArchiveId'
+import { isObjectStrict } from '../isObject/isObject'
 
 /**
  * Function - recurse to get ascendents
  *
  * @private
  * @param {string} id
- * @param {SlugParent[]} p
+ * @param {import('../../global/globalTypes').SlugParent[]} p
  * @return {void}
  */
 const _getParentSlug = (id: string = '', p: SlugParent[] = []): void => {
@@ -28,8 +29,8 @@ const _getParentSlug = (id: string = '', p: SlugParent[] = []): void => {
 /**
  * Function - get slug with base from slug base and parents
  *
- * @param {SlugArgs} args
- * @return {string|SlugReturn}
+ * @param {import('./getSlugTypes').SlugArgs} args
+ * @return {string|import('./getSlugTypes').SlugReturn}
  */
 const getSlug = (args: SlugArgs): string | SlugReturn => {
   const {
@@ -47,13 +48,26 @@ const getSlug = (args: SlugArgs): string | SlugReturn => {
     return ''
   }
 
+  /* Archive id */
+
+  const archiveId = getArchiveId(contentType, linkContentType)
+
   /* Slug base */
 
   const slugBase: SlugBase = config.slug.bases[contentType]
 
-  /* Archive id */
+  let slugBaseSlug = ''
+  let slugBaseOutput = ''
 
-  const archiveId = getArchiveId(contentType, linkContentType)
+  if (isObjectStrict(slugBase)) {
+    slugBaseSlug = slugBase.slug
+
+    if (slugBaseSlug === 'archive' && archiveId !== '') {
+      slugBaseSlug = config.slug.archives[archiveId].slug
+    }
+
+    slugBaseOutput = `${slugBaseSlug}${slugBaseSlug !== '' ? '/' : ''}`
+  }
 
   /* Parents */
 
@@ -72,12 +86,12 @@ const getSlug = (args: SlugArgs): string | SlugReturn => {
 
   /* Slug */
 
-  const s = `${p}${slugBase.slug}${slugBase.slug !== '' ? '/' : ''}${slug}${page !== 0 ? `/?page=${page}` : ''}`
+  const s = `${p}${slugBaseOutput}${slug}${page !== 0 ? `/?page=${page}` : ''}`
 
   /* Parents and slug return */
 
   if (returnParents) {
-    if (slugBase.slug !== undefined && archiveId !== '') {
+    if (slugBaseSlug !== '' && archiveId !== '') {
       pp.unshift({
         ...slugBase,
         contentType: 'page',

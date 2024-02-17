@@ -11,9 +11,9 @@ import type { Generic } from '../../global/globalTypes'
 /**
  * @typedef {object} ReloadArgs
  * @prop {Request} request
- * @prop {EnvCloudflare} env
+ * @prop {import('../serverlessTypes').EnvCloudflare} env
  * @prop {function} next
- * @prop {Config} siteConfig
+ * @prop {import('../../config/configTypes').Config} siteConfig
  */
 export interface ReloadArgs {
   request: Request
@@ -24,7 +24,7 @@ export interface ReloadArgs {
 
 /**
  * @typedef ReloadQuery
- * @type { Generic}
+ * @type {import('../../config/configTypes').Generic}
  * @prop {string} [page]
  * @prop {string} [filters]
  */

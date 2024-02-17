@@ -5,8 +5,7 @@
 /**
  * Function - get object keys cast as keyof object
  *
- * Note:
- * Workaround for index signature
+ * Note: Workaround for index signature
  * Check if object with isObject or isObjectStrict beforehand
  *
  * @param {object} obj

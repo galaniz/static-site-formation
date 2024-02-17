@@ -9,11 +9,12 @@ import { config } from '../../config/config'
 import { isObjectStrict } from '../isObject/isObject'
 import { isStringStrict } from '../isString/isString'
 import { isNumber } from '../isNumber/isNumber'
+import { isArrayStrict } from '../isArray/isArray'
 
 /**
- * Easier access to id, renderType, contentType, fields and file info
+ * Easier access to id, renderType, contentType, fields, file and tag info
  *
- * @type {Prop}
+ * @type {import('./getPropTypes').Prop}
  */
 const getProp: Prop = {
   id (obj) {
@@ -89,7 +90,7 @@ const getProp: Prop = {
 
     return obj[prop]
   },
-  file (obj, prop = 'url') {
+  file (obj, prop = 'url', source: string = config.source) {
     const res = {
       url: '',
       path: '',
@@ -108,7 +109,7 @@ const getProp: Prop = {
       return fallback
     }
 
-    if (config.cms.name === 'contentful') {
+    if (config.cms.name === 'contentful' && source === 'cms') {
       const fields = obj.fields
       const file = obj.fields?.file
 
@@ -186,6 +187,47 @@ const getProp: Prop = {
     }
 
     return fallback
+  },
+  tag (obj, id) {
+    if (!isObjectStrict(obj) || !isStringStrict(id)) {
+      return
+    }
+
+    const tags = obj.metadata?.tags
+
+    if (!isArrayStrict(tags)) {
+      return
+    }
+
+    const tagInfo = {
+      id: '',
+      name: ''
+    }
+
+    tags.find((t) => {
+      if (!isObjectStrict(t)) {
+        return false
+      }
+
+      const tagObj = config.cms.name === 'contentful' ? t.sys : t
+
+      if (!isObjectStrict(tagObj)) {
+        return false
+      }
+
+      const tagId = tagObj.id
+
+      if (tagId === id) {
+        tagInfo.id = tagId
+        tagInfo.name = isStringStrict(tagObj.name) ? tagObj.name : ''
+
+        return true
+      }
+
+      return false
+    })
+
+    return tagInfo
   }
 }
 

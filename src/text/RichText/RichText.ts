@@ -15,12 +15,29 @@ import type {
 import {
   getLink,
   getProp,
+  doShortcodes,
   applyFilters,
   isString,
   isStringStrict,
   isObjectStrict,
   isArrayStrict
-} from '../../utils/'
+} from '../../utils/utilsMin'
+
+/**
+ * Function - check if string contains shortcode
+ *
+ * @private
+ * @param {string} tag
+ * @param {string} content
+ * @return {boolean}
+ */
+const _containsShortcode = (tag: string = '', content: string = ''): boolean => {
+  if (tag === 'p' && content.charAt(0) === '[' && content.charAt(content.length - 1) === ']') {
+    return true
+  }
+
+  return false
+}
 
 /**
  * Function - get html tag from type
@@ -33,6 +50,9 @@ const _getTag = (type: string = 'text'): string => {
   let tag = ''
 
   switch (type) {
+    case 'br':
+      tag = 'br'
+      break
     case 'hr':
       tag = 'hr'
       break
@@ -119,8 +139,8 @@ const _getTag = (type: string = 'text'): string => {
  * Function - convert to more standard objects
  *
  * @private
- * @param {RichTextContentItem[]} content
- * @return {RichTextContentReturn[]|[]}
+ * @param {import('./RichTextTypes').RichTextContentItem[]} content
+ * @return {import('./RichTextTypes').RichTextContentReturn[]|[]}
  */
 const _normalizeContent = async (content: RichTextContentItem[]): Promise<RichTextContentReturn[] | []> => {
   if (!isArrayStrict(content)) {
@@ -236,7 +256,7 @@ const _normalizeContent = async (content: RichTextContentItem[]): Promise<RichTe
  * Function - recursively output content
  *
  * @private
- * @param {RichTextContentProps} args
+ * @param {import('./RichTextTypes').RichTextContentProps} args
  * @return {Promise<string>}
  */
 const _getContent = async ({ content = [], props, _output = '' }: RichTextContentProps): Promise<string> => {
@@ -244,10 +264,13 @@ const _getContent = async ({ content = [], props, _output = '' }: RichTextConten
     const c = content[i]
 
     const {
-      tag = '',
       link = '',
       internalLink,
       content: con
+    } = c
+
+    let {
+      tag = ''
     } = c
 
     let cc = con
@@ -292,9 +315,15 @@ const _getContent = async ({ content = [], props, _output = '' }: RichTextConten
       outputStr += cc
     }
 
-    if (isStringStrict(tag) && outputStr !== '') {
+    if (_containsShortcode(tag, outputStr)) {
+      tag = ''
+    }
+
+    if (isStringStrict(tag) && outputStr.trim() !== '') {
       outputStr = `<${tag}${(attrs.length > 0) ? ` ${attrs.join(' ')}` : ''}>${outputStr}</${tag}>`
     }
+
+    outputStr = outputStr.replace(/\n/g, '<br>')
 
     const richTextContentOutput: RichTextContentFilterArgs = {
       args: c,
@@ -312,7 +341,7 @@ const _getContent = async ({ content = [], props, _output = '' }: RichTextConten
 /**
  * Function - output rich text
  *
- * @param {RichTextProps} props
+ * @param {import('./RichTextTypes').RichTextProps} props
  * @return {Promise<string>}
  */
 const RichText = async (props: RichTextProps = { args: {}, parents: [] }): Promise<string> => {
@@ -373,22 +402,22 @@ const RichText = async (props: RichTextProps = { args: {}, parents: [] }): Promi
 
   /* Classes */
 
-  const classesArray: string[] = []
+  const classesArr: string[] = []
 
   if (isStringStrict(classes)) {
-    classesArray.push(classes)
+    classesArr.push(classes)
   }
 
   if (isStringStrict(textStyle)) {
-    classesArray.push(textStyle)
+    classesArr.push(textStyle)
   }
 
   if (isStringStrict(headingStyle) && heading) {
-    classesArray.push(headingStyle)
+    classesArr.push(headingStyle)
   }
 
   if (isStringStrict(align)) {
-    classesArray.push(align)
+    classesArr.push(align)
   }
 
   /* Generate output */
@@ -428,8 +457,8 @@ const RichText = async (props: RichTextProps = { args: {}, parents: [] }): Promi
     }
   }
 
-  if (classesArray.length > 0) {
-    attrs.push(`class="${classesArray.join(' ')}"`)
+  if (classesArr.length > 0) {
+    attrs.push(`class="${classesArr.join(' ')}"`)
   }
 
   if (isStringStrict(style)) {
@@ -442,10 +471,15 @@ const RichText = async (props: RichTextProps = { args: {}, parents: [] }): Promi
 
   /* Output */
 
-  if (tag !== '' && output !== '') {
+  if (_containsShortcode(tag, output)) {
+    tag = ''
+  }
+
+  if (tag !== '' && output.trim() !== '') {
     output = `<${tag}${(attrs.length > 0) ? ` ${attrs.join(' ')}` : ''}>${output}</${tag}>`
   }
 
+  output = await doShortcodes(output)
   output = await applyFilters('richTextOutput', output, props)
 
   return output

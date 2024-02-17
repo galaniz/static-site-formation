@@ -6,6 +6,7 @@
 
 import type { SendFormOutputData, SendFormRequestBody, SendFormRequestRes } from './SendFormTypes'
 import type { AjaxActionArgs, AjaxActionReturn } from '../serverlessTypes'
+import type { ConfigFormMeta } from '../../config/configTypes'
 import { config } from '../../config/config'
 import {
   escape,
@@ -15,8 +16,10 @@ import {
   isObject,
   isObjectStrict,
   getPermalink,
-  getObjectKeys
-} from '../../utils'
+  getObjectKeys,
+  getJsonFile,
+  getPath
+} from '../../utils/utilsMin'
 
 /**
  * Function - recurse through data to output plain and html email body
@@ -93,8 +96,8 @@ const _recurseEmailHtml = <T>(
 /**
  * Function - generate email from form fields and send with Smtp2go
  *
- * @param {AjaxActionArgs} args
- * @return {Promise<AjaxActionReturn>}
+ * @param {import('../serverlessTypes').AjaxActionArgs} args
+ * @return {Promise<import('../serverlessTypes').AjaxActionReturn>}
  */
 const SendForm = async ({ id, inputs }: AjaxActionArgs): Promise<AjaxActionReturn> => {
   /* Id required */
@@ -109,9 +112,9 @@ const SendForm = async ({ id, inputs }: AjaxActionArgs): Promise<AjaxActionRetur
 
   /* Meta information - to email and subject */
 
-  const formMetaJson = require(`${config.store.dir}${config.store.files.formMeta.name}`) // eslint-disable-line @typescript-eslint/no-var-requires
+  const formMetaData: ConfigFormMeta | undefined = await getJsonFile(getPath('formMeta', 'store'))
 
-  if (!isObjectStrict(formMetaJson)) {
+  if (formMetaData === undefined) {
     return {
       error: {
         message: 'No meta information'
@@ -119,7 +122,7 @@ const SendForm = async ({ id, inputs }: AjaxActionArgs): Promise<AjaxActionRetur
     }
   }
 
-  const meta = formMetaJson[id]
+  const meta = formMetaData[id]
 
   if (!isObjectStrict(meta)) {
     return {

@@ -8,15 +8,16 @@ import type { PropFile } from '../getProp/getPropTypes'
 
 /**
  * @typedef {object} ImageArgs
- * @prop {PropFile} [data]
+ * @prop {import('../getProp/getPropTypes').PropFile} [data]
  * @prop {string} [classes]
  * @prop {string} [attr]
  * @prop {string|number} [width]
  * @prop {string|number} [height]
  * @prop {boolean} [returnAspectRatio]
  * @prop {boolean} [lazy]
- * @prop {boolean} [source]
+ * @prop {boolean} [picture]
  * @prop {number} [quality]
+ * @prop {string} [source]
  * @prop {number} [maxWidth]
  * @prop {number} [viewportWidth]
  */
@@ -28,8 +29,9 @@ export interface ImageArgs {
   height?: string | number
   returnAspectRatio?: boolean
   lazy?: boolean
-  source?: boolean
+  picture?: boolean
   quality?: number
+  source?: string
   maxWidth?: number
   viewportWidth?: number
 }
