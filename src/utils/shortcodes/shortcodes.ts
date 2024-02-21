@@ -276,6 +276,26 @@ const setShortcodes = <T extends Shortcodes>(args: T): boolean => {
   return true
 }
 
+/**
+ * Function - remove shortcodes from string
+ *
+ * @param {string} content
+ * @return {string}
+ */
+const stripShortcodes = (content: string): string => {
+  /* Check if any shortcodes */
+
+  const names = Object.keys(shortcodes)
+
+  if (names.length === 0) {
+    return content
+  }
+
+  /* Replace tags with empty strings */
+
+  return content.replace(String.raw`/\[\/?(?:${names.join('|')})[^\]]*?\]/g`, '')
+}
+
 /* Exports */
 
 export {
@@ -283,5 +303,6 @@ export {
   removeShortcode,
   doShortcodes,
   resetShortcodes,
-  setShortcodes
+  setShortcodes,
+  stripShortcodes
 }

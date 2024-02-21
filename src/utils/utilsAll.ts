@@ -27,6 +27,8 @@ export { getSlug } from './getSlug/getSlug'
 export { getYear } from './getYear/getYear'
 export { getObjectKeys } from './getObjectKeys/getObjectKeys'
 export { getJson, getJsonFile } from './getJson/getJson'
+export { getExcerpt } from './getExcerpt/getExcerpt'
+export { dataSource } from './dataSource/dataSource'
 export { isArray, isArrayStrict } from './isArray/isArray'
 export { isObject, isObjectStrict } from './isObject/isObject'
 export { isString, isStringStrict } from './isString/isString'
@@ -36,7 +38,14 @@ export { remoteImages } from './remoteImages/remoteImages'
 export { processImages } from './processImages/processImages'
 export { resolveInternalLinks } from './resolveInternalLinks/resolveInternalLinks'
 export { undefineProps } from './undefineProps/undefineProps'
-export { addShortcode, removeShortcode, doShortcodes, resetShortcodes, setShortcodes } from './shortcodes/shortcodes'
 export { writeRedirectsFile } from './writeRedirectsFile/writeRedirectsFile'
 export { writeServerlessFiles } from './writeServerlessFiles/writeServerlessFiles'
 export { writeStoreFiles } from './writeStoreFiles/writeStoreFiles'
+export {
+  addShortcode,
+  removeShortcode,
+  doShortcodes,
+  resetShortcodes,
+  setShortcodes,
+  stripShortcodes
+} from './shortcodes/shortcodes'

@@ -57,18 +57,19 @@ const Container = async (props: ContainerProps = { args: {} }): Promise<Containe
     nest = false
   } = args
 
+  /* Semantically specific */
+
+  const isSemanticParent = ['ul', 'ol', 'dl', 'figure'].includes(tag)
+
   /* Classes */
 
   const classesArr: string[] = []
   const layoutClassesArr: string[] = []
 
-  if (isStringStrict(classes)) {
-    classesArr.push(classes)
-  }
-
   /* Attributes */
 
   const attrs: string[] = []
+  const innerAttrs: string[] = []
 
   /* Max width */
 
@@ -125,25 +126,38 @@ const Container = async (props: ContainerProps = { args: {} }): Promise<Containe
   /* Nest check */
 
   const isNested = nest && layoutClassesArr.length > 0
+  const isNestedSemanticParent = isSemanticParent && isNested
 
   /* Classes */
 
+  const hasClasses = isStringStrict(classes)
+  const innerClassesArr = isNested ? layoutClassesArr : []
   const outerClassesArr = isNested ? classesArr : classesArr.concat(layoutClassesArr)
+
+  if (hasClasses) {
+    const arr = isNestedSemanticParent ? innerClassesArr : outerClassesArr
+
+    arr.push(classes)
+  }
 
   if (outerClassesArr.length > 0) {
     attrs.push(`class="${outerClassesArr.join(' ')}"`)
   }
 
-  /* Style */
-
-  if (isStringStrict(style)) {
-    attrs.push(`style="${style}"`)
+  if (innerClassesArr.length > 0) {
+    innerAttrs.push(`class="${innerClassesArr.join(' ')}"`)
   }
 
-  /* Attributes */
+  /* Style and more attributes */
+
+  const att = isNestedSemanticParent ? innerAttrs : attrs
+
+  if (isStringStrict(style)) {
+    att.push(`style="${style}"`)
+  }
 
   if (isStringStrict(attr)) {
-    attrs.push(attr)
+    att.push(attr)
   }
 
   /* Output */
@@ -152,17 +166,15 @@ const Container = async (props: ContainerProps = { args: {} }): Promise<Containe
   let innerTag = ''
 
   if (isNested) {
-    const isList = tag === 'ul' || tag === 'ol'
-
-    outerTag = isList ? 'div' : tag
-    innerTag = isList ? tag : 'div'
+    outerTag = isSemanticParent ? 'div' : tag
+    innerTag = isSemanticParent ? tag : 'div'
   }
 
   let start = `<${outerTag}${(attrs.length > 0) ? ` ${attrs.join(' ')}` : ''}>`
   let end = `</${outerTag}>`
 
   if (innerTag !== '') {
-    start = `${start}<${innerTag} class="${layoutClassesArr.join(' ')}">`
+    start = `${start}<${innerTag}${(innerAttrs.length > 0) ? ` ${innerAttrs.join(' ')}` : ''}>`
     end = `</${innerTag}>${end}`
   }
 

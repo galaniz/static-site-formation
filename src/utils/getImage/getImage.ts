@@ -10,6 +10,7 @@ import { isString } from '../isString/isString'
 import { isNumber } from '../isNumber/isNumber'
 import { getProp } from '../getProp/getProp'
 import { isObjectStrict } from '../isObject/isObject'
+import { dataSource } from '../dataSource/dataSource'
 
 /**
  * Function - get responsive image output
@@ -24,7 +25,7 @@ const getImage = (args: ImageArgs = {}): ImageReturn | string => {
     attr = '',
     width = 'auto',
     height = 'auto',
-    returnAspectRatio = false,
+    returnDetails = false,
     lazy = true,
     picture = false,
     quality = config.image.quality,
@@ -77,7 +78,7 @@ const getImage = (args: ImageArgs = {}): ImageReturn | string => {
   let src = url
   let srcFallback = url
 
-  if (source === 'static') {
+  if (dataSource.isStatic(source)) {
     src = `${url}.webp`
     srcFallback = `${url}.${format}`
   } else {
@@ -136,10 +137,16 @@ const getImage = (args: ImageArgs = {}): ImageReturn | string => {
     <img${classes !== '' ? ` class="${classes}"` : ''} alt="${alt}" src="${picture ? srcFallback : src}" srcset="${picture ? srcsetFallback.join(', ') : srcset.join(', ')}" sizes="${sizes}" width="${w}" height="${h}"${attr !== '' ? ` ${attr}` : ''}${lazy ? ' loading="lazy" decoding="async"' : ' loading="eager"'}>
   `
 
-  if (returnAspectRatio) {
+  if (returnDetails) {
     return {
       output,
-      aspectRatio
+      aspectRatio,
+      naturalWidth,
+      naturalHeight,
+      src,
+      srcFallback,
+      srcset,
+      sizes
     }
   }
 

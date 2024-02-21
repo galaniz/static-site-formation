@@ -46,15 +46,13 @@ const getContentfulData = async (
 
     /* Credentials */
 
-    const credentials = config.cms
-
     const {
       space,
       previewAccessToken,
       deliveryAccessToken,
       previewHost,
       deliveryHost
-    } = credentials
+    } = config.cms
 
     let accessToken = previewAccessToken
     let host = previewHost

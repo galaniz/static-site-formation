@@ -182,6 +182,7 @@ const _normalizeContent = async (content: RichTextContentItem[]): Promise<RichTe
 
     if (isStringStrict(value)) {
       contentValue = value
+      contentValue = contentValue.replace(/\n/g, '<br>')
 
       if (isArrayStrict(marks)) {
         const markTags = marks.map((m) => {
@@ -323,8 +324,6 @@ const _getContent = async ({ content = [], props, _output = '' }: RichTextConten
       outputStr = `<${tag}${(attrs.length > 0) ? ` ${attrs.join(' ')}` : ''}>${outputStr}</${tag}>`
     }
 
-    outputStr = outputStr.replace(/\n/g, '<br>')
-
     const richTextContentOutput: RichTextContentFilterArgs = {
       args: c,
       props
@@ -440,7 +439,7 @@ const RichText = async (props: RichTextProps = { args: {}, parents: [] }): Promi
   const attrs: string[] = [`data-rich="${tag}"`]
 
   if (heading && isString(content)) {
-    attrs.push(`id="${content.replace(/[\s,:;"'“”‘’]/g, '-').toLowerCase()}"`)
+    attrs.push(`id="${content.replace(/[^\w\s]|_/g, '').replace(/\s/g, '-').toLowerCase()}"`)
   }
 
   if (tag === 'a') {

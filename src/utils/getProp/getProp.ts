@@ -10,6 +10,7 @@ import { isObjectStrict } from '../isObject/isObject'
 import { isStringStrict } from '../isString/isString'
 import { isNumber } from '../isNumber/isNumber'
 import { isArrayStrict } from '../isArray/isArray'
+import { dataSource } from '../dataSource/dataSource'
 
 /**
  * Easier access to id, renderType, contentType, fields, file and tag info
@@ -22,7 +23,7 @@ const getProp: Prop = {
       return ''
     }
 
-    if (config.cms.name === 'contentful') {
+    if (dataSource.isContentful()) {
       return isStringStrict(obj.sys?.id) ? obj.sys.id : ''
     }
 
@@ -35,7 +36,7 @@ const getProp: Prop = {
 
     let type = ''
 
-    if (config.cms.name === 'contentful') {
+    if (dataSource.isContentful()) {
       if (isStringStrict(obj.sys?.contentType?.sys?.id)) {
         type = obj.sys.contentType.sys.id
       }
@@ -63,7 +64,7 @@ const getProp: Prop = {
       return obj
     }
 
-    if (config.cms.name === 'contentful') {
+    if (dataSource.isContentful()) {
       const key = 'fields' as keyof T
       const fields = obj[key] as T
 
@@ -77,7 +78,7 @@ const getProp: Prop = {
       return
     }
 
-    if (config.cms.name === 'contentful') {
+    if (dataSource.isContentful()) {
       const key = 'fields' as keyof T
       const fields = obj[key] as T
 
@@ -90,7 +91,7 @@ const getProp: Prop = {
 
     return obj[prop]
   },
-  file (obj, prop = 'url', source: string = config.source) {
+  file (obj, prop = 'url', source) {
     const res = {
       url: '',
       path: '',
@@ -109,7 +110,7 @@ const getProp: Prop = {
       return fallback
     }
 
-    if (config.cms.name === 'contentful' && source === 'cms') {
+    if (dataSource.isContentful(source)) {
       const fields = obj.fields
       const file = obj.fields?.file
 
@@ -209,7 +210,7 @@ const getProp: Prop = {
         return false
       }
 
-      const tagObj = config.cms.name === 'contentful' ? t.sys : t
+      const tagObj = dataSource.isContentful() ? t.sys : t
 
       if (!isObjectStrict(tagObj)) {
         return false

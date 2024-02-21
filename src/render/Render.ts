@@ -484,7 +484,7 @@ const _renderItem = async (args: RenderItemArgs): Promise<RenderItemReturn> => {
 
   const props = getProp.self(item)
 
-  if (!isObjectStrict(item)) {
+  if (!isObjectStrict(props)) {
     return {}
   }
 

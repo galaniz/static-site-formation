@@ -13,7 +13,7 @@ import type { PropFile } from '../getProp/getPropTypes'
  * @prop {string} [attr]
  * @prop {string|number} [width]
  * @prop {string|number} [height]
- * @prop {boolean} [returnAspectRatio]
+ * @prop {boolean} [returnDetails]
  * @prop {boolean} [lazy]
  * @prop {boolean} [picture]
  * @prop {number} [quality]
@@ -27,7 +27,7 @@ export interface ImageArgs {
   attr?: string
   width?: string | number
   height?: string | number
-  returnAspectRatio?: boolean
+  returnDetails?: boolean
   lazy?: boolean
   picture?: boolean
   quality?: number
@@ -39,9 +39,21 @@ export interface ImageArgs {
 /**
  * @typedef {object} ImageReturn
  * @prop {string} output
+ * @prop {string} src
+ * @prop {string} srcFallback
+ * @prop {string[]} srcset
+ * @prop {string} sizes
  * @prop {number} aspectRatio
+ * @prop {number} naturalWidth
+ * @prop {number} naturalHeight
  */
 export interface ImageReturn {
   output: string
+  src: string
+  srcFallback: string
+  srcset: string[]
+  sizes: string
   aspectRatio: number
+  naturalWidth: number
+  naturalHeight: number
 }

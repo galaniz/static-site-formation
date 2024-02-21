@@ -168,8 +168,10 @@ const Pagination = (props: PaginationProps = {}): PaginationReturn => {
   /* Previous item */
 
   let prevItem = `<span${isStringStrict(prevSpanClass) ? ` class="${prevSpanClass}"` : ''}>${prev}</span>`
+  let isPrevLink = false
 
   if (current > 1) {
+    isPrevLink = true
     prevItem = `
       <a${isStringStrict(prevLinkClass) ? ` class="${prevLinkClass}"` : ''}
         href="${basePermaLink}${current > 2 ? `?page=${current - 1}` : ''}${prevFilters}"
@@ -180,14 +182,14 @@ const Pagination = (props: PaginationProps = {}): PaginationReturn => {
     `
   }
 
-  output += `<li${itemAttrs}>${prevItem}</li>`
+  output += `<li${itemAttrs} data-prev="${isPrevLink ? 'link' : 'text'}">${prevItem}</li>`
 
   /* Ellipsis */
 
   let ellipsisOutput = ''
 
   if (hasEllipsis) {
-    ellipsisOutput = `<li${itemAttrs} aria-hidden="true">${ellipsis}</li>`
+    ellipsisOutput = `<li${itemAttrs} aria-hidden="true" data-ellipsis>${ellipsis}</li>`
   }
 
   if (center && current >= limit) {
@@ -197,9 +199,11 @@ const Pagination = (props: PaginationProps = {}): PaginationReturn => {
   /* Items loop */
 
   for (let i = start; i <= totalPagesItems; i += 1) {
+    const isCurrent = i === current
+
     let content = ''
 
-    if (i === current) {
+    if (isCurrent) {
       content = `
         <span${isStringStrict(currentClass) ? ` class="${currentClass}"` : ''}>
           <span class="${a11yClass}">Current page </span>
@@ -217,7 +221,7 @@ const Pagination = (props: PaginationProps = {}): PaginationReturn => {
       `
     }
 
-    output += `<li${itemAttrs}>${content}</li>`
+    output += `<li${itemAttrs}${isCurrent ? ' data-current="true"' : ''}>${content}</li>`
   }
 
   /* Ellipsis */
@@ -229,8 +233,10 @@ const Pagination = (props: PaginationProps = {}): PaginationReturn => {
   /* Next item */
 
   let nextItem = `<span${isStringStrict(nextSpanClass) ? ` class="${nextSpanClass}"` : ''}>${next}</span>`
+  let nextLink = false
 
   if (current < total) {
+    nextLink = true
     nextItem = `
       <a${isStringStrict(nextLinkClass) ? ` class="${nextLinkClass}"` : ''}
         href="${basePermaLink}?page=${current + 1}${nextFilters}"
@@ -241,13 +247,13 @@ const Pagination = (props: PaginationProps = {}): PaginationReturn => {
     `
   }
 
-  output += `<li${itemAttrs}>${nextItem}</li>`
+  output += `<li${itemAttrs} data-next="${nextLink ? 'link' : 'text'}">${nextItem}</li>`
 
   /* Output */
 
   return {
     output: `
-      <ol${listAttrs.length > 0 ? ` ${listAttrs.join(' ')}` : ''}}>
+      <ol${listAttrs.length > 0 ? ` ${listAttrs.join(' ')}` : ''}>
         ${output}
       </ol>
     `,
