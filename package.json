@@ -14,7 +14,7 @@
   "scripts": {
     "build": "npx tsc --module commonjs --outDir cjs/ && npx tsc --module esnext --outDir esm/ && npx tsc --module commonjs --esModuleInterop --outDir lib/",
     "lint": "npx ts-standard",
-    "release": "release-it major --preRelease=beta",
+    "release": "release-it minor --preRelease=beta",
     "jsdoc": "jsdoc -c jsdoc.json"
   },
   "repository": {
