@@ -1,8 +1,13 @@
 {
   "name": "@alanizcreative/static-site-formation",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Base and helpers for static sites built with json files or Contentful",
   "main": "./esm/config/config.js",
+  "files": [
+    "./esm",
+    "./cjs",
+    "./lib"
+  ],
   "engines": {
     "node": ">=18"
   },
@@ -38,7 +43,7 @@
   "release-it": {
     "git": {
       "requireCommits": true,
-      "commitMessage": "Release ${version} [ci skip]"
+      "commitMessage": "chore: release ${version} [ci skip]"
     },
     "github": {
       "release": true
