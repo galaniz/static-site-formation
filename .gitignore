@@ -1,0 +1,7 @@
+node_modules/
+package-lock.json
+cjs/
+esm/
+lib/
+jsdocs/
+.DS_Store
