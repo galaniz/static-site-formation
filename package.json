@@ -45,6 +45,7 @@
     }
   },
   "publishconfig": {
-    "access": "public"
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }
