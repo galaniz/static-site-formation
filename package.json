@@ -3,11 +3,6 @@
   "version": "1.0.1",
   "description": "Base and helpers for static sites built with json files or Contentful",
   "main": "./esm/config/config.js",
-  "files": [
-    "./esm",
-    "./cjs",
-    "./lib"
-  ],
   "engines": {
     "node": ">=18"
   },

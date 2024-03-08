@@ -1,0 +1,10 @@
+.circleci/
+node_modules/
+package-lock.json
+src/
+jsdocs/
+.DS_Store
+.gitattributes
+.gitignore
+jsdoc.json
+tsconfig.json
