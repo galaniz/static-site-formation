@@ -1,7 +1,7 @@
 /**
- * Utils - Min
+ * Utils
  *
- * Modules with minimal file system/external dependencies
+ * Note - Modules with minimal file system/external dependencies
  */
 
 export { addAction, removeAction, doActions, resetActions, setActions } from './actions/actions'
@@ -25,6 +25,7 @@ export { getYear } from './getYear/getYear'
 export { getObjectKeys } from './getObjectKeys/getObjectKeys'
 export { getJson, getJsonFile } from './getJson/getJson'
 export { getExcerpt } from './getExcerpt/getExcerpt'
+export { getShareLinks } from './getShareLinks/getShareLinks'
 export { dataSource } from './dataSource/dataSource'
 export { isArray, isArrayStrict } from './isArray/isArray'
 export { isObject, isObjectStrict } from './isObject/isObject'

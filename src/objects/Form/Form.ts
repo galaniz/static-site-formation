@@ -6,7 +6,7 @@
 
 import type { FormProps, FormReturn, FormMeta, FormMessages } from './FormTypes'
 import { v4 as uuid } from 'uuid'
-import { applyFilters, isStringStrict, isObjectStrict } from '../../utils/utilsMin'
+import { applyFilters, isStringStrict, isObjectStrict } from '../../utils/utils'
 import { config } from '../../config/config'
 
 /**
@@ -15,7 +15,7 @@ import { config } from '../../config/config'
  * @param {import('./FormTypes').FormProps} props
  * @return {Promise<import('./FormTypes').FormReturn>}
  */
-const Form = async (props: FormProps = { args: {} }): Promise<FormReturn> => {
+const Form = async (props: FormProps): Promise<FormReturn> => {
   /* Fallback output */
 
   const fallback = {

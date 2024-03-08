@@ -9,7 +9,7 @@ import type { GenericStrings } from '../../global/globalTypes'
 /**
  * @typedef {string|number|boolean} ShortcodeAttrValue
  */
-export type ShortcodeAttrValue = string | number | boolean
+export type ShortcodeAttrValue = string | number | boolean | undefined
 
 /**
  * @typedef {Object.<string, ShortcodeAttrValue>} ShortcodeAttrs
@@ -44,11 +44,17 @@ export type ShortcodeCallback = (args: ShortcodeData) => Promise<string>
 /**
  * @typedef {object} Shortcode
  * @prop {string} [child]
+ * @prop {string} child.name
+ * @prop {import('../../global/globalTypes').GenericStrings} [child.attributeTypes]
+ * @prop {import('../../global/globalTypes').GenericStrings} [attributeTypes]
  * @prop {ShortcodeCallback} callback
  */
 export interface Shortcode {
-  child?: string
-  attributeTypes: GenericStrings
+  child?: {
+    name: string
+    attributeTypes?: GenericStrings
+  }
+  attributeTypes?: GenericStrings
   callback: ShortcodeCallback
 }
 

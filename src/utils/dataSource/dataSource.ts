@@ -6,7 +6,7 @@
 
 import type { DataSource } from './dataSourceTypes'
 import { config } from '../../config/config'
-import { isStringStrict } from '../utilsMin'
+import { isStringStrict } from '../utils'
 
 /**
  * Check and get data source

@@ -13,7 +13,7 @@ import {
   setFilters,
   setActions,
   setShortcodes
-} from '../../utils/utilsMin'
+} from '../../utils/utils'
 import { Render } from '../../render/Render'
 
 /**

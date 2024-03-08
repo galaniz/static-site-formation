@@ -15,7 +15,7 @@ import {
   isObjectStrict,
   isStringStrict,
   isNumber
-} from '../../utils/utilsMin'
+} from '../../utils/utils'
 import { SendForm } from '../SendForm/SendForm'
 
 /**

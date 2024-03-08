@@ -6,6 +6,18 @@ import type { Generic, InternalLink, ParentArgs } from '../../global/globalTypes
 import type { PropFile } from '../../utils/getProp/getPropTypes'
 
 /**
+ * @typedef {object} RichTextHeading
+ * @prop {string} title
+ * @prop {string} id
+ * @prop {string} type
+ */
+export interface RichTextHeading {
+  title: string
+  id: string
+  type: string
+}
+
+/**
  * @typedef {object} RichTextProps
  * @prop {object} args
  * @prop {string} [args.tag]
@@ -19,7 +31,9 @@ import type { PropFile } from '../../utils/getProp/getPropTypes'
  * @prop {import('../../global/globalTypes').InternalLink} [args.internalLink]
  * @prop {string} [args.style]
  * @prop {string} [args.attr]
+ * @prop {boolean} [args.dataAttr=true]
  * @prop {import('../../global/globalTypes').ParentArgs} [parents]
+ * @prop {RichTextHeading[]} [headings]
  */
 export interface RichTextProps {
   args: {
@@ -35,9 +49,11 @@ export interface RichTextProps {
     internalLink?: InternalLink
     style?: string
     attr?: string
+    dataAttr?: boolean
     [key: string]: unknown
   }
   parents?: ParentArgs[]
+  headings?: RichTextHeading[]
 }
 
 /**

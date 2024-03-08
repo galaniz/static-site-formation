@@ -29,7 +29,7 @@ import type {
 import type { Generic, GenericStrings, ParentArgs, SlugParent } from '../global/globalTypes'
 import type { SlugArgs } from '../utils/getSlug/getSlugTypes'
 import type { PaginationData } from '../components/Pagination/PaginationTypes'
-import type { RichTextContentItem } from '../text/RichText/RichTextTypes'
+import type { RichTextContentItem, RichTextHeading } from '../text/RichText/RichTextTypes'
 import type { Navigation, NavigationItem } from '../components/Navigation/NavigationTypes'
 import {
   doActions,
@@ -47,8 +47,9 @@ import {
   isObjectStrict,
   isNumber,
   isFunction,
-  getObjectKeys
-} from '../utils/utilsMin'
+  getObjectKeys,
+  doShortcodes
+} from '../utils/utils'
 import { config } from '../config/config'
 import { Container } from '../layouts/Container/Container'
 import { Column } from '../layouts/Column/Column'
@@ -259,12 +260,15 @@ const _renderContent = async (args: RenderContentArgs): Promise<void> => {
     output,
     pageData,
     pageContains = [],
+    pageHeadings = [],
     navigations = {},
     renderFunctions = {}
   } = args
 
   let {
-    parents = []
+    parents = [],
+    headingsIndex = 0,
+    depth = 0
   } = args
 
   /* Content must be array */
@@ -307,7 +311,8 @@ const _renderContent = async (args: RenderContentArgs): Promise<void> => {
             type: richTextNodeType,
             content: richTextContent as string | RichTextContentItem[] | undefined
           },
-          parents
+          parents,
+          headings: pageHeadings[headingsIndex]
         }
 
         richTextOutput = await RichText(richTextArgs)
@@ -432,12 +437,21 @@ const _renderContent = async (args: RenderContentArgs): Promise<void> => {
         parents: parentsCopy,
         pageData,
         pageContains,
+        pageHeadings,
         navigations,
-        renderFunctions
+        renderFunctions,
+        headingsIndex,
+        depth: depth += 1
       })
     }
 
     output.html += end
+
+    /* Additional rich text areas */
+
+    if (renderType === 'content' && depth === 0) {
+      headingsIndex = pageHeadings.push([])
+    }
 
     /* Clear parents */
 
@@ -502,6 +516,10 @@ const _renderItem = async (args: RenderItemArgs): Promise<RenderItemReturn> => {
 
   const pageContains: string[] = []
 
+  /* Store rich text headings in page */
+
+  const pageHeadings: RichTextHeading[][] = [[]]
+
   /* Start action */
 
   const renderItemStartArgs: RenderItemStartActionArgs = {
@@ -509,6 +527,7 @@ const _renderItem = async (args: RenderItemArgs): Promise<RenderItemReturn> => {
     pageData: props,
     contentType,
     pageContains,
+    pageHeadings,
     serverlessData
   }
 
@@ -618,10 +637,13 @@ const _renderItem = async (args: RenderItemArgs): Promise<RenderItemReturn> => {
       parents: [],
       pageData: item,
       pageContains,
+      pageHeadings,
       navigations,
       renderFunctions
     })
   }
+
+  contentOutput.html = await doShortcodes(contentOutput.html)
 
   /* Pagination variables for meta object */
 
@@ -651,6 +673,7 @@ const _renderItem = async (args: RenderItemArgs): Promise<RenderItemReturn> => {
       content: contentOutput.html,
       slug: formattedSlug,
       pageContains,
+      pageHeadings,
       pageData,
       serverlessData
     }
@@ -665,6 +688,7 @@ const _renderItem = async (args: RenderItemArgs): Promise<RenderItemReturn> => {
     output: layoutOutput,
     pageData,
     pageContains,
+    pageHeadings,
     serverlessData
   }
 
@@ -679,6 +703,7 @@ const _renderItem = async (args: RenderItemArgs): Promise<RenderItemReturn> => {
     output: layoutOutput,
     pageData,
     pageContains,
+    pageHeadings,
     serverlessData
   }
 

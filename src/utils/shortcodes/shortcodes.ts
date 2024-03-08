@@ -26,9 +26,10 @@ const _attrReg: RegExp = /[\w-]+=".*?"/g
  * @private
  * @param {string} content
  * @param {string} tagNames
- * @return {ShortcodeData[]}
+ * @param {import('./shortcodesTypes').Shortcode} [props]
+ * @return {import('./shortcodesTypes').ShortcodeData[]}
  */
-const _getShortcodeData = (content: string, tagNames: string): ShortcodeData[] => {
+const _getShortcodeData = (content: string, tagNames: string, props?: Partial<Shortcode>): ShortcodeData[] => {
   /* Content and tag names required */
 
   if (!isStringStrict(content) || !isStringStrict(tagNames)) {
@@ -79,10 +80,18 @@ const _getShortcodeData = (content: string, tagNames: string): ShortcodeData[] =
     const closingArr = matches.splice(closingIndex, 1)
     const closing = closingArr[0]
 
+    /* Shortcode info */
+
+    const info = props === undefined ? shortcodes[name] : props
+
+    if (info === undefined) {
+      return
+    }
+
     /* Attributes from opening tag */
 
     const attributes: ShortcodeAttrs = {}
-    const attributeTypes = isObjectStrict(shortcodes?.[name]?.attributeTypes) ? shortcodes[name].attributeTypes : {}
+    const attributeTypes = isObjectStrict(info.attributeTypes) ? info.attributeTypes : {}
     const attr = tag.match(_attrReg)
 
     if (isArrayStrict(attr)) {
@@ -95,7 +104,7 @@ const _getShortcodeData = (content: string, tagNames: string): ShortcodeData[] =
 
           let val: ShortcodeAttrValue = escape(value.replace(/"/g, ''))
 
-          if (isStringStrict(attributeTypes[key])) {
+          if (attributeTypes !== undefined && isStringStrict(attributeTypes[key])) {
             const type = attributeTypes[key]
 
             if (type === 'number') {
@@ -131,10 +140,10 @@ const _getShortcodeData = (content: string, tagNames: string): ShortcodeData[] =
 
     let children: ShortcodeData[] = []
 
-    const child = shortcodes?.[name]?.child
+    const child = info.child
 
-    if (isStringStrict(child)) {
-      children = _getShortcodeData(innerContent, child)
+    if (isObjectStrict(child)) {
+      children = _getShortcodeData(innerContent, child.name, child)
     }
 
     /* Add data */

@@ -16,7 +16,7 @@ import {
   setActions,
   setShortcodes,
   isFunction
-} from '../../utils/utilsMin'
+} from '../../utils/utils'
 import { Render } from '../../render/Render'
 
 /**

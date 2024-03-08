@@ -15,13 +15,14 @@ import type {
 import {
   getLink,
   getProp,
-  doShortcodes,
+  getExcerpt,
   applyFilters,
   isString,
   isStringStrict,
   isObjectStrict,
-  isArrayStrict
-} from '../../utils/utilsMin'
+  isArrayStrict,
+  isArray
+} from '../../utils/utils'
 
 /**
  * Function - check if string contains shortcode
@@ -343,7 +344,7 @@ const _getContent = async ({ content = [], props, _output = '' }: RichTextConten
  * @param {import('./RichTextTypes').RichTextProps} props
  * @return {Promise<string>}
  */
-const RichText = async (props: RichTextProps = { args: {}, parents: [] }): Promise<string> => {
+const RichText = async (props: RichTextProps): Promise<string> => {
   /* Props must be object */
 
   if (!isObjectStrict(props)) {
@@ -371,7 +372,8 @@ const RichText = async (props: RichTextProps = { args: {}, parents: [] }): Promi
     headingStyle = '',
     align = '',
     style = '',
-    attr = ''
+    attr = '',
+    dataAttr = true
   } = args
 
   let {
@@ -384,8 +386,10 @@ const RichText = async (props: RichTextProps = { args: {}, parents: [] }): Promi
   }
 
   let contentNormal: RichTextContentReturn[] = []
+  let contentInit: RichTextContentItem[] = []
 
   if (isArrayStrict(content)) {
+    contentInit = content
     contentNormal = await _normalizeContent(content)
   }
 
@@ -422,12 +426,17 @@ const RichText = async (props: RichTextProps = { args: {}, parents: [] }): Promi
   /* Generate output */
 
   let output = ''
+  let headingStr = ''
+  let headingObj
 
   if (isStringStrict(content)) {
     output = content
+    headingStr = content
   }
 
   if (isArrayStrict(contentNormal)) {
+    headingObj = contentInit
+
     output = await _getContent({
       content: contentNormal,
       props
@@ -436,10 +445,38 @@ const RichText = async (props: RichTextProps = { args: {}, parents: [] }): Promi
 
   /* Attributes */
 
-  const attrs: string[] = [`data-rich="${tag}"`]
+  const attrs: string[] = []
 
-  if (heading && isString(content)) {
-    attrs.push(`id="${content.replace(/[^\w\s]|_/g, '').replace(/\s/g, '-').toLowerCase()}"`)
+  if (dataAttr) {
+    attrs.push(`data-rich="${tag}"`)
+  }
+
+  if (heading) {
+    const headingContents = getExcerpt({
+      limit: 10,
+      limitExcerpt: true,
+      excerpt: headingStr,
+      content: headingObj
+    })
+
+    const id = headingContents
+      .trim()
+      .replace('&hellip;', '')
+      .replace(/[^\w\s]|_/g, '')
+      .replace(/\s+/g, '-')
+      .toLowerCase()
+
+    if (headingContents !== '' && id !== '') {
+      attrs.push(`id=${id}`)
+
+      if (isArray(props.headings)) {
+        props.headings.push({
+          id,
+          title: headingContents,
+          type: tag
+        })
+      }
+    }
   }
 
   if (tag === 'a') {
@@ -478,7 +515,6 @@ const RichText = async (props: RichTextProps = { args: {}, parents: [] }): Promi
     output = `<${tag}${(attrs.length > 0) ? ` ${attrs.join(' ')}` : ''}>${output}</${tag}>`
   }
 
-  output = await doShortcodes(output)
   output = await applyFilters('richTextOutput', output, props)
 
   return output

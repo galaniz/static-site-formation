@@ -24,10 +24,9 @@ import type { RenderNameFilter, RenderItemFilter, RenderContentFilter } from '..
 /**
  * @typedef {
  * import('../getContentfulData/getContentfulDataTypes').ContentfulDataReturn|
- * import('../getFileData/getFileDataTypes')FileDataReturn
+ * import('../getFileData/getFileDataTypes').FileDataReturn
  * } CacheData
  */
-
 type CacheData = ContentfulDataReturn | FileDataReturn
 
 /**

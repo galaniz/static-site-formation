@@ -25,7 +25,7 @@ import {
   isString,
   isObjectStrict,
   isFunction
-} from '../../utils/utilsMin'
+} from '../../utils/utils'
 
 /**
  * Class - recursively generate navigation output

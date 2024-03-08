@@ -5,7 +5,7 @@
 /* Imports */
 
 import type { ColumnProps, ColumnReturn } from './ColumnTypes'
-import { applyFilters, isStringStrict, isObjectStrict } from '../../utils/utilsMin'
+import { applyFilters, isStringStrict, isObjectStrict } from '../../utils/utils'
 
 /**
  * Function - output column wrapper
@@ -13,7 +13,7 @@ import { applyFilters, isStringStrict, isObjectStrict } from '../../utils/utilsM
  * @param {import('./ColumnTypes').ColumnProps} props
  * @return {Promise<import('./ColumnTypes').ColumnReturn>}
  */
-const Column = async (props: ColumnProps = { args: {} }): Promise<ColumnReturn> => {
+const Column = async (props: ColumnProps): Promise<ColumnReturn> => {
   /* Fallback output */
 
   const fallback = {

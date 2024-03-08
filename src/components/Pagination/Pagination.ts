@@ -5,7 +5,7 @@
 /* Imports */
 
 import type { PaginationProps, PaginationData, PaginationReturn } from './PaginationTypes'
-import { isObjectStrict, isStringStrict } from '../../utils/utilsMin'
+import { isObjectStrict, isStringStrict } from '../../utils/utils'
 
 /**
  * Function - output pagination navigation
@@ -13,7 +13,7 @@ import { isObjectStrict, isStringStrict } from '../../utils/utilsMin'
  * @param {import('./PaginationTypes').PaginationProps} props
  * @return {string} HTML - ol
  */
-const Pagination = (props: PaginationProps = {}): PaginationReturn => {
+const Pagination = (props: PaginationProps): PaginationReturn => {
   /* Fallback output */
 
   const fallback = {

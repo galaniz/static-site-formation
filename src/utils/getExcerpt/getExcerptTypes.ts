@@ -2,10 +2,6 @@
  * Utils - Get Excerpt Types
  */
 
-/* Imports */
-
-import type { Generic } from '../../global/globalTypes'
-
 /**
  * @typedef {object} ExcerptArgs
  * @prop {string} [excerpt]
@@ -18,9 +14,9 @@ import type { Generic } from '../../global/globalTypes'
  * @prop {boolean} [limitExcerpt=false]
  * @prop {string} [more=&hellip;]
  */
-export interface ExcerptArgs {
+export interface ExcerptArgs<T extends object> {
   excerpt?: string
-  content?: Generic | Generic[]
+  content?: T
   prop?: string
   limit?: number
   limitExcerpt?: boolean

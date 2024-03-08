@@ -19,7 +19,7 @@ import {
   getObjectKeys,
   getJsonFile,
   getPath
-} from '../../utils/utilsMin'
+} from '../../utils/utils'
 
 /**
  * Function - recurse through data to output plain and html email body

@@ -6,7 +6,7 @@
 
 import type { ContentfulDataParams, ContentfulDataReturn } from './getContentfulDataTypes'
 import resolveResponse from 'contentful-resolve-response'
-import { applyFilters, isObject, isObjectStrict, isStringStrict } from '../utilsMin'
+import { applyFilters, isObject, isObjectStrict, isStringStrict } from '../utils'
 import { config } from '../../config/config'
 
 /**

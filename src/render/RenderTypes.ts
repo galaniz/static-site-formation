@@ -6,7 +6,7 @@
 
 import type { Generic, GenericFunctions, GenericStrings, ParentArgs, HtmlString } from '../global/globalTypes'
 import type { Navigation, NavigationItem } from '../components/Navigation/NavigationTypes'
-import type { RichTextContentItem } from '../text/RichText/RichTextTypes'
+import type { RichTextContentItem, RichTextHeading } from '../text/RichText/RichTextTypes'
 import type { PropFile, PropId, PropType } from '../utils/getProp/getPropTypes'
 
 /**
@@ -68,6 +68,20 @@ export interface RenderMetaReturn {
 }
 
 /**
+ * @typedef {object} RenderCommon
+ * @prop {RenderItem} pageData
+ * @prop {string[]} pageContains
+ * @prop {Array.<import('../text/RichText/RichTextTypes').RichTextHeading[]>} pageHeadings
+ * @prop {RenderServerlessData} [serverlessData]
+ */
+export interface RenderCommon {
+  pageData: RenderItem
+  pageHeadings: RichTextHeading[][]
+  pageContains: string[]
+  serverlessData?: RenderServerlessData | undefined
+}
+
+/**
  * @typedef RenderContentData
  * @type {
  * import('../global/globalTypes').Generic|
@@ -91,25 +105,24 @@ export type RenderContentData =
   }
 
 /**
- * @typedef {object} RenderContentArgs
+ * @typedef RenderContentArgs
+ * @type {RenderCommon}
  * @prop {RenderContentData[]} contentData
- * @prop {RenderServerlessData} [serverlessData]
  * @prop {import('../global/globalTypes').HtmlString} output
  * @prop {import('../global/globalTypes').ParentArgs[]} parents
- * @prop {RenderItem} pageData
- * @prop {string[]} pageContains
  * @prop {import('../global/globalTypes').GenericStrings} navigations
  * @prop {import('../global/globalTypes').GenericFunctions} renderFunctions
+ * @prop {number} headingsIndex
+ * @prop {number} depth
  */
-export interface RenderContentArgs {
+export interface RenderContentArgs extends RenderCommon {
   contentData: RenderContentData[]
-  serverlessData?: RenderServerlessData
   output: HtmlString
   parents: ParentArgs[]
-  pageData: RenderItem
-  pageContains: string[]
   navigations: GenericStrings
   renderFunctions: GenericFunctions
+  headingsIndex?: number
+  depth?: number
 }
 
 /**
@@ -200,39 +213,29 @@ export interface RenderItemReturn {
 }
 
 /**
- * @typedef {object} RenderItemStartActionArgs
+ * @typedef RenderItemStartActionArgs
+ * @type {RenderCommon}
  * @prop {string} id
  * @prop {string} contentType
- * @prop {RenderItem} pageData
- * @prop {string[]} pageContains
- * @prop {RenderServerlessData} [serverlessData]
  */
-export interface RenderItemStartActionArgs {
+export interface RenderItemStartActionArgs extends RenderCommon {
   id: string
   contentType: string
-  pageData: RenderItem
-  pageContains: string[]
-  serverlessData?: RenderServerlessData
 }
 
 /**
- * @typedef {object} RenderItemActionArgs
+ * @typedef RenderItemActionArgs
+ * @type {RenderCommon}
  * @prop {string} id
  * @prop {string} contentType
  * @prop {string} slug
  * @prop {string} output
- * @prop {RenderItem} pageData
- * @prop {string[]} pageContains
- * @prop {RenderServerlessData} [serverlessData]
  */
-export interface RenderItemActionArgs {
+export interface RenderItemActionArgs extends RenderCommon {
   id: string
   contentType: string
   slug: string
   output: string
-  pageData: RenderItem
-  pageContains: string[]
-  serverlessData?: RenderServerlessData
 }
 
 /**
@@ -243,8 +246,9 @@ export interface RenderItemActionArgs {
  * @prop {string} contentType
  * @prop {string} content
  * @prop {string} slug
- * @prop {string[]} pageContains
  * @prop {RenderItem} pageData
+ * @prop {string[]} pageContains
+ * @prop {Array.<import('../text/RichText/RichTextTypes').RichTextHeading[]>} pageHeadings
  * @prop {RenderServerlessData} [serverlessData]
  */
 export interface RenderLayoutArgs {
@@ -254,8 +258,9 @@ export interface RenderLayoutArgs {
   contentType: string
   content: string
   slug: string
-  pageContains: string[]
   pageData: RenderItem
+  pageHeadings?: RichTextHeading[][]
+  pageContains?: string[]
   serverlessData?: RenderServerlessData | undefined
 }
 

@@ -5,7 +5,7 @@
 /* Imports */
 
 import type { ContainerProps, ContainerReturn } from './ContainerTypes'
-import { applyFilters, isObjectStrict, isStringStrict } from '../../utils/utilsMin'
+import { applyFilters, isObjectStrict, isStringStrict } from '../../utils/utils'
 
 /**
  * Function - output container wrapper
@@ -13,7 +13,7 @@ import { applyFilters, isObjectStrict, isStringStrict } from '../../utils/utilsM
  * @param {import('./ContainerTypes').ContainerProps} props
  * @return {Promise<import('./ContainerTypes').ContainerReturn>}
  */
-const Container = async (props: ContainerProps = { args: {} }): Promise<ContainerReturn> => {
+const Container = async (props: ContainerProps): Promise<ContainerReturn> => {
   /* Fallback output */
 
   const fallback = {

@@ -40,7 +40,7 @@ const getSlug = (args: SlugArgs): string | SlugReturn => {
     contentType = 'page',
     linkContentType = 'default',
     returnParents = false
-  } = args
+  } = isObjectStrict(args) ? args : {}
 
   /* Index */
 

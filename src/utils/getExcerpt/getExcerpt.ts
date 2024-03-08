@@ -7,6 +7,7 @@ import { isObject, isObjectStrict } from '../isObject/isObject'
 import { isStringStrict } from '../isString/isString'
 import { getObjectKeys } from '../getObjectKeys/getObjectKeys'
 import { stripShortcodes } from '../shortcodes/shortcodes'
+import { dataSource } from '../dataSource/dataSource'
 
 /**
  * Function - get words from object or array of content
@@ -18,7 +19,7 @@ import { stripShortcodes } from '../shortcodes/shortcodes'
 const _getContentWords = <T>(args: ExcerptContentWordArgs<T>): string[] => {
   const {
     content,
-    prop = 'value',
+    prop,
     limit = 25
   } = args
 
@@ -71,11 +72,11 @@ const _getContentWords = <T>(args: ExcerptContentWordArgs<T>): string[] => {
  * @param {import('./getExcerptTypes').ExcerptArgs} args
  * @return {string}
  */
-const getExcerpt = (args: ExcerptArgs): string => {
+const getExcerpt = <T extends object>(args: ExcerptArgs<T>): string => {
   const {
     excerpt = '',
     content = undefined,
-    prop = 'value',
+    prop = dataSource.isContentful() ? 'value' : 'content',
     limit = 25,
     limitExcerpt = false,
     more = '&hellip;'
@@ -107,7 +108,9 @@ const getExcerpt = (args: ExcerptArgs): string => {
     const wordsLen = words.length
 
     if (wordsLen > 0) {
-      words.pop()
+      if (wordsLen > limit && more !== '') {
+        words.pop()
+      }
 
       output = `${words.join(' ')}${wordsLen > limit ? more : ''}`
     }

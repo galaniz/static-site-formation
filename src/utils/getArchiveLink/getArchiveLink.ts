@@ -6,36 +6,38 @@
 
 import type { ArchiveLinkReturn } from './getArchiveLinkTypes'
 import { config } from '../../config/config'
+import { isStringStrict } from '../isString/isString'
 import { getArchiveId } from '../getArchiveId/getArchiveId'
 import { getPermalink } from '../getPermalink/getPermalink'
 import { getSlug } from '../getSlug/getSlug'
-import { isString } from '../isString/isString'
 
 /**
  * Function - get archive link by content type
  *
  * @param {string} contentType
- * @param {string} linkContentType
+ * @param {string} [linkContentType]
  * @return {import('./getArchiveLinkTypes').ArchiveLinkReturn}
  */
-const getArchiveLink = (contentType: string = '', linkContentType: string = ''): ArchiveLinkReturn => {
+const getArchiveLink = (contentType: string = '', linkContentType?: string): ArchiveLinkReturn => {
   let archiveLink = ''
   let archiveTitle = ''
 
-  if (config.slug.bases[contentType] !== undefined) {
-    archiveTitle = config.contentTypes.archive[contentType].plural
+  const archiveId = getArchiveId(contentType, linkContentType)
+  const archiveInfo = config.slug.archives[archiveId]
 
-    const archiveId = getArchiveId(contentType, linkContentType)
-    const archiveSlug = config.slug.bases[contentType].slug
+  archiveTitle = config.contentTypes.archive[contentType].plural
 
-    if (archiveId !== '' && archiveSlug !== '') {
+  if (archiveInfo !== undefined) {
+    const archiveSlug = archiveInfo.slug
+
+    if (isStringStrict(archiveId) && isStringStrict(archiveSlug)) {
       const s = getSlug({
         id: archiveId,
         slug: archiveSlug,
         contentType: 'page'
       })
 
-      if (isString(s)) {
+      if (isStringStrict(s)) {
         archiveLink = getPermalink(s)
       }
     }
