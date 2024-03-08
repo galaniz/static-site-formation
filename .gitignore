@@ -1,7 +1,7 @@
 node_modules/
 package-lock.json
-cjs/
-esm/
 lib/
+cjs/
+iop/
 jsdocs/
 .DS_Store

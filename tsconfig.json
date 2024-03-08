@@ -6,16 +6,16 @@
     "allowSyntheticDefaultImports": true,
     "noUnusedLocals": true,
     "strict": true,
-    "outDir": "esm",
+    "outDir": "lib",
     "declaration": true
   },
   "include": [
     "**/*.ts"
   ],
   "exclude": [
-    "./esm",
-    "./cjs",
     "./lib",
+    "./cjs",
+    "./iop",
     "node_modules"
   ]
 }
