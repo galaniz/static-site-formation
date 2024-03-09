@@ -113,9 +113,7 @@ let config: Config = {
   },
   serverless: {
     dir: 'functions',
-    import: 'lib',
     files: {
-      config: 'src/config/config.js',
       ajax: 'ajax/index.js',
       preview: '',
       reload: ''

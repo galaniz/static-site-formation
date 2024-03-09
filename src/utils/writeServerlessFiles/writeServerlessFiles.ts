@@ -4,10 +4,11 @@
 
 /* Imports */
 
+import type { ServerlessFilesArgs } from './writeServerlessFilesTypes'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { resolve, dirname } from 'node:path'
 import { getPathDepth } from '../getPathDepth/getPathDepth'
-import { isArrayStrict } from '../isArray/isArray'
+import { isObjectStrict } from '../isObject/isObject'
 import { isStringStrict } from '../isString/isString'
 import { config } from '../../config/config'
 
@@ -16,9 +17,19 @@ import { config } from '../../config/config'
  *
  * @return {Promise<void>}
  */
-const writeServerlessFiles = async (): Promise<void> => {
+const writeServerlessFiles = async (args?: ServerlessFilesArgs): Promise<void> => {
   try {
-    const formationPackage = `@alanizcreative/static-site-formation/${config.serverless.import}/serverless/`
+    /* Args */
+
+    const {
+      packageDir = 'lib',
+      configName = 'config',
+      configFile = 'src/config/config.js'
+    } = isObjectStrict(args) ? args : {}
+
+    /* Package */
+
+    const formationPackage = `@alanizcreative/static-site-formation/${packageDir}/serverless/`
 
     /* Serverless folder */
 
@@ -26,21 +37,10 @@ const writeServerlessFiles = async (): Promise<void> => {
       await mkdir(resolve(config.serverless.dir), { recursive: true })
     }
 
-    /* Config */
-
-    let configName = 'config'
-    let configFile = config.serverless.files.config
-    let configPath = configFile
-
-    if (isArrayStrict(configFile) && configFile.length === 2) {
-      configName = configFile[0]
-      configPath = configFile[1]
-    }
-
     /* Ajax file */
 
     if (isStringStrict(config.serverless.files.ajax)) {
-      const content = `import { ${configName} } from '${getPathDepth(`${config.serverless.dir}/${config.serverless.files.ajax}`)}${configPath}'\nimport { Ajax } from '${formationPackage}Ajax/Ajax'\nconst render = async ({ request, env }) => { return await Ajax({ request, env, siteConfig: config }) }\nexport const onRequestPost = [render]\n`
+      const content = `import { ${configName} } from '${getPathDepth(`${config.serverless.dir}/${config.serverless.files.ajax}`)}${configFile}'\nimport { Ajax } from '${formationPackage}Ajax/Ajax'\nconst render = async ({ request, env }) => { return await Ajax({ request, env, siteConfig: ${configName} }) }\nexport const onRequestPost = [render]\n`
 
       const path = resolve(config.serverless.dir, config.serverless.files.ajax)
       const dir = dirname(path)
@@ -54,7 +54,7 @@ const writeServerlessFiles = async (): Promise<void> => {
     /* Preview file */
 
     if (config.env.dev && isStringStrict(config.serverless.files.preview)) {
-      const content = `import { ${configName} } from '${getPathDepth(`${config.serverless.dir}/${config.serverless.files.preview}`)}${configPath}'\nimport { Preview } from '${formationPackage}Preview/Preview'\nconst render = async ({ request, next }) => { return await Preview({ request, next, siteConfig: config }) }\nexport const onRequestGet = [render]\n`
+      const content = `import { ${configName} } from '${getPathDepth(`${config.serverless.dir}/${config.serverless.files.preview}`)}${configFile}'\nimport { Preview } from '${formationPackage}Preview/Preview'\nconst render = async ({ request, next }) => { return await Preview({ request, next, siteConfig: ${configName} }) }\nexport const onRequestGet = [render]\n`
 
       const path = resolve(config.serverless.dir, config.serverless.files.preview)
       const dir = dirname(path)
@@ -82,7 +82,7 @@ const writeServerlessFiles = async (): Promise<void> => {
           if (type === 'reload' && isStringStrict(reloadFile) && isStringStrict(path)) {
             path = `${path}/${reloadFile}`
 
-            content = `import { ${configName} } from '${getPathDepth(`${config.serverless.dir}/${path}`)}${configPath}'\nimport { Reload } from '${formationPackage}Reload/Reload'\nconst render = async ({ request, env, next }) => { return await Reload({ request, env, next, siteConfig: config }) }\nexport const onRequestGet = [render]\n`
+            content = `import { ${configName} } from '${getPathDepth(`${config.serverless.dir}/${path}`)}${configFile}'\nimport { Reload } from '${formationPackage}Reload/Reload'\nconst render = async ({ request, env, next }) => { return await Reload({ request, env, next, siteConfig: ${configName} }) }\nexport const onRequestGet = [render]\n`
           }
 
           if (isStringStrict(path) && isStringStrict(content)) {

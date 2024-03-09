@@ -262,13 +262,11 @@ export interface ConfigServerlessRoute {
 
 /**
  * @typedef {object} ConfigServerlessFiles
- * @prop {string|string[]} config
  * @prop {string} ajax
  * @prop {string} preview
  * @prop {string} reload
  */
 export interface ConfigServerlessFiles {
-  config: string | string[]
   ajax: string
   preview: string
   reload: string
@@ -277,14 +275,12 @@ export interface ConfigServerlessFiles {
 /**
  * @typedef {object} ConfigServerless
  * @prop {string} dir
- * @prop {string} import
  * @prop {ConfigServerlessFiles} files
  * @prop {Object.<string, ConfigServerlessRoute[]>} routes
  * @prop {ConfigServerlessRoute[]} routes.reload
  */
 export interface ConfigServerless {
   dir: string
-  import: string
   files: ConfigServerlessFiles
   routes: {
     reload: ConfigServerlessRoute[]
