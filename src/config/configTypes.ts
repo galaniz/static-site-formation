@@ -262,11 +262,13 @@ export interface ConfigServerlessRoute {
 
 /**
  * @typedef {object} ConfigServerlessFiles
+ * @prop {string|string[]} config
  * @prop {string} ajax
  * @prop {string} preview
  * @prop {string} reload
  */
 export interface ConfigServerlessFiles {
+  config: string | string[]
   ajax: string
   preview: string
   reload: string

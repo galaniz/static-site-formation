@@ -7,6 +7,8 @@
 import { mkdir, writeFile } from 'node:fs/promises'
 import { resolve, dirname } from 'node:path'
 import { getPathDepth } from '../getPathDepth/getPathDepth'
+import { isArrayStrict } from '../isArray/isArray'
+import { isStringStrict } from '../isString/isString'
 import { config } from '../../config/config'
 
 /**
@@ -20,14 +22,25 @@ const writeServerlessFiles = async (): Promise<void> => {
 
     /* Serverless folder */
 
-    if (config.serverless.dir !== '') {
+    if (isStringStrict(config.serverless.dir)) {
       await mkdir(resolve(config.serverless.dir), { recursive: true })
+    }
+
+    /* Config */
+
+    let configName = 'config'
+    let configFile = config.serverless.files.config
+    let configPath = configFile
+
+    if (isArrayStrict(configFile) && configFile.length === 2) {
+      configName = configFile[0]
+      configPath = configFile[1]
     }
 
     /* Ajax file */
 
-    if (config.serverless.files.ajax !== '') {
-      const content = `import config from '${getPathDepth(`${config.serverless.dir}/${config.serverless.files.ajax}`)}src/config'\nimport ajax from '${formationPackage}ajax'\nconst render = async ({ request, env }) => { return await ajax({ request, env, siteConfig: config }) }\nexport const onRequestPost = [render]\n`
+    if (isStringStrict(config.serverless.files.ajax)) {
+      const content = `import { ${configName} } from '${getPathDepth(`${config.serverless.dir}/${config.serverless.files.ajax}`)}${configPath}'\nimport { Ajax } from '${formationPackage}Ajax/Ajax'\nconst render = async ({ request, env }) => { return await Ajax({ request, env, siteConfig: config }) }\nexport const onRequestPost = [render]\n`
 
       const path = resolve(config.serverless.dir, config.serverless.files.ajax)
       const dir = dirname(path)
@@ -40,8 +53,8 @@ const writeServerlessFiles = async (): Promise<void> => {
 
     /* Preview file */
 
-    if (config.env.dev && config.serverless.files.preview !== '') {
-      const content = `import config from '${getPathDepth(`${config.serverless.dir}/${config.serverless.files.preview}`)}src/config'\nimport preview from '${formationPackage}preview'\nconst render = async ({ request, next }) => { return await preview({ request, next, siteConfig: config }) }\nexport const onRequestGet = [render]\n`
+    if (config.env.dev && isStringStrict(config.serverless.files.preview)) {
+      const content = `import { ${configName} } from '${getPathDepth(`${config.serverless.dir}/${config.serverless.files.preview}`)}${configPath}'\nimport { Preview } from '${formationPackage}Preview/Preview'\nconst render = async ({ request, next }) => { return await Preview({ request, next, siteConfig: config }) }\nexport const onRequestGet = [render]\n`
 
       const path = resolve(config.serverless.dir, config.serverless.files.preview)
       const dir = dirname(path)
@@ -66,13 +79,13 @@ const writeServerlessFiles = async (): Promise<void> => {
         for (let r = 0; r < routesArr.length; r += 1) {
           let { path = '', content = '' } = routesArr[r]
 
-          if (type === 'reload' && reloadFile !== '' && path !== '') {
+          if (type === 'reload' && isStringStrict(reloadFile) && isStringStrict(path)) {
             path = `${path}/${reloadFile}`
 
-            content = `import config from '${getPathDepth(`${config.serverless.dir}/${path}`)}src/config'\nimport reload from '${formationPackage}reload'\nconst render = async ({ request, env, next }) => { return await reload({ request, env, next, siteConfig: config }) }\nexport const onRequestGet = [render]\n`
+            content = `import { ${configName} } from '${getPathDepth(`${config.serverless.dir}/${path}`)}${configPath}'\nimport { Reload } from '${formationPackage}Reload/Reload'\nconst render = async ({ request, env, next }) => { return await Reload({ request, env, next, siteConfig: config }) }\nexport const onRequestGet = [render]\n`
           }
 
-          if (path !== '' && content !== '') {
+          if (isStringStrict(path) && isStringStrict(content)) {
             path = resolve(config.serverless.dir, path)
 
             const dir = dirname(path)
