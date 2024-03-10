@@ -7,7 +7,7 @@
 import type { Generic, GenericFunctions, GenericStrings, ParentArgs, HtmlString } from '../global/globalTypes'
 import type { Navigation, NavigationItem } from '../components/Navigation/NavigationTypes'
 import type { RichTextContentItem, RichTextHeading } from '../text/RichText/RichTextTypes'
-import type { PropFile, PropId, PropType } from '../utils/getProp/getPropTypes'
+import type { PropFile, PropId, PropType, PropTags } from '../utils/getProp/getPropTypes'
 
 /**
  * @typedef {object} RenderSlug
@@ -88,6 +88,7 @@ export interface RenderCommon {
  * import('../utils/getProp/getPropTypes').PropId|
  * import('../utils/getProp/getPropTypes').PropFile|
  * import('../utils/getProp/getPropTypes').PropType|
+ * import('../utils/getProp/getPropTypes').PropTags|
  * import('../text/RichText/RichTextTypes').RichTextContentItem
  * }
  * @prop {RenderContentData|RenderContentData[]} [content]
@@ -98,11 +99,18 @@ export type RenderContentData =
   PropId &
   PropFile &
   PropType &
+  PropTags &
   Omit<RichTextContentItem, 'content'> &
   {
     content?: RenderContentData | RenderContentData[]
+    repeat?: RenderContentData
     templates?: RenderContentData[]
   }
+
+/**
+ * @typedef {RenderContentData|RenderContentData[]} RenderTemplateData
+ */
+export type RenderTemplateData = RenderContentData | RenderContentData[]
 
 /**
  * @typedef RenderContentArgs

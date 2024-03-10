@@ -9,6 +9,8 @@ import type {
   RenderMetaArgs,
   RenderMetaReturn,
   RenderContentArgs,
+  RenderContentData,
+  RenderTemplateData,
   RenderServerlessData,
   RenderItemArgs,
   RenderItemReturn,
@@ -26,7 +28,7 @@ import type {
   ConfigFormMeta,
   ConfigSlugArchives
 } from '../config/configTypes'
-import type { Generic, GenericStrings, ParentArgs, SlugParent } from '../global/globalTypes'
+import type { GenericStrings, ParentArgs, SlugParent } from '../global/globalTypes'
 import type { SlugArgs } from '../utils/getSlug/getSlugTypes'
 import type { PaginationData } from '../components/Pagination/PaginationTypes'
 import type { RichTextContentItem, RichTextHeading } from '../text/RichText/RichTextTypes'
@@ -48,7 +50,8 @@ import {
   isNumber,
   isFunction,
   getObjectKeys,
-  doShortcodes
+  doShortcodes,
+  dataSource
 } from '../utils/utils'
 import { config } from '../config/config'
 import { Container } from '../layouts/Container/Container'
@@ -156,47 +159,69 @@ const _setPaginationMeta = (args: PaginationData, slugArgs: SlugArgs, meta: Rend
 }
 
 /**
+ * Function - set content value from content template based on data source
+ *
+ * @private
+ * @param {import('./RenderTypes').RenderContentData} obj
+ * @param {import('./RenderTypes').RenderTemplateData} value
+ * @return {void}
+ */
+const _setContentTemplate = (obj: RenderContentData, value: RenderTemplateData): void => {
+  if (dataSource.isContentful() && obj.fields !== undefined) {
+    obj.fields.content = value
+  }
+
+  obj.content = value
+}
+
+/**
  * Function - map out content slots to templates for contentTemplate
  *
  * @private
- * @param {object|object[]} templates
- * @param {object[]} content
- * @return {undefined}
+ * @param {import('./RenderTypes').RenderTemplateData} templates
+ * @param {import('./RenderTypes').RenderTemplateData} content
+ * @return {import('./RenderTypes').RenderTemplateData}
  */
-const _mapContentTemplate = <T, U>(templates: T, content: U): undefined => {
+const _mapContentTemplate = (templates: RenderTemplateData, content: RenderTemplateData): RenderTemplateData => {
   if (!isArrayStrict(content)) {
-    return
+    return templates
   }
 
   /* Transform templates */
 
   if (isArrayStrict(templates)) {
+    /* Clone templates */
+
+    templates = templates.map((t) => structuredClone(t))
+
+    /* Recurse cloned template */
+
     templates.forEach((t, i) => {
       /* Remove template break */
 
-      if (isObjectStrict(getProp.tag(content[0] as Generic, 'templateBreak'))) {
+      if (isObjectStrict(getProp.tag(content[0], 'templateBreak'))) {
         content.shift()
       }
 
       /* Check if slot */
 
-      const isSlot = isObjectStrict(getProp.tag(t as Generic, 'templateSlot'))
+      const isSlot = isObjectStrict(getProp.tag(t, 'templateSlot'))
 
       /* Check for repeatable template item */
 
-      const children = getProp.fields(t as Generic, 'content')
-      const repeat = getProp.fields(t as Generic, 'repeat')
+      const children = getProp.fields(t, 'content')
+      const repeat = getProp.fields(t, 'repeat')
 
       if (isObjectStrict(repeat) && isArrayStrict(children) && !isSlot) {
         const repeatId = getProp.id(repeat)
 
         const repeatIndex = children.findIndex((c) => {
-          return getProp.id(c as Generic) === repeatId
+          return getProp.id(c) === repeatId
         })
 
         if (repeatIndex !== -1) {
           let breakIndex = content.findIndex((c) => {
-            return isObjectStrict(getProp.tag(c as Generic, 'templateBreak'))
+            return isObjectStrict(getProp.tag(c, 'templateBreak'))
           })
 
           breakIndex = breakIndex === -1 ? content.length : breakIndex
@@ -214,7 +239,7 @@ const _mapContentTemplate = <T, U>(templates: T, content: U): undefined => {
       /* Replace slot with content */
 
       if (isSlot) {
-        templates.unshift()
+        // @ts-expect-error No index signature with a parameter of type 'number' was found on type 'RenderTemplateData'
         templates[i] = content.shift()
 
         return
@@ -223,7 +248,8 @@ const _mapContentTemplate = <T, U>(templates: T, content: U): undefined => {
       /* Recurse children */
 
       if (isObject(children)) {
-        _mapContentTemplate(children, content)
+        // @ts-expect-error No index signature with a parameter of type 'number' was found on type 'RenderTemplateData'
+        _setContentTemplate(templates[i], _mapContentTemplate(children, content))
       }
     })
   }
@@ -233,13 +259,19 @@ const _mapContentTemplate = <T, U>(templates: T, content: U): undefined => {
   if (isObjectStrict(templates)) {
     getObjectKeys(templates).forEach((t) => {
       const template = templates[t]
-      const children = getProp.fields(template as Generic, 'content')
+      // @ts-expect-error Argument of type 'string' is not assignable to parameter of type 'never'
+      const children = getProp.fields(template, 'content')
 
       if (isObject(children)) {
-        _mapContentTemplate(children, content)
+        // @ts-expect-error No index signature with a parameter of type 'string' was found on type 'RenderTemplateData'
+        _setContentTemplate(templates[t], _mapContentTemplate(children, content))
       }
     })
   }
+
+  /* Output */
+
+  return templates
 }
 
 /**
@@ -328,7 +360,7 @@ const _renderContent = async (args: RenderContentArgs): Promise<void> => {
 
     const normalProps = getProp.self(c)
     const normalRenderType = getProp.type(c, 'render')
-    const props = isObjectStrict(normalProps) ? normalProps : {}
+    const props = isObjectStrict(normalProps) ? structuredClone(normalProps) : {}
     const renderType = isString(normalRenderType) ? normalRenderType : ''
     const id = getProp.id(c)
 
@@ -352,10 +384,11 @@ const _renderContent = async (args: RenderContentArgs): Promise<void> => {
 
     /* Map out content to template */
 
-    if (renderType === 'contentTemplate') {
-      const templates = isArray(props.templates) ? props.templates : []
-
-      _mapContentTemplate(templates, props.content)
+    if (renderType === 'contentTemplate' && props.content !== undefined) {
+      const templates = _mapContentTemplate(
+        isArray(props.templates) ? props.templates : [],
+        props.content
+      )
 
       children = templates
       recurse = true
