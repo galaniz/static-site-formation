@@ -362,12 +362,17 @@ export interface ConfigConsole {
 }
 
 /**
+ * @typedef {import('../global/globalTypes').GenericStrings|NodeJS.Process['env']} ConfigEnvArg
+ */
+export type ConfigEnvArg = GenericStrings | NodeJS.Process['env']
+
+/**
  * @typedef {function} ConfigFilter
  * @param {Config} config
- * @param {import('../global/globalTypes').GenericStrings} env
+ * @param {ConfigEnvArg} env
  * @return {Promise<Config>}
  */
-export type ConfigFilter = (config: Config, env: GenericStrings) => Promise<Config>
+export type ConfigFilter = (config: Config, env: ConfigEnvArg) => Promise<Config>
 
 /**
  * @typedef {object} ConfigBase
@@ -471,7 +476,7 @@ export type ConfigSet = (args: ConfigArgs) => Config
 
 /**
  * @typedef {function} ConfigSetFilter
- * @param {import('../global/globalTypes').GenericStrings} env
+ * @param {ConfigEnvArg} env
  * @return {Promise<void>}
  */
-export type ConfigSetFilter = (env: GenericStrings) => Promise<void>
+export type ConfigSetFilter = (env: ConfigEnvArg) => Promise<void>
