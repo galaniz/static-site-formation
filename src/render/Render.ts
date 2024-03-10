@@ -179,14 +179,10 @@ const _setContentTemplate = (obj: RenderContentData, value: RenderTemplateData):
  *
  * @private
  * @param {import('./RenderTypes').RenderTemplateData} templates
- * @param {import('./RenderTypes').RenderTemplateData} content
+ * @param {import('./RenderTypes').RenderContentData[]} [content]
  * @return {import('./RenderTypes').RenderTemplateData}
  */
-const _mapContentTemplate = (templates: RenderTemplateData, content: RenderTemplateData): RenderTemplateData => {
-  if (!isArrayStrict(content)) {
-    return templates
-  }
-
+const _mapContentTemplate = (templates: RenderTemplateData, content: RenderContentData[] = []): RenderTemplateData => {
   /* Transform templates */
 
   if (isArrayStrict(templates)) {
@@ -199,7 +195,7 @@ const _mapContentTemplate = (templates: RenderTemplateData, content: RenderTempl
     templates.forEach((t, i) => {
       /* Remove template break */
 
-      if (isObjectStrict(getProp.tag(content[0], 'templateBreak'))) {
+      if (isObjectStrict(getProp.tag(content[0], 'templateBreak')) && content.length >= 1) {
         content.shift()
       }
 
@@ -238,7 +234,7 @@ const _mapContentTemplate = (templates: RenderTemplateData, content: RenderTempl
 
       /* Replace slot with content */
 
-      if (isSlot) {
+      if (isSlot && content.length >= 1) {
         // @ts-expect-error No index signature with a parameter of type 'number' was found on type 'RenderTemplateData'
         templates[i] = content.shift()
 
@@ -384,11 +380,8 @@ const _renderContent = async (args: RenderContentArgs): Promise<void> => {
 
     /* Map out content to template */
 
-    if (renderType === 'contentTemplate' && props.content !== undefined) {
-      const templates = _mapContentTemplate(
-        isArray(props.templates) ? props.templates : [],
-        props.content
-      )
+    if (renderType === 'contentTemplate' && isArray(props.templates)) {
+      const templates = _mapContentTemplate(props.templates, isArray(props.content) ? props.content : [])
 
       children = templates
       recurse = true

@@ -362,6 +362,14 @@ export interface ConfigConsole {
 }
 
 /**
+ * @typedef {function} ConfigFilter
+ * @param {Config} config
+ * @param {import('../global/globalTypes').GenericStrings} env
+ * @return {Promise<Config>}
+ */
+export type ConfigFilter = (config: Config, env: GenericStrings) => Promise<Config>
+
+/**
  * @typedef {object} ConfigBase
  * @prop {string} namespace
  * @prop {string} source
@@ -411,6 +419,7 @@ export interface Config extends ConfigBase {
   ajaxFunctions: GenericFunctions
   actions: Partial<Actions>
   filters: Partial<Filters>
+  filter?: ConfigFilter
   shortcodes: Shortcodes
   image: ConfigImage
   navigation: Navigation[]
@@ -452,3 +461,17 @@ export interface Config extends ConfigBase {
  * @prop {ConfigApiKeys} [apiKeys]
  */
 export type ConfigArgs = Partial<Config>
+
+/**
+ * @typedef {function} ConfigSet
+ * @param {import('./configTypes').ConfigArgs} args
+ * @return {import('./configTypes').Config}
+ */
+export type ConfigSet = (args: ConfigArgs) => Config
+
+/**
+ * @typedef {function} ConfigSetFilter
+ * @param {import('../global/globalTypes').GenericStrings} env
+ * @return {Promise<void>}
+ */
+export type ConfigSetFilter = (env: GenericStrings) => Promise<void>

@@ -6,7 +6,7 @@
 
 import type { ReloadArgs, ReloadQuery } from './ReloadTypes'
 import type { CustomErrorObject } from '../serverlessTypes'
-import { config, setConfig } from '../../config/config'
+import { config, setConfig, setConfigFilter } from '../../config/config'
 import { getAllContentfulData } from '../../utils/getAllContentfulData/getAllContentfulData'
 import {
   isObjectStrict,
@@ -25,7 +25,7 @@ import { Render } from '../../render/Render'
  * @param {import('./ReloadTypes').ReloadArgs} args
  * @return {Promise<Response>} Response
  */
-const Reload = async ({ request, env, next, siteConfig }: ReloadArgs): Promise<Response> => {
+const Reload = async ({ request, next, env, siteConfig }: ReloadArgs): Promise<Response> => {
   try {
     /* Query */
 
@@ -59,14 +59,12 @@ const Reload = async ({ request, env, next, siteConfig }: ReloadArgs): Promise<R
     /* Config */
 
     setConfig(siteConfig)
+
+    await setConfigFilter(env)
+
     setFilters(siteConfig.filters)
     setActions(siteConfig.actions)
     setShortcodes(siteConfig.shortcodes)
-
-    if (isObjectStrict(env)) {
-      config.env.dev = env.ENVIRONMENT === 'dev'
-      config.env.prod = env.ENVIRONMENT === 'production'
-    }
 
     /* Data params */
 

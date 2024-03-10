@@ -5,7 +5,7 @@
 /* Imports */
 
 import type { PreviewArgs } from './PreviewTypes'
-import { config, setConfig } from '../../config/config'
+import { setConfig, setConfigFilter } from '../../config/config'
 import { getAllContentfulData } from '../../utils/getAllContentfulData/getAllContentfulData'
 import {
   isObjectStrict,
@@ -22,7 +22,7 @@ import { Render } from '../../render/Render'
  * @param {import('./PreviewTypes').PreviewArgs} args
  * @return {Promise<Response>} Response
  */
-const Preview = async ({ request, next, siteConfig }: PreviewArgs): Promise<Response> => {
+const Preview = async ({ request, next, env, siteConfig }: PreviewArgs): Promise<Response> => {
   /* Params */
 
   const { searchParams } = new URL(request.url)
@@ -38,12 +38,12 @@ const Preview = async ({ request, next, siteConfig }: PreviewArgs): Promise<Resp
   /* Config */
 
   setConfig(siteConfig)
+
+  await setConfigFilter(env)
+
   setFilters(siteConfig.filters)
   setActions(siteConfig.actions)
   setShortcodes(siteConfig.shortcodes)
-
-  config.env.dev = true
-  config.env.prod = false
 
   /* Data params */
 

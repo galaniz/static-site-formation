@@ -4,21 +4,20 @@
 
 /* Imports */
 
-import type { EnvCloudflare } from '../serverlessTypes'
 import type { Config } from '../../config/configTypes'
-import type { Generic } from '../../global/globalTypes'
+import type { Generic, GenericStrings } from '../../global/globalTypes'
 
 /**
  * @typedef {object} ReloadArgs
  * @prop {Request} request
- * @prop {import('../serverlessTypes').EnvCloudflare} env
  * @prop {function} next
+ * @prop {import('../../global/globalTypes').GenericStrings} env
  * @prop {import('../../config/configTypes').Config} siteConfig
  */
 export interface ReloadArgs {
   request: Request
-  env: EnvCloudflare
   next: Function
+  env: GenericStrings
   siteConfig: Config
 }
 

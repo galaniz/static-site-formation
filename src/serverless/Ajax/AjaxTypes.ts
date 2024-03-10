@@ -3,18 +3,18 @@
  */
 
 import type { GenericStrings } from '../../global/globalTypes'
-import type { EnvCloudflare, AjaxActionReturn, AjaxActionArgs } from '../serverlessTypes'
+import type { AjaxActionReturn, AjaxActionArgs } from '../serverlessTypes'
 import type { Config } from '../../config/configTypes'
 
 /**
  * @typedef {object} AjaxArgs
  * @prop {Request} request
- * @prop {import('../serverlessTypes').EnvCloudflare} env
+ * @prop {import('../../global/globalTypes').GenericStrings} env
  * @prop {import(../../config/configTypes').Config} siteConfig
  */
 export interface AjaxArgs {
   request: Request
-  env: EnvCloudflare
+  env: GenericStrings
   siteConfig: Config
 }
 

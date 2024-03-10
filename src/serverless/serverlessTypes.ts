@@ -4,18 +4,7 @@
 
 /* Imports */
 
-import type { Generic, GenericStrings } from '../global/globalTypes'
-
-/**
- * @typedef EnvCloudflare
- * @type {import('../global/globalTypes').Generic}
- * @prop {string} [ENVIRONMENT]
- * @prop {string} [SMPT2GO_API_KEY]
- */
-export interface EnvCloudflare extends Generic {
-  ENVIRONMENT?: string
-  SMPT2GO_API_KEY?: string
-}
+import type { GenericStrings } from '../global/globalTypes'
 
 /**
  * @typedef {object} AjaxActionInput
@@ -48,11 +37,11 @@ export interface AjaxActionData {
 /**
  * @typedef AjaxActionArgs
  * @type {AjaxActionData}
- * @prop {EnvCloudflare} env
+ * @prop {import('../global/globalTypes').GenericStrings} env
  * @prop {Request} request
  */
 export interface AjaxActionArgs extends AjaxActionData {
-  env: EnvCloudflare
+  env: GenericStrings
   request: Request
 }
 

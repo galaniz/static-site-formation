@@ -4,7 +4,8 @@
 
 /* Imports */
 
-import type { Config, ConfigArgs } from './configTypes'
+import type { Config, ConfigSet, ConfigSetFilter } from './configTypes'
+import { addFilter, applyFilters } from '../utils/utils'
 
 /**
  * Default options
@@ -162,15 +163,27 @@ let config: Config = {
 /**
  * Function - update default config with user options
  *
- * @param {import('./configTypes').ConfigArgs} args
- * @return {import('./configTypes').Config}
+ * @type {import('./configTypes').ConfigSet}
  */
-const setConfig = (args: ConfigArgs): Config => {
+const setConfig: ConfigSet = (args) => {
   config = Object.assign(config, args)
+
+  if (config.filter !== undefined) {
+    addFilter('config', config.filter)
+  }
 
   return config
 }
 
+/**
+ * Function - update config based on env variables
+ *
+ * @type {import('./configTypes').ConfigSetFilter}
+ */
+const setConfigFilter: ConfigSetFilter = async (env) => {
+  config = await applyFilters('config', config, env)
+}
+
 /* Exports */
 
-export { config, setConfig }
+export { config, setConfig, setConfigFilter }

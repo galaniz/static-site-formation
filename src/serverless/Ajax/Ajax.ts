@@ -6,7 +6,7 @@
 
 import type { AjaxArgs, AjaxCustomErrorArgs, AjaxResOptions } from './AjaxTypes'
 import type { AjaxActionReturn, AjaxActionArgs, CustomErrorObject } from '../serverlessTypes'
-import { setConfig } from '../../config/config'
+import { setConfig, setConfigFilter } from '../../config/config'
 import {
   setActions,
   setShortcodes,
@@ -67,15 +67,12 @@ const Ajax = async ({ request, env, siteConfig }: AjaxArgs): Promise<Response> =
     /* Config */
 
     setConfig(siteConfig)
+
+    await setConfigFilter(env)
+
     setFilters(siteConfig.filters)
     setActions(siteConfig.actions)
     setShortcodes(siteConfig.shortcodes)
-
-    if (isObjectStrict(env)) {
-      siteConfig.env.dev = env.ENVIRONMENT === 'dev'
-      siteConfig.env.prod = env.ENVIRONMENT === 'production'
-      siteConfig.apiKeys.smtp2go = env.SMPT2GO_API_KEY !== undefined ? env.SMPT2GO_API_KEY : ''
-    }
 
     /* Get form data */
 

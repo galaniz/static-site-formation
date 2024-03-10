@@ -4,6 +4,7 @@
  * Note - Modules with minimal file system/external dependencies
  */
 
+export { setConfigFilter } from '../config/config'
 export { addAction, removeAction, doActions, resetActions, setActions } from './actions/actions'
 export { addScriptStyle } from './addScriptStyle/addScriptStyle'
 export { escape } from './escape/escape'
