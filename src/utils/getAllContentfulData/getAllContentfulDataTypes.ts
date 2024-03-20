@@ -4,7 +4,7 @@
 
 /* Imports */
 
-import type { RenderServerlessData, RenderPreviewData } from '../../render/RenderTypes'
+import type { RenderServerlessData, RenderPreviewData } from '../../render/renderTypes'
 
 /**
  * @typedef {object} AllContentfulDataArgs

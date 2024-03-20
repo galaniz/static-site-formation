@@ -4,7 +4,7 @@
 
 /* Imports */
 
-import type { RenderItem } from '../../render/RenderTypes'
+import type { RenderItem } from '../../render/renderTypes'
 
 /**
  * @typedef {object} FileDataParams

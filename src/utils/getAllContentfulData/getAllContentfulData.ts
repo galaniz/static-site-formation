@@ -5,7 +5,7 @@
 /* Imports */
 
 import type { AllContentfulDataArgs } from './getAllContentfulDataTypes'
-import type { RenderAllData, RenderItem, RenderSlugs } from '../../render/RenderTypes'
+import type { RenderAllData, RenderItem, RenderSlugs } from '../../render/renderTypes'
 import { config } from '../../config/config'
 import { getContentfulData } from '../getContentfulData/getContentfulData'
 import { isArray } from '../isArray/isArray'

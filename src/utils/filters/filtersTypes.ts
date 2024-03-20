@@ -19,7 +19,7 @@ import type {
 import type { ContentfulDataReturn } from '../getContentfulData/getContentfulDataTypes'
 import type { FileDataReturn } from '../getFileData/getFileDataTypes'
 import type { AjaxResFilter } from '../../serverless/Ajax/AjaxTypes'
-import type { RenderNameFilter, RenderItemFilter, RenderContentFilter } from '../../render/RenderTypes'
+import type { RenderNameFilter, RenderItemFilter, RenderContentFilter } from '../../render/renderTypes'
 
 /**
  * @typedef {

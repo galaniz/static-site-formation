@@ -6,7 +6,7 @@
 
 import type { Generic, GenericFunctions, GenericStrings, GenericNumbers, SlugBase } from '../global/globalTypes'
 import type { Navigation, NavigationItem } from '../components/Navigation/NavigationTypes'
-import type { RenderItem } from '../render/RenderTypes'
+import type { RenderItem } from '../render/renderTypes'
 import type { Filters } from '../utils/filters/filtersTypes'
 import type { Actions } from '../utils/actions/actionsTypes'
 import type { Shortcodes } from '../utils/shortcodes/shortcodesTypes'

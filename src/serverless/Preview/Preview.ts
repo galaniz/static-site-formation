@@ -14,7 +14,7 @@ import {
   setActions,
   setShortcodes
 } from '../../utils/utils'
-import { Render } from '../../render/Render'
+import { render } from '../../render/render'
 
 /**
  * Function - output preview from contentful
@@ -51,7 +51,7 @@ const Preview = async ({ request, next, env, siteConfig }: PreviewArgs): Promise
 
   /* Output */
 
-  const data = await Render({
+  const data = await render({
     previewData,
     allData: await getAllContentfulData({
       previewData

@@ -17,7 +17,7 @@ import {
   setShortcodes,
   isFunction
 } from '../../utils/utils'
-import { Render } from '../../render/Render'
+import { render } from '../../render/render'
 
 /**
  * Function - output paginated and/or filtered page on browser reload
@@ -72,7 +72,7 @@ const Reload = async ({ request, next, env, siteConfig }: ReloadArgs): Promise<R
 
     /* Output */
 
-    const data = await Render({
+    const data = await render({
       serverlessData,
       allData: await getAllContentfulData({
         serverlessData

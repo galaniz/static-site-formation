@@ -19,7 +19,7 @@ import type {
   RenderLayoutArgs,
   RenderArgs,
   RenderReturn
-} from './RenderTypes'
+} from './renderTypes'
 import type {
   ConfigArchiveIds,
   ConfigArchivePosts,
@@ -61,7 +61,7 @@ import { Field } from '../objects/Field/Field'
 import { RichText } from '../text/RichText/RichText'
 
 /**
- * Store slug data for json
+ * Store slug data
  *
  * @private
  * @type {import('./RenderTypes').RenderSlugs}
@@ -753,7 +753,7 @@ const _renderItem = async (args: RenderItemArgs): Promise<RenderItemReturn> => {
  * @param {import('./RenderTypes').RenderArgs} args
  * @return {Promise<import('./RenderTypes').RenderReturn[]|import('./RenderTypes').RenderReturn>}
  */
-const Render = async (args: RenderArgs): Promise<RenderReturn[] | RenderReturn> => {
+const render = async (args: RenderArgs): Promise<RenderReturn[] | RenderReturn> => {
   /* Fallback output */
 
   const fallback = [{
@@ -1027,4 +1027,4 @@ const Render = async (args: RenderArgs): Promise<RenderReturn[] | RenderReturn> 
 
 /* Exports */
 
-export { Render }
+export { render }

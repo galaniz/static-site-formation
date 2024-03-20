@@ -5,7 +5,7 @@
 /* Imports */
 
 import type { Generic } from '../../global/globalTypes'
-import type { RenderItem } from '../../render/RenderTypes'
+import type { RenderItem } from '../../render/renderTypes'
 
 /**
  * @typedef {Object.<string, (string|number|boolean)>} ContentfulDataParams

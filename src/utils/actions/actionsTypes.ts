@@ -10,7 +10,7 @@ import type {
   RenderEndAction,
   RenderItemStartAction,
   RenderItemEndAction
-} from '../../render/RenderTypes'
+} from '../../render/renderTypes'
 
 /**
  * @typedef Actions

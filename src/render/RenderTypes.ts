@@ -120,8 +120,8 @@ export type RenderTemplateData = RenderContentData | RenderContentData[]
  * @prop {import('../global/globalTypes').ParentArgs[]} parents
  * @prop {import('../global/globalTypes').GenericStrings} navigations
  * @prop {import('../global/globalTypes').GenericFunctions} renderFunctions
- * @prop {number} headingsIndex
- * @prop {number} depth
+ * @prop {number} [headingsIndex]
+ * @prop {number} [depth]
  */
 export interface RenderContentArgs extends RenderCommon {
   contentData: RenderContentData[]
@@ -255,8 +255,8 @@ export interface RenderItemActionArgs extends RenderCommon {
  * @prop {string} content
  * @prop {string} slug
  * @prop {RenderItem} pageData
- * @prop {string[]} pageContains
- * @prop {Array.<import('../text/RichText/RichTextTypes').RichTextHeading[]>} pageHeadings
+ * @prop {string[]} [pageContains]
+ * @prop {Array.<import('../text/RichText/RichTextTypes').RichTextHeading[]>} [pageHeadings]
  * @prop {RenderServerlessData} [serverlessData]
  */
 export interface RenderLayoutArgs {

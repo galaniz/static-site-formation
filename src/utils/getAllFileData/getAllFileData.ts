@@ -6,7 +6,7 @@
 
 import type { AllFileDataArgs } from './getAllFileDataTypes'
 import type { Generic } from '../../global/globalTypes'
-import type { RenderAllData } from '../../render/RenderTypes'
+import type { RenderAllData } from '../../render/renderTypes'
 import type { ImagesStore } from '../processImages/processImagesTypes'
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
