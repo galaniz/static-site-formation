@@ -224,10 +224,10 @@ const _mapContentTemplate = (templates: RenderTemplateData, content: RenderConte
 
           let insertIndex = repeatIndex
 
-          for (let i = 0; i < breakIndex - 1; i += 1) {
+          for (let i = insertIndex; i < breakIndex - 1; i += 1) {
             children.splice(insertIndex, 0, structuredClone(repeat))
 
-            insertIndex += 1
+            insertIndex = i
           }
         }
       }
@@ -273,11 +273,10 @@ const _mapContentTemplate = (templates: RenderTemplateData, content: RenderConte
 /**
  * Function - recurse and output nested content
  *
- * @private
  * @param {import('./RenderTypes').RenderContentArgs} args
  * @return {void}
  */
-const _renderContent = async (args: RenderContentArgs): Promise<void> => {
+const renderContent = async (args: RenderContentArgs): Promise<void> => {
   if (!isObject(args)) {
     return
   }
@@ -456,7 +455,7 @@ const _renderContent = async (args: RenderContentArgs): Promise<void> => {
         args: props
       })
 
-      await _renderContent({
+      await renderContent({
         contentData: children,
         serverlessData,
         output,
@@ -490,11 +489,10 @@ const _renderContent = async (args: RenderContentArgs): Promise<void> => {
 /**
  * Function - output single post or page
  *
- * @private
  * @param {import('./RenderTypes').RenderItemArgs} args
  * @return {import('./RenderTypes').RenderItemReturn}
  */
-const _renderItem = async (args: RenderItemArgs): Promise<RenderItemReturn> => {
+const renderItem = async (args: RenderItemArgs): Promise<RenderItemReturn> => {
   if (!isObjectStrict(args)) {
     return {}
   }
@@ -656,7 +654,7 @@ const _renderItem = async (args: RenderItemArgs): Promise<RenderItemReturn> => {
   }
 
   if (isArrayStrict(contentData)) {
-    await _renderContent({
+    await renderContent({
       contentData,
       serverlessData: itemServerlessData,
       output: contentOutput,
@@ -976,7 +974,7 @@ const render = async (args: RenderArgs): Promise<RenderReturn[] | RenderReturn> 
     const contentType = contentTypes[c]
 
     for (let i = 0; i < content[contentType].length; i += 1) {
-      const item = await _renderItem({
+      const item = await renderItem({
         item: content[contentType][i],
         contentType,
         serverlessData,
@@ -1027,4 +1025,8 @@ const render = async (args: RenderArgs): Promise<RenderReturn[] | RenderReturn> 
 
 /* Exports */
 
-export { render }
+export {
+  render,
+  renderItem,
+  renderContent
+}

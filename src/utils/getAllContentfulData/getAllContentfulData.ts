@@ -5,7 +5,7 @@
 /* Imports */
 
 import type { AllContentfulDataArgs } from './getAllContentfulDataTypes'
-import type { RenderAllData, RenderItem, RenderSlugs } from '../../render/renderTypes'
+import type { RenderAllData, RenderSlugs } from '../../render/renderTypes'
 import { config } from '../../config/config'
 import { getContentfulData } from '../getContentfulData/getContentfulData'
 import { isArray } from '../isArray/isArray'
@@ -43,7 +43,7 @@ const getAllContentfulData = async (args: AllContentfulDataArgs = {}): Promise<R
 
     /* Get single entry data if serverless or preview data */
 
-    let entry: { items?: RenderItem[] } | undefined
+    let isEntry = false
 
     if (serverlessData !== undefined || previewData !== undefined) {
       let contentType = ''
@@ -78,6 +78,7 @@ const getAllContentfulData = async (args: AllContentfulDataArgs = {}): Promise<R
         const data = await getContentfulData(key, params)
 
         if (isArray(data.items)) {
+          isEntry = true
           allData.content[contentType] = data.items
         }
       }
@@ -85,7 +86,7 @@ const getAllContentfulData = async (args: AllContentfulDataArgs = {}): Promise<R
 
     /* Get partial data - not serverless */
 
-    if (serverlessData === undefined || entry === undefined) {
+    if (serverlessData === undefined || !isEntry) {
       const partial = config.contentTypes.partial
 
       for (let i = 0; i < partial.length; i += 1) {
@@ -112,7 +113,7 @@ const getAllContentfulData = async (args: AllContentfulDataArgs = {}): Promise<R
 
     /* Get whole data (for page generation) - not serverless or preview */
 
-    if ((serverlessData === undefined && previewData === undefined) || entry === undefined) {
+    if ((serverlessData === undefined && previewData === undefined) || !isEntry) {
       const whole = config.contentTypes.whole
 
       for (let i = 0; i < whole.length; i += 1) {
