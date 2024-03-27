@@ -5,7 +5,8 @@
 /* Imports */
 
 import type { PaginationProps, PaginationData, PaginationReturn } from './PaginationTypes'
-import { isObjectStrict, isStringStrict } from '../../utils/utils'
+import { isObjectStrict } from '../../utils/isObject/isObject'
+import { isStringStrict } from '../../utils/isString/isString'
 
 /**
  * Function - output pagination navigation

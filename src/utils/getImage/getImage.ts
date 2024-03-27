@@ -6,9 +6,8 @@
 
 import type { ImageArgs, ImageReturn } from './getImageTypes'
 import { config } from '../../config/config'
-import { isString } from '../isString/isString'
+import { isString, isStringStrict } from '../isString/isString'
 import { isNumber } from '../isNumber/isNumber'
-import { getProp } from '../getProp/getProp'
 import { isObjectStrict } from '../isObject/isObject'
 import { dataSource } from '../dataSource/dataSource'
 
@@ -20,7 +19,7 @@ import { dataSource } from '../dataSource/dataSource'
  */
 const getImage = (args: ImageArgs = {}): ImageReturn | string => {
   const {
-    data = {},
+    data = undefined,
     classes = '',
     attr = '',
     width = 'auto',
@@ -36,19 +35,27 @@ const getImage = (args: ImageArgs = {}): ImageReturn | string => {
 
   /* Data required */
 
-  const normalData = getProp.file(data, 'all', source)
-
-  if (!isObjectStrict(normalData)) {
+  if (!isObjectStrict(data)) {
     return ''
   }
 
   const {
-    url = '',
+    path = '',
     alt = '',
-    naturalWidth,
-    naturalHeight,
+    width: naturalWidth = 1,
+    height: naturalHeight = 1,
     format = 'jpg'
-  } = normalData
+  } = data
+
+  let {
+    url = ''
+  } = data
+
+  /* Static url */
+
+  if (source === 'static' && isStringStrict(path)) {
+    url = `${config.image.url}${path}`
+  }
 
   /* Dimensions */
 

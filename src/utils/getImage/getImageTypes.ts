@@ -4,11 +4,11 @@
 
 /* Imports */
 
-import type { PropFile } from '../getProp/getPropTypes'
+import type { RenderFile } from '../../render/renderTypes'
 
 /**
  * @typedef {object} ImageArgs
- * @prop {import('../getProp/getPropTypes').PropFile} [data]
+ * @prop {import('../../render/renderTypes').RenderFile} [data]
  * @prop {string} [classes]
  * @prop {string} [attr]
  * @prop {string|number} [width]
@@ -22,7 +22,7 @@ import type { PropFile } from '../getProp/getPropTypes'
  * @prop {number} [viewportWidth]
  */
 export interface ImageArgs {
-  data?: PropFile
+  data?: RenderFile
   classes?: string
   attr?: string
   width?: string | number

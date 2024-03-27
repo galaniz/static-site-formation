@@ -6,23 +6,16 @@
 
 import type {
   RichTextProps,
-  RichTextContentItem,
-  RichTextContentReturn,
   RichTextContentProps,
-  RichTextNormalizeContentFilterArgs,
   RichTextContentFilterArgs
 } from './RichTextTypes'
-import {
-  getLink,
-  getProp,
-  getExcerpt,
-  applyFilters,
-  isString,
-  isStringStrict,
-  isObjectStrict,
-  isArrayStrict,
-  isArray
-} from '../../utils/utils'
+import { getLink } from '../../utils/getLink/getLink'
+import { getExcerpt } from '../../utils/getExcerpt/getExcerpt'
+import { applyFilters } from '../../utils/filters/filters'
+import { isString, isStringStrict } from '../../utils/isString/isString'
+import { isArray, isArrayStrict } from '../../utils/isArray/isArray'
+import { isObjectStrict } from '../../utils/isObject/isObject'
+import { isHeading } from '../../utils/isHeading/isHeading'
 
 /**
  * Function - check if string contains shortcode
@@ -41,257 +34,62 @@ const _containsShortcode = (tag: string = '', content: string = ''): boolean => 
 }
 
 /**
- * Function - get html tag from type
- *
- * @private
- * @param {string} type
- * @return {string}
- */
-const _getTag = (type: string = 'text'): string => {
-  let tag = ''
-
-  switch (type) {
-    case 'br':
-      tag = 'br'
-      break
-    case 'hr':
-      tag = 'hr'
-      break
-    case 'paragraph':
-      tag = 'p'
-      break
-    case 'blockquote':
-      tag = 'blockquote'
-      break
-    case 'bold':
-      tag = 'b'
-      break
-    case 'italic':
-      tag = 'i'
-      break
-    case 'underline':
-      tag = 'u'
-      break
-    case 'superscript':
-      tag = 'sup'
-      break
-    case 'subscript':
-      tag = 'sub'
-      break
-    case 'code':
-      tag = 'code'
-      break
-    case 'hyperlink':
-    case 'entry-hyperlink':
-    case 'asset-hyperlink':
-      tag = 'a'
-      break
-    case 'text':
-      tag = ''
-      break
-    case 'heading-1':
-      tag = 'h1'
-      break
-    case 'heading-2':
-      tag = 'h2'
-      break
-    case 'heading-3':
-      tag = 'h3'
-      break
-    case 'heading-4':
-      tag = 'h4'
-      break
-    case 'heading-5':
-      tag = 'h5'
-      break
-    case 'heading-6':
-      tag = 'h6'
-      break
-    case 'list-item':
-      tag = 'li'
-      break
-    case 'unordered-list':
-      tag = 'ul'
-      break
-    case 'ordered-list':
-      tag = 'ol'
-      break
-    case 'table':
-      tag = 'table'
-      break
-    case 'table-row':
-      tag = 'tr'
-      break
-    case 'table-cell':
-      tag = 'td'
-      break
-    case 'table-header-cell':
-      tag = 'th'
-      break
-    default:
-      tag = ''
-      break
-  }
-
-  return tag
-}
-
-/**
- * Function - convert to more standard objects
- *
- * @private
- * @param {import('./RichTextTypes').RichTextContentItem[]} content
- * @return {import('./RichTextTypes').RichTextContentReturn[]|[]}
- */
-const _normalizeContent = async (content: RichTextContentItem[]): Promise<RichTextContentReturn[] | []> => {
-  if (!isArrayStrict(content)) {
-    return []
-  }
-
-  const normalContent = []
-
-  for (let i = 0; i < content.length; i += 1) {
-    const c: RichTextContentItem = content[i]
-
-    const {
-      nodeType = '',
-      data,
-      value,
-      marks
-    } = c
-
-    let {
-      tag = '',
-      link = '',
-      internalLink,
-      content: con
-    } = c
-
-    /* Type for filter */
-
-    const filterType = nodeType !== '' ? nodeType : tag
-
-    /* Tag */
-
-    if (nodeType !== '') {
-      tag = _getTag(nodeType)
-    }
-
-    /* Content */
-
-    let contentValue
-
-    if (isStringStrict(value)) {
-      contentValue = value
-      contentValue = contentValue.replace(/\n/g, '<br>')
-
-      if (isArrayStrict(marks)) {
-        const markTags = marks.map((m) => {
-          return _getTag(m.type)
-        })
-
-        const markStart = markTags.map(m => `<${m}>`).join('')
-        const markEnd = markTags.map(m => `</${m}>`).join('')
-
-        contentValue = `${markStart}${value}${markEnd}`
-      }
-    }
-
-    if (isStringStrict(con)) {
-      contentValue = con
-    }
-
-    if (isArrayStrict(con)) {
-      contentValue = await _normalizeContent(con)
-    }
-
-    const richTextNormalizeContentFilterArgs: RichTextNormalizeContentFilterArgs = {
-      type: filterType,
-      args: c
-    }
-
-    contentValue = await applyFilters(
-      'richTextNormalizeContent',
-      contentValue,
-      richTextNormalizeContentFilterArgs
-    )
-
-    /* Link */
-
-    if (isObjectStrict(data)) {
-      link = isStringStrict(data.uri) ? data.uri : ''
-
-      if (isObjectStrict(data.target)) {
-        const target = data.target
-
-        if (nodeType === 'entry-hyperlink') {
-          internalLink = target
-        }
-
-        const url = getProp.file(target, 'url')
-
-        if (nodeType === 'asset-hyperlink' && isStringStrict(url)) {
-          link = url
-        }
-      }
-    }
-
-    /* Output */
-
-    const obj: RichTextContentReturn = { tag, content: contentValue }
-
-    if (isStringStrict(link)) {
-      obj.link = link
-    }
-
-    if (isObjectStrict(internalLink)) {
-      obj.internalLink = internalLink
-    }
-
-    normalContent[i] = obj
-  }
-
-  return normalContent
-}
-
-/**
  * Function - recursively output content
  *
  * @private
  * @param {import('./RichTextTypes').RichTextContentProps} args
  * @return {Promise<string>}
  */
-const _getContent = async ({ content = [], props, _output = '' }: RichTextContentProps): Promise<string> => {
+const _getContent = async (args: RichTextContentProps): Promise<string> => {
+  const {
+    content = [],
+    props,
+    dataAttr = false
+  } = args
+
+  let {
+    _output = ''
+  } = args
+
   for (let i = 0; i < content.length; i += 1) {
-    const c = content[i]
+    const item = content[i]
 
     const {
       link = '',
       internalLink,
-      content: con
-    } = c
+      content: c
+    } = item
 
     let {
       tag = ''
-    } = c
+    } = item
 
-    let cc = con
+    let cc = c
 
     /* Nested content */
 
-    if (isArrayStrict(con)) {
+    if (isArrayStrict(c)) {
       cc = await _getContent({
-        content: con,
-        props
+        content: c,
+        props,
+        dataAttr
       })
     }
 
-    const attrs: string[] = [`data-rich="${tag}"`]
+    /* Attributes */
+
+    const attrs: string[] = []
+
+    if (dataAttr) {
+      attrs.push(`data-rich="${tag}"`)
+    }
+
+    /* Link */
 
     if (tag === 'a') {
       let anchorLink = link
 
-      if (internalLink !== undefined && internalLink !== null) {
+      if (internalLink !== undefined) {
         anchorLink = getLink(internalLink)
       }
 
@@ -300,11 +98,13 @@ const _getContent = async ({ content = [], props, _output = '' }: RichTextConten
       }
     }
 
+    /* Filter output */
+
     let outputStr = ''
 
     if (isString(cc)) {
       const richTextContentFilterArgs: RichTextContentFilterArgs = {
-        args: c,
+        args: item,
         props
       }
 
@@ -321,12 +121,14 @@ const _getContent = async ({ content = [], props, _output = '' }: RichTextConten
       tag = ''
     }
 
+    /* Output */
+
     if (isStringStrict(tag) && outputStr.trim() !== '') {
       outputStr = `<${tag}${(attrs.length > 0) ? ` ${attrs.join(' ')}` : ''}>${outputStr}</${tag}>`
     }
 
     const richTextContentOutput: RichTextContentFilterArgs = {
-      args: c,
+      args: item,
       props
     }
 
@@ -334,6 +136,8 @@ const _getContent = async ({ content = [], props, _output = '' }: RichTextConten
 
     _output += outputStr
   }
+
+  /* Output */
 
   return _output
 }
@@ -351,7 +155,7 @@ const RichText = async (props: RichTextProps): Promise<string> => {
     return ''
   }
 
-  props = await applyFilters('richTextProps', props, { renderType: 'RichText' })
+  props = await applyFilters('richTextProps', props, { renderType: 'richText' })
 
   /* Filtered props must be object */
 
@@ -364,7 +168,7 @@ const RichText = async (props: RichTextProps): Promise<string> => {
   args = isObjectStrict(args) ? args : {}
 
   const {
-    type = '',
+    content = [],
     classes = '',
     link = '',
     internalLink,
@@ -377,21 +181,8 @@ const RichText = async (props: RichTextProps): Promise<string> => {
   } = args
 
   let {
-    tag = '',
-    content = []
+    tag = ''
   } = args
-
-  if (isStringStrict(type)) {
-    tag = _getTag(type)
-  }
-
-  let contentNormal: RichTextContentReturn[] = []
-  let contentInit: RichTextContentItem[] = []
-
-  if (isArrayStrict(content)) {
-    contentInit = content
-    contentNormal = await _normalizeContent(content)
-  }
 
   /* Hr */
 
@@ -401,7 +192,7 @@ const RichText = async (props: RichTextProps): Promise<string> => {
 
   /* Check if heading */
 
-  const heading = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tag)
+  const isSectionHeading = isHeading(tag)
 
   /* Classes */
 
@@ -415,7 +206,7 @@ const RichText = async (props: RichTextProps): Promise<string> => {
     classesArr.push(textStyle)
   }
 
-  if (isStringStrict(headingStyle) && heading) {
+  if (isStringStrict(headingStyle) && isSectionHeading) {
     classesArr.push(headingStyle)
   }
 
@@ -434,12 +225,13 @@ const RichText = async (props: RichTextProps): Promise<string> => {
     headingStr = content
   }
 
-  if (isArrayStrict(contentNormal)) {
-    headingObj = contentInit
+  if (isArrayStrict(content)) {
+    headingObj = content
 
     output = await _getContent({
-      content: contentNormal,
-      props
+      content,
+      props,
+      dataAttr
     })
   }
 
@@ -451,7 +243,7 @@ const RichText = async (props: RichTextProps): Promise<string> => {
     attrs.push(`data-rich="${tag}"`)
   }
 
-  if (heading) {
+  if (isSectionHeading) {
     const headingContents = getExcerpt({
       limit: 10,
       limitExcerpt: true,

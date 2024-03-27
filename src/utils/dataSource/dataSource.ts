@@ -5,8 +5,8 @@
 /* Imports */
 
 import type { DataSource } from './dataSourceTypes'
+import { isStringStrict } from '../isString/isString'
 import { config } from '../../config/config'
-import { isStringStrict } from '../utils'
 
 /**
  * Check and get data source

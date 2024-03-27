@@ -9,9 +9,9 @@ import type {
   RenderMetaArgs,
   RenderMetaReturn,
   RenderContentArgs,
-  RenderContentData,
-  RenderTemplateData,
+  RenderFunctionArgs,
   RenderServerlessData,
+  RenderItem,
   RenderItemArgs,
   RenderItemReturn,
   RenderItemStartActionArgs,
@@ -28,31 +28,24 @@ import type {
   ConfigFormMeta,
   ConfigSlugArchives
 } from '../config/configTypes'
-import type { GenericStrings, ParentArgs, SlugParent } from '../global/globalTypes'
+import type { GenericFunctions, GenericStrings, ParentArgs, SlugParent } from '../global/globalTypes'
 import type { SlugArgs } from '../utils/getSlug/getSlugTypes'
 import type { PaginationData } from '../components/Pagination/PaginationTypes'
-import type { RichTextContentItem, RichTextHeading } from '../text/RichText/RichTextTypes'
+import type { RichTextHeading } from '../text/RichText/RichTextTypes'
 import type { Navigation, NavigationItem } from '../components/Navigation/NavigationTypes'
-import {
-  doActions,
-  applyFilters,
-  getSlug,
-  getPermalink,
-  getProp,
-  getPath,
-  getJsonFile,
-  isString,
-  isStringStrict,
-  isArray,
-  isArrayStrict,
-  isObject,
-  isObjectStrict,
-  isNumber,
-  isFunction,
-  getObjectKeys,
-  doShortcodes,
-  dataSource
-} from '../utils/utils'
+import { doActions } from '../utils/actions/actions'
+import { applyFilters } from '../utils/filters/filters'
+import { getSlug } from '../utils/getSlug/getSlug'
+import { getPermalink } from '../utils/getPermalink/getPermalink'
+import { getPath } from '../utils/getPath/getPath'
+import { getJsonFile } from '../utils/getJson/getJson'
+import { isString, isStringStrict } from '../utils/isString/isString'
+import { isArray, isArrayStrict } from '../utils/isArray/isArray'
+import { isObject, isObjectStrict } from '../utils/isObject/isObject'
+import { isNumber } from '../utils/isNumber/isNumber'
+import { isFunction } from '../utils/isFunction/isFunction'
+import { doShortcodes } from '../utils/shortcodes/shortcodes'
+import { tag } from '../utils/tag/tag'
 import { config } from '../config/config'
 import { Container } from '../layouts/Container/Container'
 import { Column } from '../layouts/Column/Column'
@@ -104,8 +97,9 @@ const _getMeta = (args: RenderMetaArgs): RenderMetaReturn => {
     meta.description = args.metaDescription
   }
 
-  const imageUrl = getProp.file(args.metaImage, 'url')
-  meta.image = isStringStrict(imageUrl) ? imageUrl : ''
+  if (isStringStrict(args?.metaImage?.url)) {
+    meta.image = args.metaImage.url
+  }
 
   return meta
 }
@@ -127,10 +121,10 @@ const _setPaginationMeta = (args: PaginationData, slugArgs: SlugArgs, meta: Rend
 
   slugArgs.page = current > 1 ? current : 0
 
-  const c = getSlug(slugArgs)
+  const s = getSlug(slugArgs)
 
-  if (isObject(c)) {
-    meta.canonical = `${getPermalink(c.slug, current === 1)}${isString(currentFilters) ? currentFilters : ''}`
+  if (isObject(s)) {
+    meta.canonical = `${getPermalink(s.slug, current === 1)}${isString(currentFilters) ? currentFilters : ''}`
   }
 
   if (isStringStrict(args.title)) {
@@ -159,30 +153,45 @@ const _setPaginationMeta = (args: PaginationData, slugArgs: SlugArgs, meta: Rend
 }
 
 /**
- * Function - set content value from content template based on data source
+ * Function - get config and formation render functions
  *
- * @private
- * @param {import('./RenderTypes').RenderContentData} obj
- * @param {import('./RenderTypes').RenderTemplateData} value
- * @return {void}
+ * @return {import('../global/globalTypes').GenericFunctions}
  */
-const _setContentTemplate = (obj: RenderContentData, value: RenderTemplateData): void => {
-  if (dataSource.isContentful() && obj.fields !== undefined) {
-    obj.fields.content = value
+const getRenderFunctions = (): GenericFunctions => {
+  const renderFunctions = { ...config.renderFunctions }
+
+  if (renderFunctions.container === undefined) {
+    renderFunctions.container = Container
   }
 
-  obj.content = value
+  if (renderFunctions.column === undefined) {
+    renderFunctions.column = Column
+  }
+
+  if (renderFunctions.form === undefined) {
+    renderFunctions.form = Form
+  }
+
+  if (renderFunctions.field === undefined) {
+    renderFunctions.field = Field
+  }
+
+  if (renderFunctions.richText === undefined) {
+    renderFunctions.richText = RichText
+  }
+
+  return renderFunctions
 }
 
 /**
  * Function - map out content slots to templates for contentTemplate
  *
  * @private
- * @param {import('./RenderTypes').RenderTemplateData} templates
- * @param {import('./RenderTypes').RenderContentData[]} [content]
- * @return {import('./RenderTypes').RenderTemplateData}
+ * @param {import('./RenderTypes').RenderItem[]} templates
+ * @param {import('./RenderTypes').RenderItem[]} [content]
+ * @return {import('./RenderTypes').RenderItem[]}
  */
-const _mapContentTemplate = (templates: RenderTemplateData, content: RenderContentData[] = []): RenderTemplateData => {
+const _mapContentTemplate = (templates: RenderItem[], content: RenderItem[] = []): RenderItem[] => {
   /* Transform templates */
 
   if (isArrayStrict(templates)) {
@@ -195,29 +204,29 @@ const _mapContentTemplate = (templates: RenderTemplateData, content: RenderConte
     templates.forEach((t, i) => {
       /* Remove template break */
 
-      if (isObjectStrict(getProp.tag(content[0], 'templateBreak')) && content.length >= 1) {
+      if (tag.exists(content[0], 'templateBreak') && content.length >= 1) {
         content.shift()
       }
 
       /* Check if slot */
 
-      const isSlot = isObjectStrict(getProp.tag(t, 'templateSlot'))
+      const isSlot = tag.exists(t, 'templateSlot')
 
       /* Check for repeatable template item */
 
-      const children = getProp.fields(t, 'content')
-      const repeat = getProp.fields(t, 'repeat')
+      const children = t.content
+      const repeat = t.repeat
 
       if (isObjectStrict(repeat) && isArrayStrict(children) && !isSlot) {
-        const repeatId = getProp.id(repeat)
+        const repeatId = repeat.id
 
         const repeatIndex = children.findIndex((c) => {
-          return getProp.id(c) === repeatId
+          return c.id === repeatId
         })
 
         if (repeatIndex !== -1) {
           let breakIndex = content.findIndex((c) => {
-            return isObjectStrict(getProp.tag(c, 'templateBreak'))
+            return tag.exists(c, 'templateBreak')
           })
 
           breakIndex = breakIndex === -1 ? content.length : breakIndex
@@ -235,32 +244,19 @@ const _mapContentTemplate = (templates: RenderTemplateData, content: RenderConte
       /* Replace slot with content */
 
       if (isSlot && content.length >= 1) {
-        // @ts-expect-error No index signature with a parameter of type 'number' was found on type 'RenderTemplateData'
-        templates[i] = content.shift()
+        const fill = content.shift()
+
+        if (fill !== undefined) {
+          templates[i] = fill
+        }
 
         return
       }
 
       /* Recurse children */
 
-      if (isObject(children)) {
-        // @ts-expect-error No index signature with a parameter of type 'number' was found on type 'RenderTemplateData'
-        _setContentTemplate(templates[i], _mapContentTemplate(children, content))
-      }
-    })
-  }
-
-  /* Check for nested content */
-
-  if (isObjectStrict(templates)) {
-    getObjectKeys(templates).forEach((t) => {
-      const template = templates[t]
-      // @ts-expect-error Argument of type 'string' is not assignable to parameter of type 'never'
-      const children = getProp.fields(template, 'content')
-
-      if (isObject(children)) {
-        // @ts-expect-error No index signature with a parameter of type 'string' was found on type 'RenderTemplateData'
-        _setContentTemplate(templates[t], _mapContentTemplate(children, content))
+      if (isArray(children)) {
+        templates[i].content = _mapContentTemplate(children, content)
       }
     })
   }
@@ -274,22 +270,22 @@ const _mapContentTemplate = (templates: RenderTemplateData, content: RenderConte
  * Function - recurse and output nested content
  *
  * @param {import('./RenderTypes').RenderContentArgs} args
- * @return {void}
+ * @return {Promise<void>}
  */
 const renderContent = async (args: RenderContentArgs): Promise<void> => {
-  if (!isObject(args)) {
+  if (!isObjectStrict(args)) {
     return
   }
 
   const {
-    contentData = [],
+    content = [],
     serverlessData,
-    output,
     pageData,
     pageContains = [],
     pageHeadings = [],
     navigations = {},
-    renderFunctions = {}
+    renderFunctions = {},
+    output
   } = args
 
   let {
@@ -300,90 +296,35 @@ const renderContent = async (args: RenderContentArgs): Promise<void> => {
 
   /* Content must be array */
 
-  if (!isArrayStrict(contentData)) {
+  if (!isArrayStrict(content)) {
     return
   }
 
   /* Loop */
 
-  for (let i = 0; i < contentData.length; i += 1) {
-    let c = contentData[i]
+  for (let i = 0; i < content.length; i += 1) {
+    const item = content[i]
 
-    if (!isObjectStrict(c)) {
+    if (!isObjectStrict(item)) {
       continue
-    }
-
-    /* Store html string and filter info */
-
-    let filterType = ''
-    let filterArgs = {}
-    let richTextOutput = ''
-
-    /* Check for embedded entries and rich text */
-
-    const richTextNodeType = c.nodeType
-
-    if (isStringStrict(richTextNodeType)) {
-      if (richTextNodeType === 'embedded-entry-block' || richTextNodeType === 'embedded-asset-block') {
-        c = isObjectStrict(c.data?.target) ? c.data.target : c
-      } else {
-        let richTextContent
-
-        if (isStringStrict(c.content) || isArrayStrict(c.content)) {
-          richTextContent = c.content
-        }
-
-        const richTextArgs = {
-          args: {
-            type: richTextNodeType,
-            content: richTextContent as string | RichTextContentItem[] | undefined
-          },
-          parents,
-          headings: pageHeadings[headingsIndex]
-        }
-
-        richTextOutput = await RichText(richTextArgs)
-        filterType = 'richText'
-        filterArgs = {
-          type: richTextNodeType,
-          content: richTextContent
-        }
-      }
     }
 
     /* Render props */
 
-    const normalProps = getProp.self(c)
-    const normalRenderType = getProp.type(c, 'render')
-    const props = isObjectStrict(normalProps) ? structuredClone(normalProps) : {}
-    const renderType = isString(normalRenderType) ? normalRenderType : ''
-    const id = getProp.id(c)
-
-    if (isStringStrict(id)) {
-      props.id = id
-    }
+    const props = structuredClone(item)
+    const renderType = isString(props.renderType) ? props.renderType : ''
+    const contentType = isString(props.contentType) ? props.contentType : ''
 
     /* Check for nested content */
 
     let children = props.content
-    let recurse = children !== undefined
-
-    if (isObjectStrict(children)) {
-      const nestedChildren = children.content
-
-      if (children.nodeType !== undefined && nestedChildren !== undefined) {
-        children = nestedChildren
-        recurse = true
-      }
-    }
 
     /* Map out content to template */
 
-    if (renderType === 'contentTemplate' && isArray(props.templates)) {
+    if (contentType === 'contentTemplate' && isArray(props.templates)) {
       const templates = _mapContentTemplate(props.templates, isArray(props.content) ? props.content : [])
 
       children = templates
-      recurse = true
     }
 
     /* Render output */
@@ -393,16 +334,23 @@ const renderContent = async (args: RenderContentArgs): Promise<void> => {
       end: ''
     }
 
+    let filterType = ''
+    let filterArgs = {}
+
     const renderFunction = renderFunctions[renderType]
 
     if (isFunction(renderFunction)) {
-      const renderArgs = {
+      const renderArgs: RenderFunctionArgs = {
         args: props,
         parents,
         pageData,
         pageContains,
         navigations,
         serverlessData
+      }
+
+      if (renderType === 'richText') {
+        renderArgs.headings = pageHeadings[headingsIndex]
       }
 
       const renderOutput = await renderFunction(renderArgs)
@@ -436,29 +384,28 @@ const renderContent = async (args: RenderContentArgs): Promise<void> => {
       end = await applyFilters('renderContentEnd', end, renderContentFilterArgs)
     }
 
-    if (richTextOutput !== '') {
-      richTextOutput = await applyFilters('renderContent', richTextOutput, renderContentFilterArgs)
-    }
-
     /* Add to output object */
 
-    output.html += richTextOutput
     output.html += start
 
     /* Recurse through children */
 
-    if (isArrayStrict(children) && recurse) {
+    if (isArrayStrict(children) && renderType !== 'richText') {
       const parentsCopy = [...parents]
 
       parentsCopy.unshift({
         renderType,
-        args: props
+        args: {
+          ...props,
+          content: undefined,
+          templates: undefined,
+          repeat: undefined
+        }
       })
 
       await renderContent({
-        contentData: children,
+        content: children,
         serverlessData,
-        output,
         parents: parentsCopy,
         pageData,
         pageContains,
@@ -466,7 +413,8 @@ const renderContent = async (args: RenderContentArgs): Promise<void> => {
         navigations,
         renderFunctions,
         headingsIndex,
-        depth: depth += 1
+        depth: depth += 1,
+        output
       })
     }
 
@@ -512,23 +460,15 @@ const renderItem = async (args: RenderItemArgs): Promise<RenderItemReturn> => {
 
   /* Item id required */
 
-  const id = getProp.id(item)
+  const id = item.id
 
   if (!isStringStrict(id)) {
     return {}
   }
 
-  /* Item props */
-
-  const props = getProp.self(item)
-
-  if (!isObjectStrict(props)) {
-    return {}
-  }
-
   /* Slug required */
 
-  if (!isStringStrict(props.slug)) {
+  if (!isStringStrict(item.slug)) {
     return {}
   }
 
@@ -548,7 +488,7 @@ const renderItem = async (args: RenderItemArgs): Promise<RenderItemReturn> => {
 
   const renderItemStartArgs: RenderItemStartActionArgs = {
     id,
-    pageData: props,
+    pageData: item,
     contentType,
     pageContains,
     pageHeadings,
@@ -564,8 +504,8 @@ const renderItem = async (args: RenderItemArgs): Promise<RenderItemReturn> => {
 
   /* Meta */
 
-  const title = props.title
-  const meta = _getMeta(props)
+  const title = item.title
+  const meta = _getMeta(item)
 
   if (!isStringStrict(meta.title)) {
     meta.title = title
@@ -576,8 +516,8 @@ const renderItem = async (args: RenderItemArgs): Promise<RenderItemReturn> => {
   const slugArgs = {
     id,
     contentType,
-    linkContentType: props.linkContentType,
-    slug: props.slug,
+    linkContentType: item.linkContentType,
+    slug: item.slug,
     returnParents: true,
     page: 0
   }
@@ -609,7 +549,7 @@ const renderItem = async (args: RenderItemArgs): Promise<RenderItemReturn> => {
 
   /* Check if index */
 
-  const index = props.slug === 'index'
+  const index = item.slug === 'index'
 
   meta.isIndex = index
 
@@ -643,46 +583,49 @@ const renderItem = async (args: RenderItemArgs): Promise<RenderItemReturn> => {
     }
   }
 
-  /* Content loop */
-
-  const contentOutput = { html: '' }
-
-  let contentData = props.content
-
-  if (isObjectStrict(contentData)) {
-    contentData = contentData.content
-  }
-
-  if (isArrayStrict(contentData)) {
-    await renderContent({
-      contentData,
-      serverlessData: itemServerlessData,
-      output: contentOutput,
-      parents: [],
-      pageData: item,
-      pageContains,
-      pageHeadings,
-      navigations,
-      renderFunctions
-    })
-  }
-
-  contentOutput.html = await doShortcodes(contentOutput.html)
-
-  /* Pagination variables for meta object */
-
-  if (isObjectStrict(item.pagination)) {
-    _setPaginationMeta(item.pagination, slugArgs, meta)
-    serverlessRender = true
-  }
-
   /* Page data (props) for layout and actions */
 
-  const pageData = { ...props }
+  const pageData = { ...item }
 
   pageData.id = id
   pageData.parents = parents
-  pageData.content = []
+  pageData.content = undefined
+
+  /* Content loop */
+
+  let contentOutput = ''
+
+  const contentData = item.content
+
+  if (isArrayStrict(contentData)) {
+    const contentStore = {
+      html: ''
+    }
+
+    await renderContent({
+      content: contentData,
+      serverlessData: itemServerlessData,
+      parents: [],
+      pageData,
+      pageContains,
+      pageHeadings,
+      navigations,
+      renderFunctions,
+      output: contentStore
+    })
+
+    contentOutput = contentStore.html
+  }
+
+  contentOutput = await doShortcodes(contentOutput)
+
+  /* Pagination variables for meta object */
+
+  if (isObjectStrict(pageData.pagination)) {
+    _setPaginationMeta(pageData.pagination, slugArgs, meta)
+
+    serverlessRender = true
+  }
 
   /* Output */
 
@@ -694,7 +637,7 @@ const renderItem = async (args: RenderItemArgs): Promise<RenderItemReturn> => {
       meta,
       navigations,
       contentType,
-      content: contentOutput.html,
+      content: contentOutput,
       slug: formattedSlug,
       pageContains,
       pageHeadings,
@@ -800,27 +743,7 @@ const render = async (args: RenderArgs): Promise<RenderReturn[] | RenderReturn> 
 
   /* Add formation functions */
 
-  const renderFunctions = { ...config.renderFunctions }
-
-  if (renderFunctions.container === undefined) {
-    renderFunctions.container = Container
-  }
-
-  if (renderFunctions.column === undefined) {
-    renderFunctions.column = Column
-  }
-
-  if (renderFunctions.form === undefined) {
-    renderFunctions.form = Form
-  }
-
-  if (renderFunctions.field === undefined) {
-    renderFunctions.field = Field
-  }
-
-  if (renderFunctions.richText === undefined) {
-    renderFunctions.richText = RichText
-  }
+  const renderFunctions = getRenderFunctions()
 
   /* Store content data */
 
@@ -831,30 +754,24 @@ const render = async (args: RenderArgs): Promise<RenderReturn[] | RenderReturn> 
   if (serverlessData === undefined) {
     for (let i = 0; i < content.page.length; i += 1) {
       const item = content.page[i]
-      const itemProp = getProp.self(item)
-      const itemData = Object.assign({
-        parent: undefined,
-        archive: '',
-        linkContentType: 'default'
-      }, isObjectStrict(itemProp) ? itemProp : {})
+      const itemObj = isObjectStrict(item) ? item : {}
+      const { parent } = itemObj
 
       let {
-        parent,
         archive = '',
         linkContentType = 'default'
-      } = itemData
+      } = itemObj
 
       archive = await applyFilters('renderArchiveName', archive)
       linkContentType = await applyFilters('renderLinkContentTypeName', linkContentType)
 
-      const idProp = getProp.id(item)
-      const id = isStringStrict(idProp) ? idProp : ''
+      const id = isStringStrict(item.id) ? item.id : ''
       const isArchive = isStringStrict(archive) && id !== ''
 
       if (isArchive && id !== '') {
         const archiveIds = config.archive.ids
-        const archiveSlug = itemProp.slug
-        const archiveTitle = itemProp.title
+        const archiveSlug = item.slug
+        const archiveTitle = item.title
         const contentTypeArchive = config.contentTypes.archive?.[archive]?.id
 
         if (archiveIds[archive] === undefined) {
@@ -877,9 +794,9 @@ const render = async (args: RenderArgs): Promise<RenderReturn[] | RenderReturn> 
       }
 
       if (isObjectStrict(parent) && id !== '') {
-        const parentSlug = getProp.fields(parent, 'slug')
-        const parentTitle = getProp.fields(parent, 'title')
-        const parentId = getProp.id(parent)
+        const parentSlug = parent.slug
+        const parentTitle = parent.title
+        const parentId = parent.id
 
         if (isStringStrict(parentSlug) && isStringStrict(parentTitle) && isStringStrict(parentId)) {
           config.slug.parents[id] = {
@@ -894,13 +811,11 @@ const render = async (args: RenderArgs): Promise<RenderReturn[] | RenderReturn> 
 
     if (isArrayStrict(redirect)) {
       redirect.forEach((r) => {
-        const redirectProp = getProp.self(r)
-
-        if (!isObjectStrict(redirectProp)) {
+        if (!isObjectStrict(r)) {
           return
         }
 
-        const { redirect: rr = [] } = redirectProp
+        const { redirect: rr = [] } = r
 
         if (!isArrayStrict(rr)) {
           return
@@ -1028,5 +943,6 @@ const render = async (args: RenderArgs): Promise<RenderReturn[] | RenderReturn> 
 export {
   render,
   renderItem,
-  renderContent
+  renderContent,
+  getRenderFunctions
 }

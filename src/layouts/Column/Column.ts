@@ -5,7 +5,9 @@
 /* Imports */
 
 import type { ColumnProps, ColumnReturn } from './ColumnTypes'
-import { applyFilters, isStringStrict, isObjectStrict } from '../../utils/utils'
+import { applyFilters } from '../../utils/filters/filters'
+import { isStringStrict } from '../../utils/isString/isString'
+import { isObjectStrict } from '../../utils/isObject/isObject'
 
 /**
  * Function - output column wrapper
@@ -27,7 +29,7 @@ const Column = async (props: ColumnProps): Promise<ColumnReturn> => {
     return fallback
   }
 
-  props = await applyFilters('columnProps', props, { renderType: 'Column' })
+  props = await applyFilters('columnProps', props, { renderType: 'column' })
 
   /* Filtered props must be object */
 

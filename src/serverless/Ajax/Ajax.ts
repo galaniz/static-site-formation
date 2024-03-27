@@ -7,15 +7,12 @@
 import type { AjaxArgs, AjaxCustomErrorArgs, AjaxResOptions } from './AjaxTypes'
 import type { AjaxActionReturn, AjaxActionArgs, CustomErrorObject } from '../serverlessTypes'
 import { setConfig, setConfigFilter } from '../../config/config'
-import {
-  setActions,
-  setShortcodes,
-  setFilters,
-  applyFilters,
-  isObjectStrict,
-  isStringStrict,
-  isNumber
-} from '../../utils/utils'
+import { setActions } from '../../utils/actions/actions'
+import { setShortcodes } from '../../utils/shortcodes/shortcodes'
+import { applyFilters, setFilters } from '../../utils/filters/filters'
+import { isObjectStrict } from '../../utils/isObject/isObject'
+import { isStringStrict } from '../../utils/isString/isString'
+import { isNumber } from '../../utils/isNumber/isNumber'
 import { SendForm } from '../SendForm/SendForm'
 
 /**
@@ -48,7 +45,10 @@ class _CustomError extends Error {
       args = {}
     }
 
-    const { message = '', code = 500 } = args
+    const {
+      message = '',
+      code = 500
+    } = args
 
     super(message)
     this.message = message
@@ -162,7 +162,10 @@ const Ajax = async ({ request, env, siteConfig }: AjaxArgs): Promise<Response> =
     let message = ''
 
     if (res.success !== undefined) {
-      const { message: successMessage, headers } = res.success
+      const {
+        message: successMessage,
+        headers
+      } = res.success
 
       if (successMessage !== undefined) {
         message = successMessage

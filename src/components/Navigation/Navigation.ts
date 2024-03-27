@@ -15,17 +15,13 @@ import type {
   NavigationBreadcrumbOutputArgs
 } from './NavigationTypes'
 import type { HtmlString } from '../../global/globalTypes'
-import {
-  getSlug,
-  getPermalink,
-  getLink,
-  getProp,
-  isArrayStrict,
-  isStringStrict,
-  isString,
-  isObjectStrict,
-  isFunction
-} from '../../utils/utils'
+import { getSlug } from '../../utils/getSlug/getSlug'
+import { getPermalink } from '../../utils/getPermalink/getPermalink'
+import { getLink } from '../../utils/getLink/getLink'
+import { isArrayStrict } from '../../utils/isArray/isArray'
+import { isObjectStrict } from '../../utils/isObject/isObject'
+import { isStringStrict, isString } from '../../utils/isString/isString'
+import { isFunction } from '../../utils/isFunction/isFunction'
 
 /**
  * Class - recursively generate navigation output
@@ -131,9 +127,7 @@ class Navigation {
     /* Navigations by location */
 
     this.navigations.forEach(nav => {
-      const fields = getProp.self(nav)
-
-      if (!isObjectStrict(fields)) {
+      if (!isObjectStrict(nav)) {
         return
       }
 
@@ -141,7 +135,7 @@ class Navigation {
         title = '',
         location = '',
         items = []
-      } = fields
+      } = nav
 
       if (isStringStrict(title) && isStringStrict(location) && isArrayStrict(items)) {
         this.#navigationsByLocation[location.toLowerCase().replace(/\s+/g, '')] = {
@@ -164,9 +158,7 @@ class Navigation {
    * @return {import('./NavigationTypes').NavigationItem|undefined}
    */
   #getItemInfo (item: NavigationItem): NavigationItem | undefined {
-    const fields = getProp.self(item)
-
-    if (!isObjectStrict(fields)) {
+    if (!isObjectStrict(item)) {
       return
     }
 
@@ -175,7 +167,7 @@ class Navigation {
       internalLink,
       externalLink = '',
       children
-    } = fields
+    } = item
 
     let id = isStringStrict(title) ? title : ''
     let external = false
@@ -185,10 +177,8 @@ class Navigation {
       external = true
     }
 
-    const internalId = getProp.id(internalLink)
-
-    if (isStringStrict(internalId)) {
-      id = internalId
+    if (isObjectStrict(internalLink) && isStringStrict(internalLink.id)) {
+      id = internalLink.id
     }
 
     const link = getLink(internalLink, externalLink)
@@ -206,20 +196,20 @@ class Navigation {
     let descendentCurrent = false
 
     if (isArrayStrict(children)) {
-      const c: NavigationItem[] = []
+      const storeChildren: NavigationItem[] = []
 
-      descendentCurrent = this.#recurseItemChildren(children, c)
+      descendentCurrent = this.#recurseItemChildren(children, storeChildren)
 
-      props.children = c
+      props.children = storeChildren
     }
 
     if (descendentCurrent) {
       props.descendentCurrent = descendentCurrent
     }
 
-    Object.keys(fields).forEach((f) => {
-      if (props[f] === undefined) {
-        props[f] = fields[f]
+    Object.keys(item).forEach((p) => {
+      if (props[p] === undefined) {
+        props[p] = item[p]
       }
     })
 
@@ -274,9 +264,7 @@ class Navigation {
     const resItems: NavigationItem[] = []
 
     items.forEach(item => {
-      const fields = getProp.self(item)
-
-      if (!isObjectStrict(fields)) {
+      if (!isObjectStrict(item)) {
         return
       }
 
@@ -284,7 +272,7 @@ class Navigation {
         title = '',
         internalLink,
         externalLink
-      } = fields
+      } = item
 
       let id = ''
 
@@ -296,10 +284,8 @@ class Navigation {
         id = externalLink
       }
 
-      const internalId = getProp.id(internalLink)
-
-      if (isStringStrict(internalId)) {
-        id = internalId
+      if (isObjectStrict(internalLink) && isStringStrict(internalLink.id)) {
+        id = internalLink.id
       }
 
       const storedItem = this.#itemsById[id]

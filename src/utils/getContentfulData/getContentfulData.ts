@@ -4,9 +4,12 @@
 
 /* Imports */
 
-import type { ContentfulDataParams, ContentfulDataReturn } from './getContentfulDataTypes'
+import type { ContentfulDataParams, ContentfulData, ContentfulDataReturn } from './getContentfulDataTypes'
 import resolveResponse from 'contentful-resolve-response'
-import { applyFilters, isObject, isObjectStrict, isStringStrict } from '../utils'
+import { normalizeContentfulData } from '../normalizeContentfulData/normalizeContentfulData'
+import { applyFilters } from '../filters/filters'
+import { isObject, isObjectStrict } from '../isObject/isObject'
+import { isStringStrict } from '../isString/isString'
 import { config } from '../../config/config'
 
 /**
@@ -74,10 +77,10 @@ const getContentfulData = async (
       url += `&${p}=${params[p].toString()}`
     })
 
-    /* New data */
+    /* Check and transform data */
 
     const resp = await fetch(url)
-    const data: ContentfulDataReturn = await resp.json()
+    const data: ContentfulData = await resp.json()
 
     if (!isObjectStrict(data)) {
       throw new Error('No data')
@@ -89,6 +92,12 @@ const getContentfulData = async (
 
     data.items = resolveResponse(data)
 
+    const newItems = normalizeContentfulData(data.items !== undefined ? data.items : [])
+
+    const newData = {
+      items: newItems
+    }
+
     /* Store in cache */
 
     if (config.env.cache) {
@@ -98,12 +107,12 @@ const getContentfulData = async (
         data
       }
 
-      await applyFilters('cacheData', data, cacheDataFilterArgs)
+      await applyFilters('cacheData', newData, cacheDataFilterArgs)
     }
 
     /* Output */
 
-    return data
+    return newData
   } catch (error) {
     console.error(config.console.red, '[SSF] Error fetching Contentful data: ', error)
 

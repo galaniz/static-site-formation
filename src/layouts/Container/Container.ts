@@ -5,7 +5,9 @@
 /* Imports */
 
 import type { ContainerProps, ContainerReturn } from './ContainerTypes'
-import { applyFilters, isObjectStrict, isStringStrict } from '../../utils/utils'
+import { applyFilters } from '../../utils/filters/filters'
+import { isObjectStrict } from '../../utils/isObject/isObject'
+import { isStringStrict } from '../../utils/isString/isString'
 
 /**
  * Function - output container wrapper
@@ -27,7 +29,7 @@ const Container = async (props: ContainerProps): Promise<ContainerReturn> => {
     return fallback
   }
 
-  props = await applyFilters('containerProps', props, { renderType: 'Container' })
+  props = await applyFilters('containerProps', props, { renderType: 'container' })
 
   /* Filtered props must be object */
 

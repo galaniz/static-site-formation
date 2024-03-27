@@ -7,7 +7,6 @@ import { isObject, isObjectStrict } from '../isObject/isObject'
 import { isStringStrict } from '../isString/isString'
 import { getObjectKeys } from '../getObjectKeys/getObjectKeys'
 import { stripShortcodes } from '../shortcodes/shortcodes'
-import { dataSource } from '../dataSource/dataSource'
 
 /**
  * Function - get words from object or array of content
@@ -76,7 +75,7 @@ const getExcerpt = <T extends object>(args: ExcerptArgs<T>): string => {
   const {
     excerpt = '',
     content = undefined,
-    prop = dataSource.isContentful() ? 'value' : 'content',
+    prop = 'content',
     limit = 25,
     limitExcerpt = false,
     more = '&hellip;'

@@ -9,7 +9,6 @@ import { isArrayStrict } from '../isArray/isArray'
 import { isStringStrict } from '../isString/isString'
 import { isObjectStrict } from '../isObject/isObject'
 import { isFunction } from '../isFunction/isFunction'
-import { config } from '../../config/config'
 
 /**
  * Store filter callbacks by name
@@ -25,7 +24,6 @@ let filters: FiltersFunctions = {
   richTextOutput: [],
   richTextContent: [],
   richTextContentOutput: [],
-  richTextNormalizeContent: [],
   renderArchiveName: [],
   renderLinkContentTypeName: [],
   renderItem: [],
@@ -93,18 +91,6 @@ const removeFilter = <T extends keyof Filters>(name: T, filter: Filters[T]): boo
  * @return {Promise<*>}
  */
 const applyFilters = async <T, U>(name: string, value: T, args?: U): Promise<T> => {
-  /* TEMP */
-
-  if (config.env.dev) {
-    Object.keys(config.filters).forEach((f) => {
-      const filter = config.filters[f]
-
-      if (filter !== undefined && !filters[f].includes(filter)) {
-        addFilter(f, filter)
-      }
-    })
-  }
-
   const callbacks = filters[name]
 
   if (isArrayStrict(callbacks)) {
@@ -135,7 +121,6 @@ const resetFilters = (): void => {
     richTextOutput: [],
     richTextContent: [],
     richTextContentOutput: [],
-    richTextNormalizeContent: [],
     renderArchiveName: [],
     renderLinkContentTypeName: [],
     renderItem: [],
@@ -167,7 +152,7 @@ const setFilters = (args: Partial<Filters>): boolean => {
   Object.keys(args).forEach((a) => {
     const arg = args[a]
 
-    if (!isFunction(arg)) {
+    if (arg === undefined) {
       return
     }
 

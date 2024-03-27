@@ -8,18 +8,14 @@ import type { SendFormOutputData, SendFormRequestBody, SendFormRequestRes } from
 import type { AjaxActionArgs, AjaxActionReturn } from '../serverlessTypes'
 import type { ConfigFormMeta } from '../../config/configTypes'
 import { config } from '../../config/config'
-import {
-  escape,
-  isArray,
-  isString,
-  isStringStrict,
-  isObject,
-  isObjectStrict,
-  getPermalink,
-  getObjectKeys,
-  getJsonFile,
-  getPath
-} from '../../utils/utils'
+import { escape } from '../../utils/escape/escape'
+import { isArray } from '../../utils/isArray/isArray'
+import { isString, isStringStrict } from '../../utils/isString/isString'
+import { isObject, isObjectStrict } from '../../utils/isObject/isObject'
+import { getPermalink } from '../../utils/getPermalink/getPermalink'
+import { getObjectKeys } from '../../utils/getObjectKeys/getObjectKeys'
+import { getJsonFile } from '../../utils/getJson/getJson'
+import { getPath } from '../../utils/getPath/getPath'
 
 /**
  * Function - recurse through data to output plain and html email body

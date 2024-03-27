@@ -8,15 +8,13 @@ import type { ReloadArgs, ReloadQuery } from './ReloadTypes'
 import type { CustomErrorObject } from '../serverlessTypes'
 import { config, setConfig, setConfigFilter } from '../../config/config'
 import { getAllContentfulData } from '../../utils/getAllContentfulData/getAllContentfulData'
-import {
-  isObjectStrict,
-  isStringStrict,
-  isNumber,
-  setFilters,
-  setActions,
-  setShortcodes,
-  isFunction
-} from '../../utils/utils'
+import { isObjectStrict } from '../../utils/isObject/isObject'
+import { isStringStrict } from '../../utils/isString/isString'
+import { isNumber } from '../../utils/isNumber/isNumber'
+import { isFunction } from '../../utils/isFunction/isFunction'
+import { setFilters } from '../../utils/filters/filters'
+import { setActions } from '../../utils/actions/actions'
+import { setShortcodes } from '../../utils/shortcodes/shortcodes'
 import { render } from '../../render/render'
 
 /**

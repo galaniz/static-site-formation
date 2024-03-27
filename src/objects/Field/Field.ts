@@ -6,7 +6,10 @@
 
 import type { FieldProps, FieldOption, FieldCheckboxRadioArgs } from './FieldTypes'
 import { v4 as uuid } from 'uuid'
-import { applyFilters, isStringStrict, isObjectStrict, isArrayStrict } from '../../utils/utils'
+import { applyFilters } from '../../utils/filters/filters'
+import { isStringStrict } from '../../utils/isString/isString'
+import { isObjectStrict } from '../../utils/isObject/isObject'
+import { isArrayStrict } from '../../utils/isArray/isArray'
 
 /**
  * Function - output checkbox and radio inputs from options
@@ -66,7 +69,7 @@ const Field = async (props: FieldProps): Promise<string> => {
     return ''
   }
 
-  props = await applyFilters('fieldProps', props, { renderType: 'Field' })
+  props = await applyFilters('fieldProps', props, { renderType: 'field' })
 
   /* Filtered props must be object */
 

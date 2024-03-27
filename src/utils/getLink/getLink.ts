@@ -7,7 +7,6 @@
 import type { InternalLink } from '../../global/globalTypes'
 import { getPermalink } from '../getPermalink/getPermalink'
 import { getSlug } from '../getSlug/getSlug'
-import { getProp } from '../getProp/getProp'
 import { isObjectStrict } from '../isObject/isObject'
 import { isString, isStringStrict } from '../isString/isString'
 
@@ -20,12 +19,12 @@ import { isString, isStringStrict } from '../isString/isString'
  */
 const getLink = (internalLink?: InternalLink, externalLink?: string): string => {
   if (isObjectStrict(internalLink)) {
-    const slug = getProp.fields(internalLink, 'slug')
+    const slug = internalLink.slug
 
     const res = getSlug({
-      id: getProp.id(internalLink),
-      contentType: getProp.type(internalLink, 'content'),
-      linkContentType: getProp.fields(internalLink, 'linkContentType'),
+      id: internalLink.id,
+      contentType: internalLink.contentType,
+      linkContentType: internalLink.linkContentType,
       slug: isString(slug) ? slug : ''
     })
 

@@ -2,8 +2,10 @@
  * Text - Rich Text Types
  */
 
-import type { Generic, InternalLink, ParentArgs } from '../../global/globalTypes'
-import type { PropFile } from '../../utils/getProp/getPropTypes'
+/* Imports */
+
+import type { InternalLink, ParentArgs } from '../../global/globalTypes'
+import type { RenderRichText } from '../../render/renderTypes'
 
 /**
  * @typedef {object} RichTextHeading
@@ -21,7 +23,7 @@ export interface RichTextHeading {
  * @typedef {object} RichTextProps
  * @prop {object} args
  * @prop {string} [args.tag]
- * @prop {string|RichTextContentItem} [args.content]
+ * @prop {RenderRichText[]|string} [args.content]
  * @prop {string} [args.classes]
  * @prop {string} [args.textStyle]
  * @prop {string} [args.headingStyle]
@@ -37,9 +39,8 @@ export interface RichTextHeading {
  */
 export interface RichTextProps {
   args: {
-    type?: string
     tag?: string
-    content?: string | RichTextContentItem[]
+    content?: RenderRichText[] | string
     classes?: string
     textStyle?: string
     headingStyle?: string
@@ -57,77 +58,26 @@ export interface RichTextProps {
 }
 
 /**
- * @typedef RichTextContentItem
- * @prop {string} [tag]
- * @prop {string} [link]
- * @prop {import('../../global/globalTypes').InternalLink} [internalLink]
- * @prop {string|RichTextContentItem[]} [content]
- * @prop {string} [nodeType]
- * @prop {string} [value]
- * @prop {RichTextContentItemMark} [marks]
- * @prop {object} [data]
- * @prop {string} [data.uri]
- * @prop {
- * import('../../global/globalTypes').Generic|
- * import('../../utils/getProp/getPropTypes').PropFile|
- * import('../../global/globalTypes').InternalLink
- * } [data.target]
- */
-export interface RichTextContentItem {
-  tag?: string
-  link?: string
-  internalLink?: InternalLink
-  content?: string | RichTextContentItem[]
-  nodeType?: string
-  value?: string
-  marks?: RichTextContentItemMark[]
-  data?: {
-    uri?: string
-    target?: Generic & InternalLink & PropFile
-  }
-}
-
-/**
- * @typedef {object} RichTextContentItemMark
- * @prop {string} type
- */
-export interface RichTextContentItemMark {
-  type: string
-}
-
-/**
- * @typedef {object} RichTextContentReturn
- * @prop {string} [tag]
- * @prop {string} [link]
- * @prop {import('../../global/globalTypes').InternalLink} [internalLink]
- * @prop {string|RichTextContentReturn[]} [content]
- */
-export interface RichTextContentReturn {
-  tag?: string
-  link?: string
-  internalLink?: InternalLink
-  content?: string | RichTextContentReturn[]
-}
-
-/**
  * @typedef {object} RichTextContentProps
- * @prop {RichTextContentReturn[]} content
+ * @prop {RenderRichText[]} content
  * @prop {RichTextProps} props
- * @prop {string} _output
+ * @prop {boolean} dataAttr
+ * @prop {string} [_output]
  */
 export interface RichTextContentProps {
-  content: RichTextContentReturn[]
+  content: RenderRichText[]
   props: RichTextProps
+  dataAttr: boolean
   _output?: string
 }
 
 /**
  * @typedef {object} RichTextContentFilterArgs
- * @prop {RichTextContentItem} args
+ * @prop {RenderRichText} args
  * @prop {RichTextProps} props
  */
 export interface RichTextContentFilterArgs {
-  args: RichTextContentItem
+  args: RenderRichText
   props: RichTextProps
 }
 
@@ -139,29 +89,6 @@ export interface RichTextContentFilterArgs {
  * @return {Promise<RichTextProps>}
  */
 export type RichTextPropsFilter = (props: RichTextProps, args: { renderType: string }) => Promise<RichTextProps>
-
-/**
- * @typedef {object} RichTextNormalizeContentFilterArgs
- * @prop {string} type
- * @prop {RichTextContentItem} args
- */
-export interface RichTextNormalizeContentFilterArgs {
-  type: string
-  args: RichTextContentItem
-}
-
-/**
- * @typedef {RichTextContentItem[]|string|undefined} RichTextNormalizeContent
- */
-type RichTextNormalizeContent = RichTextContentItem[] | string | undefined
-
-/**
- * @typedef {function} RichTextNormalizeContentFilter
- * @param {RichTextNormalizeContent} content
- * @param {RichTextNormalizeContentFilterArgs} args
- * @return {Promise<RichTextNormalizeContent>}
- */
-export type RichTextNormalizeContentFilter = (content: RichTextNormalizeContent, args: RichTextNormalizeContentFilterArgs) => Promise<RichTextNormalizeContent>
 
 /**
  * @typedef {function} RichTextContentFilter

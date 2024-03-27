@@ -5,7 +5,7 @@
 /* Imports */
 
 import type { Config, ConfigSet, ConfigSetFilter } from './configTypes'
-import { addFilter, applyFilters } from '../utils/utils'
+import { addFilter, applyFilters } from '../utils/filters/filters'
 
 /**
  * Default options

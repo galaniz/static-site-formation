@@ -6,7 +6,9 @@
 
 import type { FormProps, FormReturn, FormMeta, FormMessages } from './FormTypes'
 import { v4 as uuid } from 'uuid'
-import { applyFilters, isStringStrict, isObjectStrict } from '../../utils/utils'
+import { applyFilters } from '../../utils/filters/filters'
+import { isStringStrict } from '../../utils/isString/isString'
+import { isObjectStrict } from '../../utils/isObject/isObject'
 import { config } from '../../config/config'
 
 /**
@@ -29,7 +31,7 @@ const Form = async (props: FormProps): Promise<FormReturn> => {
     return fallback
   }
 
-  props = await applyFilters('formProps', props, { renderType: 'Form' })
+  props = await applyFilters('formProps', props, { renderType: 'form' })
 
   /* Filtered props must be object */
 

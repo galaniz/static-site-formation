@@ -8,7 +8,10 @@ import type { FileDataParams, FileDataReturn } from './getFileDataTypes'
 import type { RenderItem } from '../../render/renderTypes'
 import { readdir, readFile } from 'node:fs/promises'
 import { extname, basename, resolve } from 'node:path'
-import { applyFilters, isObject, isStringStrict, getJson } from '../utils'
+import { applyFilters } from '../../utils/filters/filters'
+import { isObject } from '../../utils/isObject/isObject'
+import { isStringStrict } from '../../utils/isString/isString'
+import { getJson } from '../../utils/getJson/getJson'
 import { config } from '../../config/config'
 
 /**

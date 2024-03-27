@@ -125,7 +125,7 @@ const setActions = (args: Partial<Actions>): boolean => {
   Object.keys(args).forEach((a) => {
     const arg = args[a]
 
-    if (!isFunction(arg)) {
+    if (arg === undefined) {
       return
     }
 

@@ -13,8 +13,7 @@ import type {
   RichTextPropsFilter,
   RichTextOutputFilter,
   RichTextContentFilter,
-  RichTextContentOutputFilter,
-  RichTextNormalizeContentFilter
+  RichTextContentOutputFilter
 } from '../../text/RichText/RichTextTypes'
 import type { ContentfulDataReturn } from '../getContentfulData/getContentfulDataTypes'
 import type { FileDataReturn } from '../getFileData/getFileDataTypes'
@@ -59,7 +58,6 @@ export type CacheDataFilter = (data: CacheData, args: CacheDataFilterArgs) => Pr
  * @prop {import('../../text/RichText/RichTextTypes').RichTextOutputFilter} richTextOutput
  * @prop {import('../../text/RichText/RichTextTypes').RichTextContentFilter} richTextContent
  * @prop {import('../../text/RichText/RichTextTypes').RichTextContentOutputFilter} richTextContentOutput
- * @prop {import('../../text/RichText/RichTextTypes').RichTextNormalizeContentFilter} richTextNormalizeContent
  * @prop {import('../../render/RenderTypes').RenderNameFilter} renderArchiveName
  * @prop {import('../../render/RenderTypes').RenderNameFilter} renderLinkContentTypeName
  * @prop {import('../../render/RenderTypes').RenderItemFilter} renderItem
@@ -78,7 +76,6 @@ export interface Filters extends GenericFunctions {
   richTextOutput: RichTextOutputFilter
   richTextContent: RichTextContentFilter
   richTextContentOutput: RichTextContentOutputFilter
-  richTextNormalizeContent: RichTextNormalizeContentFilter
   renderArchiveName: RenderNameFilter
   renderLinkContentTypeName: RenderNameFilter
   renderItem: RenderItemFilter
@@ -100,7 +97,6 @@ export interface Filters extends GenericFunctions {
  * @prop {import('../../text/RichText/RichTextTypes').RichTextOutputFilter[]} richTextOutput
  * @prop {import('../../text/RichText/RichTextTypes').RichTextContentFilter[]} richTextContent
  * @prop {import('../../text/RichText/RichTextTypes').RichTextContentOutputFilter[]} richTextContentOutput
- * @prop {import('../../text/RichText/RichTextTypes').RichTextNormalizeContentFilter[]} richTextNormalizeContent
  * @prop {import('../../render/RenderTypes').RenderNameFilter[]} renderArchiveName
  * @prop {import('../../render/RenderTypes').RenderNameFilter[]} renderLinkContentTypeName
  * @prop {import('../../render/RenderTypes').RenderItemFilter[]} renderItem
@@ -119,7 +115,6 @@ export interface FiltersFunctions {
   richTextOutput: RichTextOutputFilter[]
   richTextContent: RichTextContentFilter[]
   richTextContentOutput: RichTextContentOutputFilter[]
-  richTextNormalizeContent: RichTextNormalizeContentFilter[]
   renderArchiveName: RenderNameFilter[]
   renderLinkContentTypeName: RenderNameFilter[]
   renderItem: RenderItemFilter[]

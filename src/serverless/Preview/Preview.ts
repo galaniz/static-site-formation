@@ -7,13 +7,11 @@
 import type { PreviewArgs } from './PreviewTypes'
 import { setConfig, setConfigFilter } from '../../config/config'
 import { getAllContentfulData } from '../../utils/getAllContentfulData/getAllContentfulData'
-import {
-  isObjectStrict,
-  isStringStrict,
-  setFilters,
-  setActions,
-  setShortcodes
-} from '../../utils/utils'
+import { isObjectStrict } from '../../utils/isObject/isObject'
+import { isStringStrict } from '../../utils/isString/isString'
+import { setFilters } from '../../utils/filters/filters'
+import { setActions } from '../../utils/actions/actions'
+import { setShortcodes } from '../../utils/shortcodes/shortcodes'
 import { render } from '../../render/render'
 
 /**
